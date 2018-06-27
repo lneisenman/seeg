@@ -201,7 +201,7 @@ def calc_z_scores(seizures, freq=1):
     return z_scores
 
 
-def show_z_score(times, z_score):
+def show_z_score(times, z_score, freqs):
     plt.figure()
     plt.pcolormesh(times, freqs, z_score, vmin=-10, vmax=10, cmap='gin')
     plt.xlim(0, 20)
