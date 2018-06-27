@@ -39,7 +39,7 @@ def test_brainstorm_seizure1():
     freqs = np.arange(10, 220, 3)
 
     
-    montage, contact_info = seeg.read_electrode_locations()
+    montage, __ = seeg.read_electrode_locations()
     
     for seizure in seizures:
         raw = seeg.read_eeg(montage.dig_ch_pos, seizure)
@@ -56,8 +56,8 @@ def test_brainstorm_seizure1():
     seiz_img = seizures[0]['seizure']['img']
     # base_img = nib.load('baseline.nii.gz')
     # seiz_img = nib.load('seizure.nii.gz')
-    base = base_img.get_data()
-    seiz = seiz_img.get_data()
+    # base = base_img.get_data()
+    # seiz = seiz_img.get_data()
     
     nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)  # cache options
     base_masked = nifti_masker.fit_transform(base_img)
