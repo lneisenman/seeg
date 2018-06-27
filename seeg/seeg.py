@@ -18,7 +18,7 @@ import numpy.linalg as npl
 import pandas as pd
 from scipy import stats as sps
 
-import gin
+from . import gin
 
 
 def read_electrode_locations(show=False):
@@ -130,7 +130,7 @@ def create_bipolar(seizure):
     return baseline_bp, seizure_bp
 
 
-def calc_power(seizure):
+def calc_power(seizure, freqs):
     n_cycles = freqs
     n_channels = seizure['seizure']['bipolar'].info['nchan']
     n_times = seizure['seizure']['bipolar'].n_times
@@ -208,7 +208,7 @@ def show_z_score(times, z_score):
     plt.colorbar()
 
 
-def ave_power_over_freq_band(seizure, low=120, high=200):
+def ave_power_over_freq_band(seizure, freqs, low=120, high=200):
     ''' returns the average power between low and high '''
     baseline_power = seizure['baseline']['power']
     shape = baseline_power.shape

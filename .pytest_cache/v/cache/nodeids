@@ -1,0 +1,3 @@
+[
+  "tests/test_seeg.py::test_brainstorm_seizure1"
+]
