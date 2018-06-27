@@ -22,15 +22,17 @@ import seeg
 def test_brainstorm_seizure1():
     names = [r"l'", r"g'"]
     num_contacts = [9, 12]
-    seizure1 = {'file_name': 'sz1.trc', 'bads': ["v'1", "f'1"],
+    directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
+
+    seizure1 = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
                 'electrodes': {'names': names, 'num_contacts': num_contacts},
                 'baseline': {'start': 72.800, 'end': 77.800},
                 'seizure': {'start': 110.8, 'end': 160.8}}
-    seizure2 = {'file_name': 'sz2.trc', 'bads': ["v'1", "t'8"],
+    seizure2 = {'eeg_file_name': directory+'\\sz2.trc', 'bads': ["v'1", "t'8"],
                 'electrodes': {'names': names, 'num_contacts': num_contacts},
                 'baseline': {'start': 103.510, 'end': 108.510},
                 'seizure': {'start': 133.510, 'end': 183.510}}
-    seizure3 = {'file_name': 'sz3.trc', 'bads': ["o'1", "t'8"],
+    seizure3 = {'eeg_file_name': directory+'\\sz3.trc', 'bads': ["o'1", "t'8"],
                 'electrodes': {'names': names, 'num_contacts': num_contacts},
                 'baseline': {'start': 45.287, 'end': 50.287},
                 'seizure': {'start': 110.287, 'end': 160.287}}
@@ -38,8 +40,12 @@ def test_brainstorm_seizure1():
     seizures = [seizure1]
     freqs = np.arange(10, 220, 3)
 
-    
-    montage, __ = seeg.read_electrode_locations()
+    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
+    # home = r'C:\Users\leisenman\Documents\brainstorm_db'
+    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
+    file_name = home + electrode_file
+
+    montage, __ = seeg.read_electrode_locations(file_name)
     
     for seizure in seizures:
         raw = seeg.read_eeg(montage.dig_ch_pos, seizure)

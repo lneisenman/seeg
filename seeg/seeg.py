@@ -21,12 +21,7 @@ from scipy import stats as sps
 from . import gin
 
 
-def read_electrode_locations(show=False):
-    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
-#    home = r'C:\Users\leisenman\Documents\brainstorm_db'
-    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
-    file_name = home + electrode_file
-    # file_name = home + electrode_file
+def read_electrode_locations(file_name, show=False):
     sfreq = 1000
     electrodes = pd.read_table(file_name, header=None,
                                names=['contact', 'x', 'y', 'z'])
@@ -60,12 +55,7 @@ def match_ch_type(name):
 
 
 def read_eeg(dig_ch_pos, seizure, show=False):
-    home = r'C:\Users\eisenmanl\Documents'
-#    home = r'C:\Users\leisenman\Documents'
-    seiz = r'\tutorial_epimap\seeg'
-    raw_fname = home + r'\brainstorm_data_files' + seiz + '\\' + seizure['file_name']
-#    raw_fname = home + r'\brainstorm_db' + seiz + '\\' + seizure['file_name']
-    reader = neo.rawio.MicromedRawIO(filename=raw_fname)
+    reader = neo.rawio.MicromedRawIO(filename=seizure['eeg_file_name'])
     reader.parse_header()
     ch_names = list(reader.header['signal_channels']['name'])
     dig_ch_pos = {k: v for k, v in dig_ch_pos.items() if k in ch_names}
