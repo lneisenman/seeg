@@ -54,7 +54,7 @@ def match_ch_type(name):
     return out
 
 
-def read_eeg(dig_ch_pos, seizure, show=False):
+def read_micromed_eeg(dig_ch_pos, seizure, show=False):
     reader = neo.rawio.MicromedRawIO(filename=seizure['eeg_file_name'])
     reader.parse_header()
     ch_names = list(reader.header['signal_channels']['name'])
@@ -316,5 +316,5 @@ def create_source_image(seizure, mri, freqs, raw_eeg, montage):
         # + intercept as a covariate by default
         n_perm=10000, two_sided_test=True,
         n_jobs=2)  # can be changed to use more CPUs
-        
+
     return nifti_masker.inverse_transform(t_scores)
