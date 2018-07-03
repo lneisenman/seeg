@@ -48,7 +48,7 @@ def test_brainstorm_seizure1():
     montage, __ = seeg.read_electrode_locations(file_name)
     
     for seizure in seizures:
-        raw = seeg.read_eeg(montage.dig_ch_pos, seizure)
+        raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
         seizure['baseline']['eeg'], seizure['seizure']['eeg'] = seeg.clip_eeg(seizure, raw)
         seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = seeg.create_bipolar(seizure)
         seizure['baseline']['power'], seizure['seizure']['power'] = seeg.calc_power(seizure, freqs)
@@ -79,5 +79,31 @@ def test_brainstorm_seizure1():
     p_pt_img = nifti_masker.inverse_transform(neg_log_pvals)
     plot_stat_map(p_pt_img, mri, threshold=1.3)
     t_pt_img = nifti_masker.inverse_transform(t_scores)
+    plot_stat_map(t_pt_img, mri, threshold=2)
+    plt.show()
+
+
+def test_create_source_image():
+    names = [r"l'", r"g'"]
+    num_contacts = [9, 12]
+    directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
+
+    seizure = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
+               'electrodes': {'names': names, 'num_contacts': num_contacts},
+               'baseline': {'start': 72.800, 'end': 77.800},
+               'seizure': {'start': 110.8, 'end': 160.8}}
+
+    freqs = np.arange(10, 220, 3)
+
+    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
+    # home = r'C:\Users\leisenman\Documents\brainstorm_db'
+    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
+    file_name = home + electrode_file
+    montage, __ = seeg.read_electrode_locations(file_name)
+
+    montage, __ = seeg.read_electrode_locations(file_name)
+    raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
+    mri = r'C:\Users\eisenmanl\Documents\brainstorm_data_files\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
+    t_pt_img = seeg.create_source_image(seizure, mri, freqs, raw, montage)
     plot_stat_map(t_pt_img, mri, threshold=2)
     plt.show()

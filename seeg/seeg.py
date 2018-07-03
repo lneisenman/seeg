@@ -311,7 +311,7 @@ def create_source_image(seizure, mri, freqs, raw_eeg, montage):
     data = np.concatenate((base_masked, seiz_masked))
     labels = np.zeros(30, dtype=np.int)
     labels[15:] = 1
-    neg_log_pvals, t_scores, _ = permuted_ols(
+    __, t_scores, _ = permuted_ols(
         labels, data,
         # + intercept as a covariate by default
         n_perm=10000, two_sided_test=True,
