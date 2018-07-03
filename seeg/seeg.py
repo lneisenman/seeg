@@ -292,3 +292,29 @@ def map_seeg_data(seizure, montage):
     base_img = nilearn.image.smooth_img(base_img, 6)
     seiz_img = nilearn.image.smooth_img(seiz_img, 6)
     return base_img, seiz_img
+
+
+def create_source_image(seizure, mri, freqs, raw_eeg, montage):
+    ''' create and display the SEEG source image as per David et. al. 2011'''
+    seizure['baseline']['eeg'], seizure['seizure']['eeg'] = clip_eeg(seizure, raw_eeg)
+    seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = create_bipolar(seizure)
+    seizure['baseline']['power'], seizure['seizure']['power'] = calc_power(seizure, freqs)
+    seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = ave_power_over_freq_band(seizure, freqs)
+    seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = extract_power(seizure)
+    seizure['baseline']['img'], seizure['seizure']['img'] = map_seeg_data(seizure, montage)
+    base_img = seizure['baseline']['img']
+    seiz_img = seizure['seizure']['img']
+    
+    nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)  # cache options
+    base_masked = nifti_masker.fit_transform(base_img)
+    seiz_masked = nifti_masker.fit_transform(seiz_img)
+    data = np.concatenate((base_masked, seiz_masked))
+    labels = np.zeros(30, dtype=np.int)
+    labels[15:] = 1
+    neg_log_pvals, t_scores, _ = permuted_ols(
+        labels, data,
+        # + intercept as a covariate by default
+        n_perm=10000, two_sided_test=True,
+        n_jobs=2)  # can be changed to use more CPUs
+        
+    return nifti_masker.inverse_transform(t_scores)
