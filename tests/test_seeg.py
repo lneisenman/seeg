@@ -15,8 +15,45 @@ from nilearn.input_data import NiftiMasker
 from nilearn.mass_univariate import permuted_ols
 from nilearn.plotting import plot_stat_map
 import numpy as np
+import pytest
 
 import seeg
+
+@pytest.fixture
+def seizure():
+    names = [r"l'", r"g'"]
+    directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
+
+    seizure = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
+               'electrodes': names,
+               'baseline': {'start': 72.800, 'end': 77.800},
+               'seizure': {'start': 110.8, 'end': 160.8}}
+
+    return seizure
+    
+@pytest.fixture
+def freqs():
+    return np.arange(10, 220, 3)
+
+
+@pytest.fixture
+def montage():
+    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
+    # home = r'C:\Users\leisenman\Documents\brainstorm_db'
+    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
+    file_name = home + electrode_file
+    mont, __ = seeg.read_electrode_locations(file_name)
+    return mont
+
+
+@pytest.fixture
+def raw(montage, seizure):
+    return seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
+
+
+@pytest.fixture
+def mri():
+    return r'C:\Users\eisenmanl\Documents\brainstorm_data_files\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
 
 
 def test_brainstorm_seizure1():
@@ -25,15 +62,14 @@ def test_brainstorm_seizure1():
     directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
 
     seizure1 = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
-                'electrodes': {'names': names, 'num_contacts': num_contacts},
-                'baseline': {'start': 72.800, 'end': 77.800},
+                'electrodes': names,
                 'seizure': {'start': 110.8, 'end': 160.8}}
     seizure2 = {'eeg_file_name': directory+'\\sz2.trc', 'bads': ["v'1", "t'8"],
-                'electrodes': {'names': names, 'num_contacts': num_contacts},
+                'electrodes': names,
                 'baseline': {'start': 103.510, 'end': 108.510},
                 'seizure': {'start': 133.510, 'end': 183.510}}
     seizure3 = {'eeg_file_name': directory+'\\sz3.trc', 'bads': ["o'1", "t'8"],
-                'electrodes': {'names': names, 'num_contacts': num_contacts},
+                'electrodes': names,
                 'baseline': {'start': 45.287, 'end': 50.287},
                 'seizure': {'start': 110.287, 'end': 160.287}}
     seizures = [seizure1, seizure2, seizure3]
@@ -83,27 +119,16 @@ def test_brainstorm_seizure1():
     plt.show()
 
 
-def test_create_source_image():
-    names = [r"l'", r"g'"]
-    num_contacts = [9, 12]
-    directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
-
-    seizure = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
-               'electrodes': {'names': names, 'num_contacts': num_contacts},
-               'baseline': {'start': 72.800, 'end': 77.800},
-               'seizure': {'start': 110.8, 'end': 160.8}}
-
-    freqs = np.arange(10, 220, 3)
-
-    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
-    # home = r'C:\Users\leisenman\Documents\brainstorm_db'
-    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
-    file_name = home + electrode_file
-    montage, __ = seeg.read_electrode_locations(file_name)
-
-    montage, __ = seeg.read_electrode_locations(file_name)
-    raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
-    mri = r'C:\Users\eisenmanl\Documents\brainstorm_data_files\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
+def test_create_source_image(seizure, mri, freqs, raw, montage):
     t_pt_img = seeg.create_source_image(seizure, mri, freqs, raw, montage)
     plot_stat_map(t_pt_img, mri, threshold=2)
     plt.show()
+
+
+def test_setup_bipolar(raw):
+    anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw)
+    print(anodes)
+    print(cathodes)
+    assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"] # v'1 is bad!
+    assert cathodes == ["v'3", "v'4", "v'13", "v'14", "v'15"]
+    assert ch_names == ["v'2-v'3", "v'3-v'4", "v'12-v'13", "v'13-v'14", "v'14-v'15"]

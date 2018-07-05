@@ -88,12 +88,23 @@ def clip_eeg(seizure, raw, show=False):
     return baseline, seizure
 
 
-def setup_bipolar(electrode, first, last):
-    anodes = [electrode + str(i) for i in range(first, last)]
-    cathodes = [electrode + str(i) for i in range(first+1, last+1)]
-    label = electrode[:-1]
-    ch_names = [label + str(i) + '-' + label + str(i+1)
-                for i in range(first, last)]
+def setup_bipolar(electrode, raw):
+    contacts = [i for i in raw.ch_names if electrode in i]
+    anodes = list()
+    cathodes = list()
+    ch_names = list()
+    last = contacts[-1]
+    num_contacts = int(last[len(electrode):])
+    bads = raw.info['bads']
+    for i in range(num_contacts):
+        anode = electrode + str(i)
+        cathode = electrode + str(i+1)
+        if (anode in contacts) and (cathode in contacts):
+            if not ((anode in bads) or (cathodes in bads)):
+                anodes.append(anode)
+                cathodes.append(cathode)
+                ch_names.append(anode + '-' + cathode)
+
     return anodes, cathodes, ch_names
 
 
@@ -103,14 +114,14 @@ def create_bipolar(seizure):
     cathodes = list()
     ch_names = list()
     electrodes = seizure['electrodes']
-    for name, num in zip(electrodes['names'], electrodes['num_contacts']):
-        temp = setup_bipolar(name, 1, num)
+    baseline = seizure['baseline']['eeg']
+    seiz = seizure['seizure']['eeg']
+    for name in electrodes:
+        temp = setup_bipolar(name, baseline)
         anodes.extend(temp[0])
         cathodes.extend(temp[1])
         ch_names.extend(temp[2])
 
-    baseline = seizure['baseline']['eeg']
-    seiz = seizure['seizure']['eeg']
     baseline_bp = mne.set_bipolar_reference(baseline, anodes, cathodes,
                                             ch_names, verbose=False)
     baseline_bp = baseline_bp.pick_channels(ch_names)
@@ -272,14 +283,21 @@ def map_seeg_data(seizure, montage):
     affine = seiz_img.affine
     inverse = npl.inv(affine)
     electrodes = seizure['electrodes']
+    eeg = seizure['baseline']['eeg']
+    bads = eeg.info['bads']
     coord_list = list()
-    for name, num in zip(electrodes['names'], electrodes['num_contacts']):
-        for i in range(num-1):
-            label = name + str(i+1)
-            loc1 = montage.dig_ch_pos[label]*1000
-            label = name + str(i+2)
-            loc2 = montage.dig_ch_pos[label]*1000
-            coord_list.append((loc1 + loc2)/2)
+    for electrode in electrodes:
+        contacts = [i for i in eeg.ch_names if electrode in i]
+        last = contacts[-1]
+        num_contacts = int(last[len(electrode):])
+        for i in range(num_contacts):
+            anode = electrode + str(i)
+            cathode = electrode + str(i+1)
+            if (anode in contacts) and (cathode in contacts):
+                if not ((anode in bads) or (cathode in bads)):
+                    loc1 = montage.dig_ch_pos[anode]*1000
+                    loc2 = montage.dig_ch_pos[cathode]*1000
+                    coord_list.append((loc1 + loc2)/2)
             
     base_ex = seizure['baseline']['ex_power']
     seiz_ex = seizure['seizure']['ex_power']
