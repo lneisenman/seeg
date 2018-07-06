@@ -89,7 +89,7 @@ def clip_eeg(seizure, raw, show=False):
 
 
 def setup_bipolar(electrode, raw):
-    contacts = [i for i in raw.ch_names if electrode in i]
+    contacts = [i for i in raw.ch_names if i.startswith(electrode)]
     anodes = list()
     cathodes = list()
     ch_names = list()
@@ -287,7 +287,7 @@ def map_seeg_data(seizure, montage):
     bads = eeg.info['bads']
     coord_list = list()
     for electrode in electrodes:
-        contacts = [i for i in eeg.ch_names if electrode in i]
+        contacts = [i for i in eeg.ch_names if i.startswith(electrode)]
         last = contacts[-1]
         num_contacts = int(last[len(electrode):])
         for i in range(num_contacts):

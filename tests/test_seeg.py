@@ -58,11 +58,11 @@ def mri():
 
 def test_brainstorm_seizure1():
     names = [r"l'", r"g'"]
-    num_contacts = [9, 12]
     directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
 
     seizure1 = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
                 'electrodes': names,
+                'baseline': {'start': 72.800, 'end': 77.800},
                 'seizure': {'start': 110.8, 'end': 160.8}}
     seizure2 = {'eeg_file_name': directory+'\\sz2.trc', 'bads': ["v'1", "t'8"],
                 'electrodes': names,
@@ -126,7 +126,7 @@ def test_create_source_image(seizure, mri, freqs, raw, montage):
 
 
 def test_setup_bipolar(raw):
-    anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw)
+    anodes, cathodes, ch_names = seeg.setup_bipolar("t'", raw)
     print(anodes)
     print(cathodes)
     assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"] # v'1 is bad!
