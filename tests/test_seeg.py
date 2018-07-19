@@ -15,6 +15,7 @@ from nilearn.input_data import NiftiMasker
 from nilearn.mass_univariate import permuted_ols
 from nilearn.plotting import plot_stat_map
 import numpy as np
+import pandas as pd
 import pytest
 
 import seeg
@@ -42,7 +43,14 @@ def montage():
     # home = r'C:\Users\leisenman\Documents\brainstorm_db'
     electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
     file_name = home + electrode_file
-    mont, __ = seeg.read_electrode_locations(file_name)
+    electrodes = pd.read_table(file_name, header=None,
+                               names=['contact', 'x', 'y', 'z'])
+    # skip ecg locations
+    electrodes = electrodes[0:-2].copy()
+    electrodes['x'] /=1000
+    electrodes['y'] /=1000
+    electrodes['z'] /=1000
+    mont, __ = seeg.create_montage(electrodes)
     return mont
 
 

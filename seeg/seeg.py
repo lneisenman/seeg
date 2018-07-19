@@ -21,16 +21,17 @@ from scipy import stats as sps
 from . import gin
 
 
-def read_electrode_locations(file_name, show=False):
-    sfreq = 1000
-    electrodes = pd.read_table(file_name, header=None,
-                               names=['contact', 'x', 'y', 'z'])
-    # skip ecg locations
-    seeg = electrodes[0:-2].copy()
-    dig_ch_pos = {seeg['contact'][i]: np.asarray([seeg['x'][i]/1000, seeg['y'][i]/1000, seeg['z'][i]/1000]) for i in range(len(seeg))}
+def create_montage(electrodes, sfreq=1000, show=False):
+    '''
+    Create a montage from a pandas dataframe containing contact names and locations in meters
+
+    electrodes : pandas dataframe with columns named "contact", "x", "y" and "z"
+    '''
+    dig_ch_pos = {electrodes['contact'][i]: np.asarray([electrodes['x'][i], electrodes['y'][i], electrodes['z'][i]])
+                  for i in range(len(electrodes))}
 
     montage = mne.channels.DigMontage(dig_ch_pos=dig_ch_pos)
-    names = list(seeg['contact'].values)
+    names = list(electrodes['contact'].values)
     contact_info = mne.create_info(ch_names=names, sfreq=sfreq,
                                    ch_types='seeg', montage=montage)
 
