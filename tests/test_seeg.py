@@ -89,7 +89,13 @@ def test_brainstorm_seizure1():
     electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
     file_name = home + electrode_file
 
-    montage, __ = seeg.read_electrode_locations(file_name)
+    electrodes = pd.read_table(file_name, header=None,
+                               names=['contact', 'x', 'y', 'z'])
+    electrodes = electrodes[0:-2].copy()
+    electrodes['x'] /=1000
+    electrodes['y'] /=1000
+    electrodes['z'] /=1000
+    montage, __ = seeg.create_montage(electrodes)
     
     for seizure in seizures:
         raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
@@ -134,7 +140,7 @@ def test_create_source_image(seizure, mri, freqs, raw, montage):
 
 
 def test_setup_bipolar(raw):
-    anodes, cathodes, ch_names = seeg.setup_bipolar("t'", raw)
+    anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw)
     print(anodes)
     print(cathodes)
     assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"] # v'1 is bad!
