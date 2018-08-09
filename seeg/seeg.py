@@ -89,13 +89,18 @@ def clip_eeg(seizure, raw, show=False):
     return baseline, seizure
 
 
+def find_num_contacts(contacts, electrode):
+    start = len(electrode)
+    numbers = [int(contact[start:]) for contact in contacts]
+    return np.max(numbers)
+
+
 def setup_bipolar(electrode, raw):
     contacts = [i for i in raw.ch_names if i.startswith(electrode)]
     anodes = list()
     cathodes = list()
     ch_names = list()
-    last = contacts[-1]
-    num_contacts = int(last[len(electrode):])
+    num_contacts = find_num_contacts(contacts, electrode)
     bads = raw.info['bads']
     for i in range(num_contacts):
         anode = electrode + str(i)
@@ -107,7 +112,6 @@ def setup_bipolar(electrode, raw):
                 ch_names.append(anode + '-' + cathode)
 
     return anodes, cathodes, ch_names
-
 
 
 def create_bipolar(seizure):
@@ -126,9 +130,11 @@ def create_bipolar(seizure):
     baseline_bp = mne.set_bipolar_reference(baseline, anodes, cathodes,
                                             ch_names, verbose=False)
     baseline_bp = baseline_bp.pick_channels(ch_names)
+    baseline_bp = baseline_bp.reorder_channels(ch_names)
     seizure_bp = mne.set_bipolar_reference(seiz, anodes, cathodes,
                                            ch_names, verbose=False)
     seizure_bp = seizure_bp.pick_channels(ch_names)
+    seizure_bp = seizure_bp.reorder_channels(ch_names)
     return baseline_bp, seizure_bp
 
 
