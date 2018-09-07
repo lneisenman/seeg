@@ -103,7 +103,7 @@ def test_brainstorm_seizure1():
         seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = seeg.create_bipolar(seizure)
         seizure['baseline']['power'], seizure['seizure']['power'] = seeg.calc_power(seizure, freqs)
         seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = seeg.ave_power_over_freq_band(seizure, freqs)
-        seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = seeg.extract_power(seizure)
+        seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = seeg.extract_power(seizure, start=10)
         seizure['baseline']['img'], seizure['seizure']['img'] = seeg.map_seeg_data(seizure, montage)
 
     
@@ -134,7 +134,8 @@ def test_brainstorm_seizure1():
 
 
 def test_create_source_image(seizure, mri, freqs, raw, montage):
-    t_pt_img = seeg.create_source_image(seizure, mri, freqs, raw, montage)
+    t_pt_img = seeg.create_source_image(seizure, mri, freqs, raw, montage,
+                                        seiz_delay=10)
     plot_stat_map(t_pt_img, mri, threshold=2)
     plt.show()
 

@@ -172,50 +172,6 @@ def compress_data(data, old_freq, new_freq):
     return new
 
 
-def calc_z_scores(seizures, freq=1):
-    '''
-    This function is meant to generate the figures shown in the  Brainstorm
-    demo used to select the 120-200 Hz frequency band. It should also
-    be similar to figure 1 in David et al 2011.
-
-    This function will compute a z-score for each value of the seizure power
-    spectrum using the mean and sd of the control power spectrum at each
-    frequency. In the demo, the power spectrum is calculated for the 1st
-    10 seconds of all three seizures and then averaged. Controls are
-    similarly averaged
-    '''
-
-    z_scores = dict()
-    for index, electrode in enumerate(seizures[0]['seizure']['bipolar'].ch_names):
-        baseline = np.zeros_like(seizures[0]['baseline']['power'][0, index, :, :])
-        z_score = np.zeros_like(seizures[0]['seizure']['power'][0, index, :, :])
-        for seizure in seizures:
-            baseline += seizure['baseline']['power'][0, index, :, :]
-            z_score += seizure['seizure']['power'][0, index, :, :]
-
-        num = len(seizures)
-        baseline /= num
-        z_score /= num
-        baseline = compress_data(baseline, 512, 1)
-        z_score = compress_data(z_score, 512, 1)
-        mean = np.mean(baseline, 1)
-        sd = np.std(baseline, 1)
-        for i in range(z_score.shape[1]):
-            z_score[:, i] -= mean
-            z_score[:, i] /= sd
-
-        z_scores[electrode] = z_score
-
-    return z_scores
-
-
-def show_z_score(times, z_score, freqs):
-    plt.figure()
-    plt.pcolormesh(times, freqs, z_score, vmin=-10, vmax=10, cmap='gin')
-    plt.xlim(0, 20)
-    plt.colorbar()
-
-
 def ave_power_over_freq_band(seizure, freqs, low=120, high=200):
     ''' returns the average power between low and high '''
     baseline_power = seizure['baseline']['power']
@@ -242,7 +198,7 @@ def plot_ave_power(seizure, channel='g7-g8'):
              s_times, seizure['seizure']['ave_power'][index, :])
 
 
-def extract_power(seizure, D=3, dt=0.2, start=10):
+def extract_power(seizure, D=3, dt=0.2, start=0):
     assert int(D/dt)*dt == D
     sfreq = seizure['seizure']['bipolar'].info['sfreq']
     num_steps = int(D/dt)
@@ -292,25 +248,25 @@ def map_seeg_data(seizure, montage):
     electrodes = seizure['electrodes']
     eeg = seizure['baseline']['eeg']
     bads = eeg.info['bads']
-    coord_list = list()
+    coord_list = dict()
+    contact_num = -1
     for electrode in electrodes:
         contacts = [i for i in eeg.ch_names if i.startswith(electrode)]
-        last = contacts[-1]
-        num_contacts = int(last[len(electrode):])
-        for i in range(num_contacts):
+        num_contacts = find_num_contacts(contacts, electrode)
+        for i in range(1, num_contacts):
+            contact_num += 1
             anode = electrode + str(i)
             cathode = electrode + str(i+1)
             if (anode in contacts) and (cathode in contacts):
                 if not ((anode in bads) or (cathode in bads)):
                     loc1 = montage.dig_ch_pos[anode]*1000
                     loc2 = montage.dig_ch_pos[cathode]*1000
-                    coord_list.append((loc1 + loc2)/2)
+                    coord_list[contact_num] = (loc1 + loc2)/2
             
     base_ex = seizure['baseline']['ex_power']
     seiz_ex = seizure['seizure']['ex_power']
-    for i in range(seizure['seizure']['ex_power'].shape[0]):
+    for i in coord_list.keys():
         x, y, z = voxel_coords(coord_list[i], inverse)
-        # print(x, y, z)
         base_data[x, y, z, :] = base_ex[i, :]
         seiz_data[x, y, z, :] = seiz_ex[i, :]
 
@@ -319,13 +275,14 @@ def map_seeg_data(seizure, montage):
     return base_img, seiz_img
 
 
-def create_source_image(seizure, mri, freqs, raw_eeg, montage):
+def create_source_image(seizure, mri, freqs, raw_eeg, montage, low_freq=120,
+                        high_freq=200, seiz_delay=0):
     ''' create and display the SEEG source image as per David et. al. 2011'''
     seizure['baseline']['eeg'], seizure['seizure']['eeg'] = clip_eeg(seizure, raw_eeg)
     seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = create_bipolar(seizure)
     seizure['baseline']['power'], seizure['seizure']['power'] = calc_power(seizure, freqs)
-    seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = ave_power_over_freq_band(seizure, freqs)
-    seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = extract_power(seizure)
+    seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
+    seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = extract_power(seizure, start=seiz_delay)
     seizure['baseline']['img'], seizure['seizure']['img'] = map_seeg_data(seizure, montage)
     base_img = seizure['baseline']['img']
     seiz_img = seizure['seizure']['img']
