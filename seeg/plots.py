@@ -19,7 +19,7 @@ from scipy import stats as sps
 from . import gin
 
 
-def plot_eeg(eeg, depth):
+def plot_eeg(eeg, depth, label_color='black'):
     channels = [channel for channel in eeg.ch_names if depth in channel]
     electrode = eeg.pick_channels(channels)
     data, times = electrode.get_data(return_times=True)
@@ -33,27 +33,27 @@ def plot_eeg(eeg, depth):
         ax[i].spines['left'].set_visible(False)
         ax[i].yaxis.set_major_locator(plt.NullLocator())
         ax[i].tick_params(bottom=False, left=False)
-        ax[i].set_ylabel(channels[i], labelpad=10, rotation=0)
+        ax[i].set_ylabel(channels[i], labelpad=10, rotation=0, color=label_color)
 
     ax[-1].spines['bottom'].set_visible(True)
-    ax[-1].tick_params(bottom=True)
-    ax[-1].set_xlabel('time (s)')
+    ax[-1].tick_params(bottom=True, colors=label_color)
+    ax[-1].set_xlabel('time (s)', color=label_color)
     return fig
 
 
-def plot_power(power, ch_names, depth):
+def plot_power(power, ch_names, depth, label_color='black'):
     rows = [i for i in range(len(ch_names)) if depth in ch_names[i]]
     labels = [ch_names[row] for row in rows]
     fig, ax = plt.subplots(len(rows), 1, sharex=True)
     for i, row in enumerate(rows):
         ax[i].imshow(power[0, row, :, :]) #, cmap='gin')
-        ax[i].set_ylabel(labels[i], labelpad=25, rotation=0)
+        ax[i].set_ylabel(labels[i], labelpad=25, rotation=0, color=label_color)
         ax[i].yaxis.set_major_locator(plt.NullLocator())
         ax[i].tick_params(bottom=False, left=False)
 
     ax[-1].spines['bottom'].set_visible(True)
-    ax[-1].tick_params(bottom=True)
-    ax[-1].set_xlabel('time (s)')
+    ax[-1].tick_params(bottom=True, colors=label_color)
+    ax[-1].set_xlabel('time (s)', color=label_color)
     return fig
 
 
@@ -95,19 +95,19 @@ def calc_z_scores(baseline, seizure):
     return z_scores
 
 
-def plot_z_scores(times, freqs, z_scores, ch_names, depth):
+def plot_z_scores(times, freqs, z_scores, ch_names, depth, label_color='black'):
     rows = [i for i in range(len(ch_names)) if depth in ch_names[i]]
     labels = [ch_names[row] for row in rows]
     fig, ax = plt.subplots(len(rows), 1, sharex=True)
     for i, row in enumerate(rows):
         im = ax[i].pcolormesh(times, freqs, z_scores[0, row, :, :], cmap='hot')
-        ax[i].set_ylabel(labels[i], labelpad=25, rotation=0)
+        ax[i].set_ylabel(labels[i], labelpad=25, rotation=0, color=label_color)
         ax[i].yaxis.set_major_locator(plt.NullLocator())
         ax[i].tick_params(bottom=False, left=False)
 
     ax[-1].spines['bottom'].set_visible(True)
-    ax[-1].tick_params(bottom=True)
-    ax[-1].set_xlabel('time (s)')
-    #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-    fig.colorbar(im, ax=ax)
+    ax[-1].tick_params(bottom=True, colors=label_color)
+    ax[-1].set_xlabel('time (s)', color=label_color)
+    cb = fig.colorbar(im, ax=ax)
+    cb.ax.tick_params(axis='y', colors=label_color)
     return fig
