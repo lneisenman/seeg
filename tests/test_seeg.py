@@ -25,10 +25,12 @@ def seizure():
     names = [r"l'", r"g'"]
     directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
 
-    seizure = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
-               'electrodes': names,
-               'baseline': {'start': 72.800, 'end': 77.800},
-               'seizure': {'start': 110.8, 'end': 160.8}}
+    seizure = {'electrodes': names,
+               'baseline': {'start': 72.800, 'end': 77.800,
+                            'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"]},
+               'seizure': {'start': 110.8, 'end': 160.8,
+                            'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"]}
+              }
 
     return seizure
     
@@ -56,7 +58,7 @@ def montage():
 
 @pytest.fixture
 def raw(montage, seizure):
-    return seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
+    return seeg.read_micromed_eeg(montage.dig_ch_pos, seizure['baseline'])
 
 
 @pytest.fixture
@@ -68,18 +70,27 @@ def test_brainstorm_seizure1():
     names = [r"l'", r"g'"]
     directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
 
-    seizure1 = {'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"],
+    seizure1 = {'bads': ["v'1", "f'1"],
                 'electrodes': names,
-                'baseline': {'start': 72.800, 'end': 77.800},
-                'seizure': {'start': 110.8, 'end': 160.8}}
-    seizure2 = {'eeg_file_name': directory+'\\sz2.trc', 'bads': ["v'1", "t'8"],
+                'baseline': {'start': 72.800, 'end': 77.800,
+                             'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"]},
+                'seizure': {'start': 110.8, 'end': 160.8,
+                            'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"]}
+               }
+    seizure2 = {'bads': ["v'1", "t'8"],
                 'electrodes': names,
-                'baseline': {'start': 103.510, 'end': 108.510},
-                'seizure': {'start': 133.510, 'end': 183.510}}
-    seizure3 = {'eeg_file_name': directory+'\\sz3.trc', 'bads': ["o'1", "t'8"],
+                'baseline': {'start': 103.510, 'end': 108.510,
+                             'eeg_file_name': directory+'\\sz2.trc'},
+                'seizure': {'start': 133.510, 'end': 183.510,
+                            'eeg_file_name': directory+'\\sz2.trc'}
+               }
+    seizure3 = {'bads': ["o'1", "t'8"],
                 'electrodes': names,
-                'baseline': {'start': 45.287, 'end': 50.287},
-                'seizure': {'start': 110.287, 'end': 160.287}}
+                'baseline': {'start': 45.287, 'end': 50.287,
+                             'eeg_file_name': directory+'\\sz3.trc'},
+                'seizure': {'start': 110.287, 'end': 160.287,
+                            'eeg_file_name': directory+'\\sz3.trc'}
+               }
     seizures = [seizure1, seizure2, seizure3]
     seizures = [seizure1]
     freqs = np.arange(10, 220, 3)
@@ -98,8 +109,10 @@ def test_brainstorm_seizure1():
     montage, __ = seeg.create_montage(electrodes)
     
     for seizure in seizures:
-        raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
-        seizure['baseline']['eeg'], seizure['seizure']['eeg'] = seeg.clip_eeg(seizure, raw)
+        raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure['baseline'])
+        seizure['baseline']['raw'] = raw
+        seizure['seizure']['raw'] = raw
+        seizure['baseline']['eeg'], seizure['seizure']['eeg'] = seeg.clip_eeg(seizure)
         seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = seeg.create_bipolar(seizure)
         seizure['baseline']['power'], seizure['seizure']['power'] = seeg.calc_power(seizure, freqs)
         seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = seeg.ave_power_over_freq_band(seizure, freqs)
@@ -133,8 +146,11 @@ def test_brainstorm_seizure1():
     plt.show()
 
 
-def test_create_source_image(seizure, mri, freqs, raw, montage):
-    t_pt_img = seeg.create_source_image(seizure, mri, freqs, raw, montage,
+def test_create_source_image(seizure, mri, freqs, montage):
+    raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
+    seizure['baseline']['raw'] = raw
+    seizure['seizure']['raw'] = raw
+    t_pt_img = seeg.create_source_image(seizure, mri, freqs, montage,
                                         seiz_delay=10)
     plot_stat_map(t_pt_img, mri, threshold=2)
     plt.show()

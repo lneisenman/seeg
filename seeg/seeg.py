@@ -77,12 +77,12 @@ def read_micromed_eeg(dig_ch_pos, seizure, show=False):
     return raw
 
 
-def clip_eeg(seizure, raw, show=False):
+def clip_eeg(seizure, show=False):
     start, end = seizure['baseline']['start'], seizure['baseline']['end']
-    baseline = raw.copy().crop(start, end)
+    baseline = seizure['baseline']['raw'].copy().crop(start, end)
 
     start, end = seizure['seizure']['start'], seizure['seizure']['end']
-    seizure = raw.copy().crop(start, end)
+    seizure = seizure['seizure']['raw'].copy().crop(start, end)
     if show:
         seizure.plot()
 
@@ -275,10 +275,10 @@ def map_seeg_data(seizure, montage):
     return base_img, seiz_img
 
 
-def create_source_image(seizure, mri, freqs, raw_eeg, montage, low_freq=120,
+def create_source_image(seizure, mri, freqs, montage, low_freq=120,
                         high_freq=200, seiz_delay=0):
     ''' create and display the SEEG source image as per David et. al. 2011'''
-    seizure['baseline']['eeg'], seizure['seizure']['eeg'] = clip_eeg(seizure, raw_eeg)
+    seizure['baseline']['eeg'], seizure['seizure']['eeg'] = clip_eeg(seizure)
     seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = create_bipolar(seizure)
     seizure['baseline']['power'], seizure['seizure']['power'] = calc_power(seizure, freqs)
     seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
