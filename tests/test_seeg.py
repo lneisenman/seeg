@@ -147,7 +147,7 @@ def test_brainstorm_seizure1():
 
 
 def test_create_source_image(seizure, mri, freqs, montage):
-    raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
+    raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure['baseline'])
     seizure['baseline']['raw'] = raw
     seizure['seizure']['raw'] = raw
     t_pt_img = seeg.create_source_image(seizure, mri, freqs, montage,
