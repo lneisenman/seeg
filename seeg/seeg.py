@@ -55,8 +55,13 @@ def match_ch_type(name):
     return out
 
 
-def read_micromed_eeg(dig_ch_pos, seizure, show=False):
-    reader = neo.rawio.MicromedRawIO(filename=seizure['eeg_file_name'])
+def read_micromed_eeg(dig_ch_pos, seizure, baseline=True, show=False):
+    if baseline:
+        reader = neo.rawio.MicromedRawIO(filename=seizure['baseline']['eeg_file_name'])
+    else:
+        reader = neo.rawio.MicromedRawIO(filename=seizure['seizure']['eeg_file_name'])
+        
+
     reader.parse_header()
     ch_names = list(reader.header['signal_channels']['name'])
     dig_ch_pos = {k: v for k, v in dig_ch_pos.items() if k in ch_names}
@@ -249,12 +254,11 @@ def map_seeg_data(seizure, montage):
     eeg = seizure['baseline']['eeg']
     bads = eeg.info['bads']
     coord_list = dict()
-    contact_num = -1
+    contact_num = 0
     for electrode in electrodes:
         contacts = [i for i in eeg.ch_names if i.startswith(electrode)]
         num_contacts = find_num_contacts(contacts, electrode)
         for i in range(1, num_contacts):
-            contact_num += 1
             anode = electrode + str(i)
             cathode = electrode + str(i+1)
             if (anode in contacts) and (cathode in contacts):
@@ -262,7 +266,8 @@ def map_seeg_data(seizure, montage):
                     loc1 = montage.dig_ch_pos[anode]*1000
                     loc2 = montage.dig_ch_pos[cathode]*1000
                     coord_list[contact_num] = (loc1 + loc2)/2
-            
+                    contact_num += 1
+           
     base_ex = seizure['baseline']['ex_power']
     seiz_ex = seizure['seizure']['ex_power']
     for i in coord_list.keys():
