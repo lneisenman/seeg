@@ -4,6 +4,7 @@ from . import gin
 from .plots import *
 from .seeg import *
 from .source_image import *
+from .utils import *
 
 
 __author__ = """Larry Eisenman"""

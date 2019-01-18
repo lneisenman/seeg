@@ -71,6 +71,28 @@ def read_micromed_eeg(dig_ch_pos, seizure, baseline=True, show=False):
     return raw
 
 
+def read_edf(eeg_file, electrodes):
+    raw = mne.io.read_raw_edf(eeg_file, preload=True)
+    names = list()
+    for contact in electrodes['contact']:
+        name = 'EEG ' + contact + '-Org'
+        if name in raw.ch_names:
+            names.append(name)
+        else:
+            names.append(name+'-0')
+
+    eeg = raw.copy().pick_channels(names)
+
+    mapping = dict()
+    for name in eeg.ch_names:
+        label1 = name.split()[1]
+        label2 = label1.split('-')[0]
+        mapping[name] = label2
+
+    eeg.rename_channels(mapping)
+    return eeg
+
+
 def clip_eeg(seizure, show=False):
     start, end = seizure['baseline']['start'], seizure['baseline']['end']
     baseline = seizure['baseline']['raw'].copy().crop(start, end)
