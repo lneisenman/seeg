@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (print_function, division, absolute_import,
-                        unicode_literals)
-
 from . import gin
-from .seeg import *
 from .plots import *
+from .seeg import *
+from .source_image import *
+
 
 __author__ = """Larry Eisenman"""
 __email__ = 'leisenman@wustl.edu'
