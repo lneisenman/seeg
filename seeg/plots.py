@@ -33,7 +33,8 @@ def plot_eeg(eeg, depth, label_color='black'):
         ax[i].spines['left'].set_visible(False)
         ax[i].yaxis.set_major_locator(plt.NullLocator())
         ax[i].tick_params(bottom=False, left=False)
-        ax[i].set_ylabel(channels[i], labelpad=10, rotation=0, color=label_color)
+        ax[i].set_ylabel(channels[i], labelpad=10, rotation=0,
+                         color=label_color)
 
     ax[-1].spines['bottom'].set_visible(True)
     ax[-1].tick_params(bottom=True, colors=label_color)
