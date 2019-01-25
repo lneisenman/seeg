@@ -71,7 +71,7 @@ def read_micromed_eeg(dig_ch_pos, seizure, baseline=True, show=False):
     return raw
 
 
-def read_edf(eeg_file, electrodes):
+def read_edf(eeg_file, electrodes, bads=None):
     raw = mne.io.read_raw_edf(eeg_file, preload=True)
     names = list()
     for contact in electrodes['contact']:
@@ -90,6 +90,7 @@ def read_edf(eeg_file, electrodes):
         mapping[name] = label2
 
     eeg.rename_channels(mapping)
+    eeg.info['bads'] = bads
     return eeg
 
 

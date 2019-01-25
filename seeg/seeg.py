@@ -60,10 +60,12 @@ class Seeg():
         self.contacts['z'] = locations['z']/1000
 
     def load_eeg(self):
-        self.recording['baseline']['raw'] = read_edf(self.baseline_eeg_file,
-                                                     self.contacts)
-        self.recording['seizure']['raw'] = read_edf(self.seizure_eeg_file,
-                                                    self.contacts)
+        self.recording['baseline']['raw'] = \
+            read_edf(self.baseline_eeg_file, self.contacts,
+                     self.recording['bads'])
+        self.recording['seizure']['raw'] = \
+            read_edf(self.seizure_eeg_file, self.contacts,
+                     self.recording['bads'])
 
     def create_source_image(self, freqs, low_freq, high_freq):
         self.img = create_source_image(self.recording, self.mri_file, freqs,
