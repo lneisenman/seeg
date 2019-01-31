@@ -103,7 +103,6 @@ def calcualte_EI(raw, freqs, bias=1, threshold=1, tau=1, H=5):
     H_samples = int(H * raw.info['sfreq'])
     for i, ch in enumerate(raw.ch_names):
         N_di = onsets.loc[ch, 'detection']
-        print(N_di, type(N_di))
         if np.isnan(N_di):
             N_di = N0 + 10
 

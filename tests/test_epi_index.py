@@ -9,7 +9,7 @@ import pytest
 import seeg
 
 
-# @pytest.fixture
+@pytest.fixture
 def raw():
     SAMPLES = 2000
     SFREQ = 100
@@ -36,20 +36,6 @@ def raw():
     return raw
 
 
-def test_raw(raw):
-    ER = seeg.calc_ER(raw, np.arange(1, 51))
-    U_n = seeg.cusum(ER)
-    for i in range(ER.shape[0]):
-        plt.plot(ER[i, :])
-
-    plt.figure()
-    for i in range(U_n.shape[0]):
-        plt.plot(U_n[i, :])
-
-    raw.plot(scalings='auto')
-    plt.show()
-
-
 def test_find_onsets(raw):
     ER = seeg.calc_ER(raw, np.arange(1, 51))
     U_n = seeg.cusum(ER)
@@ -59,8 +45,6 @@ def test_find_onsets(raw):
 
 
 def test_calculate_EI(raw):
-    print(seeg.calcualte_EI(raw, np.arange(1, 51)))
-
-
-if __name__ == '__main__':
-    test_calculate_EI(raw())
+    onsets = seeg.calcualte_EI(raw, np.arange(1, 51))
+    np.testing.assert_allclose(onsets['EI'], [0.249182, 1., 0.490808],
+                               rtol=1e-3)

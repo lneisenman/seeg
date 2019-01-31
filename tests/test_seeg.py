@@ -20,21 +20,27 @@ import pytest
 
 import seeg
 
+
+HOME = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
+# HOME = r'C:\Users\leisenman\Documents\brainstorm_db'
+
+
 @pytest.fixture
 def seizure():
     names = [r"l'", r"g'"]
-    directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
+    directory = HOME + r'\tutorial_epimap\seeg'
 
     seizure = {'bads': ["v'1", "f'1"],
                'electrodes': names,
                'baseline': {'start': 72.800, 'end': 77.800,
                             'eeg_file_name': directory+'\\sz1.trc'},
                'seizure': {'start': 110.8, 'end': 160.8,
-                            'eeg_file_name': directory+'\\sz1.trc'}
-              }
+                           'eeg_file_name': directory+'\\sz1.trc'}
+               }
 
     return seizure
-    
+
+
 @pytest.fixture
 def freqs():
     return np.arange(10, 220, 3)
@@ -42,17 +48,15 @@ def freqs():
 
 @pytest.fixture
 def montage():
-    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
-    # home = r'C:\Users\leisenman\Documents\brainstorm_db'
     electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
-    file_name = home + electrode_file
+    file_name = HOME + electrode_file
     electrodes = pd.read_table(file_name, header=None,
                                names=['contact', 'x', 'y', 'z'])
     # skip ecg locations
     electrodes = electrodes[0:-2].copy()
-    electrodes['x'] /=1000
-    electrodes['y'] /=1000
-    electrodes['z'] /=1000
+    electrodes['x'] /= 1000
+    electrodes['y'] /= 1000
+    electrodes['z'] /= 1000
     mont, __ = seeg.create_montage(electrodes)
     return mont
 
@@ -64,72 +68,67 @@ def raw(montage, seizure):
 
 @pytest.fixture
 def mri():
-    return r'C:\Users\eisenmanl\Documents\brainstorm_data_files\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
+    return HOME + r'\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
 
 
-def test_brainstorm_seizure1():
+def test_brainstorm_seizure1(montage, mri):
     names = [r"l'", r"g'"]
-    directory = 'C:\\Users\\eisenmanl\\Documents\\brainstorm_data_files\\tutorial_epimap\\seeg'
+    directory = HOME + r'\tutorial_epimap\seeg'
 
     seizure1 = {'bads': ["v'1", "f'1"],
                 'electrodes': names,
                 'baseline': {'start': 72.800, 'end': 77.800,
-                             'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"]},
+                             'eeg_file_name': directory+'\\sz1.trc',
+                             'bads': ["v'1", "f'1"]},
                 'seizure': {'start': 110.8, 'end': 160.8,
-                            'eeg_file_name': directory+'\\sz1.trc', 'bads': ["v'1", "f'1"]}
-               }
+                            'eeg_file_name': directory+'\\sz1.trc',
+                            'bads': ["v'1", "f'1"]}
+                }
     seizure2 = {'bads': ["v'1", "t'8"],
                 'electrodes': names,
                 'baseline': {'start': 103.510, 'end': 108.510,
                              'eeg_file_name': directory+'\\sz2.trc'},
                 'seizure': {'start': 133.510, 'end': 183.510,
                             'eeg_file_name': directory+'\\sz2.trc'}
-               }
+                }
     seizure3 = {'bads': ["o'1", "t'8"],
                 'electrodes': names,
                 'baseline': {'start': 45.287, 'end': 50.287,
                              'eeg_file_name': directory+'\\sz3.trc'},
                 'seizure': {'start': 110.287, 'end': 160.287,
                             'eeg_file_name': directory+'\\sz3.trc'}
-               }
+                }
     seizures = [seizure1, seizure2, seizure3]
     seizures = [seizure1]
     freqs = np.arange(10, 220, 3)
 
-    home = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
-    # home = r'C:\Users\leisenman\Documents\brainstorm_db'
-    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
-    file_name = home + electrode_file
-
-    electrodes = pd.read_table(file_name, header=None,
-                               names=['contact', 'x', 'y', 'z'])
-    electrodes = electrodes[0:-2].copy()
-    electrodes['x'] /=1000
-    electrodes['y'] /=1000
-    electrodes['z'] /=1000
-    montage, __ = seeg.create_montage(electrodes)
-    
     for seizure in seizures:
         raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
         seizure['baseline']['raw'] = raw
         seizure['seizure']['raw'] = raw
-        seizure['baseline']['eeg'], seizure['seizure']['eeg'] = seeg.clip_eeg(seizure)
-        seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = seeg.create_bipolar(seizure)
-        seizure['baseline']['power'], seizure['seizure']['power'] = seeg.calc_power(seizure, freqs)
-        seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = seeg.ave_power_over_freq_band(seizure, freqs)
-        seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = seeg.extract_power(seizure, start=10)
-        seizure['baseline']['img'], seizure['seizure']['img'] = seeg.map_seeg_data(seizure, montage)
+        seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
+            seeg.clip_eeg(seizure)
+        seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = \
+            seeg.create_bipolar(seizure)
+        seizure['baseline']['power'] = \
+            seeg.calc_power(seizure['baseline']['bipolar'], freqs)
+        seizure['seizure']['power'] = \
+            seeg.calc_power(seizure['seizure']['bipolar'], freqs)
+        seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
+            seeg.ave_power_over_freq_band(seizure, freqs)
+        seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
+            seeg.extract_power(seizure, start=10)
+        seizure['baseline']['img'], seizure['seizure']['img'] = \
+            seeg.map_seeg_data(seizure, montage)
 
-    
-    mri = r'C:\Users\eisenmanl\Documents\brainstorm_data_files\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
     base_img = seizures[0]['baseline']['img']
     seiz_img = seizures[0]['seizure']['img']
     # base_img = nib.load('baseline.nii.gz')
     # seiz_img = nib.load('seizure.nii.gz')
     # base = base_img.get_data()
     # seiz = seiz_img.get_data()
-    
-    nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)  # cache options
+
+    nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)
     base_masked = nifti_masker.fit_transform(base_img)
     seiz_masked = nifti_masker.fit_transform(seiz_img)
     data = np.concatenate((base_masked, seiz_masked))
@@ -161,6 +160,7 @@ def test_setup_bipolar(raw):
     anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw)
     print(anodes)
     print(cathodes)
-    assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"] # v'1 is bad!
+    assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"]  # v'1 is bad!
     assert cathodes == ["v'3", "v'4", "v'13", "v'14", "v'15"]
-    assert ch_names == ["v'2-v'3", "v'3-v'4", "v'12-v'13", "v'13-v'14", "v'14-v'15"]
+    assert ch_names == ["v'2-v'3", "v'3-v'4", "v'12-v'13", "v'13-v'14",
+                        "v'14-v'15"]
