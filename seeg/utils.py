@@ -153,3 +153,16 @@ def create_bipolar(seizure):
     seizure_bp = seizure_bp.pick_channels(ch_names)
     seizure_bp = seizure_bp.reorder_channels(ch_names)
     return baseline_bp, seizure_bp
+
+
+def calc_power(raw, freqs, n_cycles=7., output='power'):
+    # n_cycles = freqs
+    n_channels = raw.info['nchan']
+    n_times = raw.n_times
+    data = np.zeros((1, n_channels, n_times))
+    data[0, :, :] = raw.get_data()[:, :]
+    sfreq = raw.info['sfreq']
+    return mne.time_frequency.tfr_array_multitaper(data, sfreq=sfreq,
+                                                   freqs=freqs,
+                                                   n_cycles=n_cycles,
+                                                   output=output)

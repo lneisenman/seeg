@@ -21,22 +21,10 @@ from . import utils
 
 
 def calc_power(seizure, freqs):
-    n_cycles = freqs
-    n_channels = seizure['seizure']['bipolar'].info['nchan']
-    n_times = seizure['seizure']['bipolar'].n_times
-    data = np.zeros((1, n_channels, n_times))
-    data[0, :, :] = seizure['seizure']['bipolar'].get_data()[:, :]
-    sfreq = seizure['seizure']['bipolar'].info['sfreq']
-    power_fcn = mne.time_frequency.tfr_array_multitaper
-    seizure_power = power_fcn(data, sfreq=sfreq, freqs=freqs,
-                              n_cycles=n_cycles, output='power')
-
-    n_channels = seizure['baseline']['bipolar'].info['nchan']
-    n_times = seizure['baseline']['bipolar'].n_times
-    data = np.zeros((1, n_channels, n_times))
-    data[0, :, :] = seizure['baseline']['bipolar'].get_data()[:, :]
-    baseline_power = power_fcn(data, sfreq=sfreq, freqs=freqs,
-                               n_cycles=n_cycles, output='power')
+    seizure_power = utils.calc_power(seizure['seizure']['bipolar'], freqs,
+                                     n_cycles=freqs)
+    baseline_power = utils.calc_power(seizure['baseline']['bipolar'], freqs,
+                                      n_cycles=freqs)
     return baseline_power, seizure_power
 
 

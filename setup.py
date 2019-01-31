@@ -19,7 +19,7 @@ test_requirements = [
 
 setup(
     name='seeg',
-    version='0.1.0',
+    version='0.1.0-dev0',
     description="seeg utilities",
     long_description=readme + '\n\n' + history,
     author="Larry Eisenman",
