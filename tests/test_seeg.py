@@ -108,8 +108,12 @@ def test_brainstorm_seizure1(montage, mri):
         seizure['seizure']['raw'] = raw
         seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
             seeg.clip_eeg(seizure)
-        seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = \
-            seeg.create_bipolar(seizure)
+        seizure['baseline']['bipolar'] = \
+            seeg.create_bipolar(seizure['baseline']['eeg'],
+                                seizure['electrodes'])
+        seizure['seizure']['bipolar'] = \
+            seeg.create_bipolar(seizure['seizure']['eeg'],
+                                seizure['electrodes'])
         seizure['baseline']['power'] = \
             seeg.calc_power(seizure['baseline']['bipolar'], freqs)
         seizure['seizure']['power'] = \

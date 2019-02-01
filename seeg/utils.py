@@ -131,28 +131,21 @@ def setup_bipolar(electrode, raw):
     return anodes, cathodes, ch_names
 
 
-def create_bipolar(seizure):
+def create_bipolar(raw, electrodes):
     anodes = list()
     cathodes = list()
     ch_names = list()
-    electrodes = seizure['electrodes']
-    baseline = seizure['baseline']['eeg']
-    seiz = seizure['seizure']['eeg']
     for name in electrodes:
-        temp = setup_bipolar(name, baseline)
+        temp = setup_bipolar(name, raw)
         anodes.extend(temp[0])
         cathodes.extend(temp[1])
         ch_names.extend(temp[2])
 
-    baseline_bp = mne.set_bipolar_reference(baseline, anodes, cathodes,
-                                            ch_names, verbose=False)
-    baseline_bp = baseline_bp.pick_channels(ch_names)
-    baseline_bp = baseline_bp.reorder_channels(ch_names)
-    seizure_bp = mne.set_bipolar_reference(seiz, anodes, cathodes,
-                                           ch_names, verbose=False)
-    seizure_bp = seizure_bp.pick_channels(ch_names)
-    seizure_bp = seizure_bp.reorder_channels(ch_names)
-    return baseline_bp, seizure_bp
+    bipolar = mne.set_bipolar_reference(raw, anodes, cathodes,
+                                        ch_names, verbose=False)
+    bipolar = bipolar.pick_channels(ch_names)
+    bipolar = bipolar.reorder_channels(ch_names)
+    return bipolar
 
 
 def calc_power(raw, freqs, n_cycles=7., output='power'):

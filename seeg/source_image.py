@@ -20,14 +20,6 @@ from . import source_image as srci
 from . import utils
 
 
-def calc_power(seizure, freqs):
-    seizure_power = utils.calc_power(seizure['seizure']['bipolar'], freqs,
-                                     n_cycles=freqs)
-    baseline_power = utils.calc_power(seizure['baseline']['bipolar'], freqs,
-                                      n_cycles=freqs)
-    return baseline_power, seizure_power
-
-
 def compress_data(data, old_freq, new_freq):
     ''' average points to compress
     assumes data is 2-D '''
@@ -153,10 +145,14 @@ def create_source_image(seizure, mri, freqs, montage, low_freq=120,
     ''' create and display the SEEG source image as per David et. al. 2011'''
     seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
         utils.clip_eeg(seizure)
-    seizure['baseline']['bipolar'], seizure['seizure']['bipolar'] = \
-        utils.create_bipolar(seizure)
-    seizure['baseline']['power'], seizure['seizure']['power'] = \
-        calc_power(seizure, freqs)
+    seizure['baseline']['bipolar'] = \
+        utils.create_bipolar(seizure['baseline']['eeg'], seizure['electrodes'])
+    seizure['seizure']['bipolar'] = \
+        utils.create_bipolar(seizure['seizure']['eeg'], seizure['electrodes'])
+    seizure['baseline']['power'] = \
+        utils.calc_power(seizure['baseline']['bipolar'], freqs, n_cycles=freqs)
+    seizure['seizure']['power'] = \
+        utils.calc_power(seizure['seizure']['bipolar'], freqs, n_cycles=freqs)
     seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
         ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
     seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
