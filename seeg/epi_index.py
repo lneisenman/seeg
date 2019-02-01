@@ -103,11 +103,14 @@ def calculate_EI(raw, freqs, bias=1, threshold=1, tau=1, H=5):
     H_samples = int(H * raw.info['sfreq'])
     for i, ch in enumerate(raw.ch_names):
         N_di = onsets.loc[ch, 'detection']
-        if np.isnan(N_di):
-            N_di = N0 + 10
+        if not np.isnan(N_di):
+            N_di = int(N_di)
+            denom = ((N_di - N0)/raw.info['sfreq']) + 1
+        else:
+            N_di = N0 + 2*H_samples
+            denom = ((N_di - N0)/raw.info['sfreq']) + 1
+            N_di = N0
 
-        N_di = int(N_di)
-        denom = ((N_di - N0)/raw.info['sfreq']) + 1
         onsets.loc[ch, 'EI'] = np.sum(ER[i, N_di:(N_di+H_samples)])/denom
 
     EI_max = onsets.EI.max()
