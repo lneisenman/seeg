@@ -45,6 +45,6 @@ def test_find_onsets(raw):
 
 
 def test_calculate_EI(raw):
-    onsets = seeg.calcualte_EI(raw, np.arange(1, 51))
+    onsets = seeg.calculate_EI(raw, np.arange(1, 51))
     np.testing.assert_allclose(onsets['EI'], [0.249182, 1., 0.490808],
                                rtol=1e-3)

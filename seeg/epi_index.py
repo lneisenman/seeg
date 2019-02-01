@@ -94,7 +94,7 @@ def find_onsets(U_n, sfreq, ch_names, threshold=1):
     return onsets
 
 
-def calcualte_EI(raw, freqs, bias=1, threshold=1, tau=1, H=5):
+def calculate_EI(raw, freqs, bias=1, threshold=1, tau=1, H=5):
     ER = calc_ER(raw, freqs)
     U_n = cusum(ER, bias)
     onsets = find_onsets(U_n, raw.info['sfreq'], raw.ch_names, threshold)
