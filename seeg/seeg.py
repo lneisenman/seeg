@@ -19,6 +19,7 @@ import os
 import pandas as pd
 from scipy import stats as sps
 
+from .epi_index import calculate_EI
 from .source_image import create_source_image
 from .utils import create_montage, read_edf
 
@@ -73,3 +74,8 @@ class Seeg():
 
     def show_source_img(self, threshold=2):
         plot_stat_map(self.img, self.mri_file, threshold=threshold)
+
+    def calculate_EI(self, freqs, bias=1, threshold=1, tau=1, H=5):
+        self.EI = calculate_EI(self.recording['seizure']['raw'], freqs,
+                               bias=bias, threshold=threshold,
+                               tau=tau, H=H)
