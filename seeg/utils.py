@@ -71,7 +71,7 @@ def read_micromed_eeg(dig_ch_pos, seizure, baseline=True, show=False):
     return raw
 
 
-def read_edf(eeg_file, electrodes, bads=None):
+def read_edf(eeg_file, electrodes, bads=None, notch=False):
     raw = mne.io.read_raw_edf(eeg_file, preload=True)
     names = list()
     for contact in electrodes['contact']:
@@ -91,6 +91,8 @@ def read_edf(eeg_file, electrodes, bads=None):
 
     eeg.rename_channels(mapping)
     eeg.info['bads'] = bads
+    if notch:
+        eeg.notch_filter(60)
     return eeg
 
 

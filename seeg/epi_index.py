@@ -23,7 +23,7 @@ from . import utils
 
 def calc_ER(raw, freqs):
     '''Calculate the ratio of beta+gamma to alpha+theta'''
-    power = utils.calc_power(raw, freqs)
+    power = utils.calc_power(raw, freqs, freqs)
     numerator = np.sum(power[0, :, 13:, :], axis=1)
     denominator = np.sum(power[0, :, 4:12, :], axis=1)
     return numerator/denominator
