@@ -73,26 +73,21 @@ def read_micromed_eeg(dig_ch_pos, seizure, baseline=True, show=False):
 
 def read_edf(eeg_file, electrodes, bads=None, notch=False):
     raw = mne.io.read_raw_edf(eeg_file, preload=True)
-    names = list()
-    for contact in electrodes['contact']:
-        name = 'EEG ' + contact + '-Org'
-        if name in raw.ch_names:
-            names.append(name)
-        else:
-            names.append(name+'-0')
-
-    eeg = raw.copy().pick_channels(names)
-
     mapping = dict()
-    for name in eeg.ch_names:
-        label1 = name.split()[1]
-        label2 = label1.split('-')[0]
-        mapping[name] = label2
+    LABELS = ['POL {}', 'EEG {}-Ref', 'EEG {}-Ref-0',
+              'EEG {}-Org', 'EEG {}-Org-0']
+    for contact in electrodes['contact']:
+        for label in LABELS:
+            if label.format(contact) in raw.ch_names:
+                mapping[label.format(contact)] = contact
+                break
 
+    eeg = raw.copy().pick_channels(list(mapping.keys()))
     eeg.rename_channels(mapping)
     eeg.info['bads'] = bads
     if notch:
-        eeg.notch_filter(60)
+        eeg.notch_filter(range(60, int(raw.info['sfreq']/2), 60))
+
     return eeg
 
 
