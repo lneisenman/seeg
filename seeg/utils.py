@@ -4,6 +4,29 @@ from mayavi import mlab
 import mne
 import neo
 import numpy as np
+import pandas as pd
+
+
+def read_electrode_file(file_name):
+    if file_name[-4:] == 'fcsv':
+        skiprows = 2
+        sep = None
+        names = None
+        header = 'infer'
+    else:
+        skiprows = None
+        sep = '\t'
+        header = None
+        names = ['label', 'x', 'y', 'z']
+
+    contacts = pd.read_csv(file_name, skiprows=skiprows, sep=sep,
+                           header=header, names=names)
+    electrodes = pd.DataFrame(columns=['contact', 'x', 'y', 'z'])
+    electrodes['contact'] = contacts['label']
+    electrodes['x'] = contacts['x']/1000
+    electrodes['y'] = contacts['y']/1000
+    electrodes['z'] = contacts['z']/1000
+    return electrodes
 
 
 def create_montage(electrodes, sfreq=1000, show=False):
@@ -44,31 +67,25 @@ def match_ch_type(name):
     return out
 
 
-def read_micromed_eeg(dig_ch_pos, seizure, baseline=True, show=False):
-    if baseline:
-        file_name = seizure['baseline']['eeg_file_name']
-    else:
-        file_name = seizure['seizure']['eeg_file_name']
-
+def read_micromed_eeg(file_name, electrodes, bads):
     reader = neo.rawio.MicromedRawIO(filename=file_name)
     reader.parse_header()
     ch_names = list(reader.header['signal_channels']['name'])
-    dig_ch_pos = {k: v for k, v in dig_ch_pos.items() if k in ch_names}
-    montage = mne.channels.DigMontage(dig_ch_pos=dig_ch_pos)
-    ch_types = [match_ch_type(ch) for ch in ch_names]
+    # ch_types = [match_ch_type(ch) for ch in ch_names]
     data = np.array(reader.get_analogsignal_chunk())
     data = reader.rescale_signal_raw_to_float(data).T
-    data *= 1e-6  # putdata from microvolts to volts
-
+    data *= 1e-6  # convert from microvolts to volts
     sfreq = reader.get_signal_sampling_rate()
-    # print('read_eeg', sfreq)
-    info = mne.create_info(ch_names, sfreq, ch_types=ch_types, montage=montage)
-    raw = mne.io.RawArray(data, info)
-    raw.info['bads'] = seizure['bads']
-    if show:
-        raw.plot()
+    labels = ['contact', 'x', 'y', 'z']
+    temp_df = electrodes[electrodes.contact.isin(ch_names)]
+    contacts = pd.DataFrame()
+    for label in labels:
+        contacts.loc[:, label] = temp_df[label].values
 
-    return raw
+    montage, info = create_montage(contacts, sfreq=sfreq)
+    raw = mne.io.RawArray(data, info)
+    raw.info['bads'] = bads
+    return raw, montage
 
 
 def read_edf(eeg_file, electrodes, bads=None, notch=False):
