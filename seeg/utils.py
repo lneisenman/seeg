@@ -77,10 +77,15 @@ def read_micromed_eeg(file_name, electrodes, bads):
     data *= 1e-6  # convert from microvolts to volts
     sfreq = reader.get_signal_sampling_rate()
     labels = ['contact', 'x', 'y', 'z']
-    temp_df = electrodes[electrodes.contact.isin(ch_names)]
-    contacts = pd.DataFrame()
-    for label in labels:
-        contacts.loc[:, label] = temp_df[label].values
+    contacts = pd.DataFrame(columns=labels)
+    contacts.loc[:, 'contact'] = ch_names
+    for name in ch_names:
+        contacts.loc[contacts['contact'] == name, ['x']] = \
+            electrodes.loc[electrodes['contact'] == name, ['x']].values
+        contacts.loc[contacts.contact == name, 'y'] = \
+            electrodes.loc[electrodes.contact == name, 'y'].values
+        contacts.loc[contacts.contact == name, 'z'] = \
+            electrodes.loc[electrodes.contact == name, 'z'].values
 
     montage, info = create_montage(contacts, sfreq=sfreq)
     raw = mne.io.RawArray(data, info)
@@ -100,6 +105,7 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
                 break
 
     eeg = raw.copy().pick_channels(list(mapping.keys()))
+    eeg.reorder_channels(list(mapping.keys()))
     eeg.rename_channels(mapping)
     eeg.info['bads'] = bads
     if notch:
