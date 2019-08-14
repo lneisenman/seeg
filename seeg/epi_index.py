@@ -21,31 +21,31 @@ from . import source_image as srci
 from . import utils
 
 
-def calc_ER(raw, freqs):
-    '''Calculate the ratio of beta+gamma to alpha+theta'''
+def calc_ER(raw, freqs, low=(4, 12), high=(13, 100)):
+    '''Calculate the ratio of beta+gamma to theta+alpha'''
     power = utils.calc_power(raw, freqs, freqs)
-    numerator = np.sum(power[0, :, 13:, :], axis=1)
-    denominator = np.sum(power[0, :, 4:12, :], axis=1)
+    numerator = np.sum(power[0, :, high[0]:high[1], :], axis=1)
+    denominator = np.sum(power[0, :, low[0]:low[1], :], axis=1)
     return numerator/denominator
 
 
-def cusum(data, bias=1):
+def cusum(data, bias=0.1):
     ER_n = np.cumsum(data, axis=1)/np.arange(1, 1+data.shape[-1])
     U = data - ER_n - bias
     U_n = np.cumsum(U, axis=1)
     return U_n
 
 
-def find_onsets(U_n, sfreq, ch_names, threshold=1):
-    window_len = int(5*sfreq)
-    step = int(window_len/2)
+def find_onsets(U_n, sfreq, ch_names, threshold=1, H=5, step_size=1):
+    window_len = int(H*sfreq)
+    step = int(step_size*sfreq)
     seizure = False
     index = int(0)
     end = U_n.shape[-1]
     onsets = pd.DataFrame(index=ch_names, dtype=np.double,
                           columns=['min', 'detection', 'alarm'])
     while not seizure and (index < end - window_len):
-        limit = index + window_len
+        limit = index + step
         local_min = np.min(U_n[:, index:limit], axis=1)
         min_idx = np.argmin(U_n[:, index:limit], axis=1) + index
         for i, ch in enumerate(ch_names):
@@ -53,39 +53,45 @@ def find_onsets(U_n, sfreq, ch_names, threshold=1):
             idx = np.where(test > 0)
             if (len(idx[0]) > 0):
                 onsets.loc[ch, 'min'] = local_min[i]
-                onsets.loc[ch, 'detection'] = min_idx[i]
-                onsets.loc[ch, 'alarm'] = min_idx[i] + idx[0][0]
+                onsets.loc[ch, 'detection'] = (min_idx[i]/sfreq)
+                onsets.loc[ch, 'alarm'] = (min_idx[i] + idx[0][0])/sfreq
                 seizure = True
 
         index += step
 
     if seizure:
-        detection = onsets.detection.min(skipna=True)
+        detection = int(onsets['detection'].min(skipna=True) * sfreq)
         channel = onsets['detection'].idxmin(skipna=True)
-        index -= step
-        limit = int(detection+step)
+        limit = int(detection + window_len)
+        if limit > end:
+            limit = end
+            warnings.warn('Seizure detected at the end of the data. \
+                           EI calculation may not be correct')
         for i, ch in enumerate(ch_names):
             if (ch != channel):
-                new_min = np.min(U_n[i, min_idx[i]:limit])
+                new_min = np.min(U_n[i, detection:limit])
                 new_idx = \
-                    np.argmin(U_n[i, min_idx[i]:limit]) + min_idx[i]
+                    np.argmin(U_n[i, detection:limit]) + detection
                 test = U_n[i, new_idx:limit] - new_min - threshold
                 idx = np.where(test > 0)
                 if (len(idx[0]) > 0):
                     onsets.loc[ch, 'min'] = new_min
-                    onsets.loc[ch, 'detection'] = new_idx
-                    onsets.loc[ch, 'alarm'] = new_idx + idx[0][0]
+                    onsets.loc[ch, 'detection'] = new_idx/sfreq
+                    onsets.loc[ch, 'alarm'] = (new_idx + idx[0][0])/sfreq
 
-    else:
+    elif (index < window_len):
         local_min = np.min(U_n[:, index:], axis=1)
         min_idx = np.argmin(U_n[:, index:], axis=1) + index
         for i, ch in enumerate(ch_names):
             test = U_n[i, min_idx[i]:] - local_min[i] - threshold
             idx = np.where(test > 0)
             if (len(idx[0]) > 0):
+                if not seizure:
+                    warnings.warn('Seizure detected at the end of the data. \
+                                   EI calculation may not be correct')
                 onsets.loc[ch, 'min'] = local_min[i]
-                onsets.loc[ch, 'detection'] = min_idx[i]
-                onsets.loc[ch, 'alarm'] = min_idx[i] + idx[0][0]
+                onsets.loc[ch, 'detection'] = min_idx[i]/sfreq
+                onsets.loc[ch, 'alarm'] = (min_idx[i] + idx[0][0])/sfreq
                 seizure = True
 
     if not seizure:
@@ -94,25 +100,25 @@ def find_onsets(U_n, sfreq, ch_names, threshold=1):
     return onsets
 
 
-def calculate_EI(raw, freqs, bias=1, threshold=1, tau=1, H=5):
+def calculate_EI(raw, freqs, bias=0.1, threshold=1, tau=1, H=5):
     ER = calc_ER(raw, freqs)
     U_n = cusum(ER, bias)
-    onsets = find_onsets(U_n, raw.info['sfreq'], raw.ch_names, threshold)
+    onsets = find_onsets(U_n, raw.info['sfreq'], raw.ch_names, threshold, H)
     onsets['EI'] = 0
-    N0 = int(onsets.detection.min(skipna=True))
+    N0 = int(onsets['detection'].min(skipna=True))
     H_samples = int(H * raw.info['sfreq'])
+    recording_end = U_n.shape[-1]
     for i, ch in enumerate(raw.ch_names):
         N_di = onsets.loc[ch, 'detection']
         if not np.isnan(N_di):
             N_di = int(N_di)
-            denom = ((N_di - N0)/raw.info['sfreq']) + 1
-        else:
-            N_di = N0 + 2*H_samples
-            denom = ((N_di - N0)/raw.info['sfreq']) + 1
-            N_di = N0
+            denom = ((N_di - N0)/raw.info['sfreq']) + tau
+            end = N_di + H_samples
+            if end > recording_end:
+                onsets.loc[ch, 'EI'] = np.sum(ER[i, N_di:])/denom
+            else:
+                onsets.loc[ch, 'EI'] = np.sum(ER[i, N_di:end])/denom
 
-        onsets.loc[ch, 'EI'] = np.sum(ER[i, N_di:(N_di+H_samples)])/denom
-
-    EI_max = onsets.EI.max()
+    EI_max = onsets['EI'].max()
     onsets.loc[:, 'EI'] = onsets.loc[:, 'EI']/EI_max
     return onsets

@@ -9,24 +9,28 @@ import pytest
 import seeg
 
 
+HIGH_FREQ = 100
+BIAS = 0.25
+
+
 @pytest.fixture
 def raw():
-    SAMPLES = 2000
-    SFREQ = 100
+    SAMPLES = 5000
+    SFREQ = 250
     np.random.seed(10)
     time = np.arange(SAMPLES)/SFREQ
     signal = np.random.rand(SAMPLES) - .5
     for freq in [5, 25]:
         signal += np.sin(freq*2*np.pi*time)
 
-    temp = np.sin(25*2*np.pi*time)
+    temp = 2*np.sin(50*2*np.pi*time)
     data = np.zeros((3, SAMPLES))
     data[0, :] = signal[:] * 1e-5
-    temp[:500] = 0
+    temp[:1250] = 0
     signal += temp
     data[1, :] = signal[:] * 1e-5
     signal -= temp
-    temp[:600] = 0
+    temp[:1500] = 0
     signal += temp
     data[2, :] = signal[:] * 1e-5
 
@@ -37,14 +41,14 @@ def raw():
 
 
 def test_find_onsets(raw):
-    ER = seeg.calc_ER(raw, np.arange(1, 51))
-    U_n = seeg.cusum(ER)
+    ER = seeg.calc_ER(raw, np.arange(1, HIGH_FREQ + 1))
+    U_n = seeg.cusum(ER, BIAS)
     onsets = seeg.find_onsets(U_n, raw.info['sfreq'], raw.ch_names)
-    np.testing.assert_allclose(onsets['detection'], [np.nan, 493, 592])
-    np.testing.assert_allclose(onsets['alarm'], [np.nan, 496, 595])
+    np.testing.assert_allclose(onsets['detection'], [np.nan, 4.552, 5.628])
+    np.testing.assert_allclose(onsets['alarm'], [np.nan, 4.6, 5.668])
 
 
 def test_calculate_EI(raw):
-    onsets = seeg.calculate_EI(raw, np.arange(1, 51))
-    np.testing.assert_allclose(onsets['EI'], [0.025042, 1., 0.490808],
+    onsets = seeg.calculate_EI(raw, np.arange(1, HIGH_FREQ + 1), BIAS)
+    np.testing.assert_allclose(onsets['EI'], [0, 1., 0.9185],
                                rtol=1e-3)
