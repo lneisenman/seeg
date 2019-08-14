@@ -82,10 +82,10 @@ def read_micromed_eeg(file_name, electrodes, bads):
     for name in ch_names:
         contacts.loc[contacts['contact'] == name, ['x']] = \
             electrodes.loc[electrodes['contact'] == name, ['x']].values
-        contacts.loc[contacts.contact == name, 'y'] = \
-            electrodes.loc[electrodes.contact == name, 'y'].values
-        contacts.loc[contacts.contact == name, 'z'] = \
-            electrodes.loc[electrodes.contact == name, 'z'].values
+        contacts.loc[contacts['contact'] == name, ['y']] = \
+            electrodes.loc[electrodes['contact'] == name, ['y']].values
+        contacts.loc[contacts['contact'] == name, ['z']] = \
+            electrodes.loc[electrodes['contact'] == name, ['z']].values
 
     montage, info = create_montage(contacts, sfreq=sfreq)
     raw = mne.io.RawArray(data, info)
