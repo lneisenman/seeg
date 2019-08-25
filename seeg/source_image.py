@@ -82,9 +82,7 @@ def extract_power(seizure, D=3, dt=0.2, start=0):
     return baseline_ex_power, seizure_ex_power
 
 
-def create_volumes(seizure):
-    mri = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
-    mri += r'\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
+def create_volumes(seizure, mri):
     img = nib.load(mri)
     shape = np.round(np.asarray(img.shape)/3).astype(np.int)
     shape = np.append(shape, seizure['baseline']['ex_power'].shape[-1])
@@ -104,8 +102,8 @@ def voxel_coords(mri_coords, inverse):
     return coords.astype(np.int)
 
 
-def map_seeg_data(seizure, montage):
-    base_img, seiz_img = create_volumes(seizure)
+def map_seeg_data(seizure, montage, mri):
+    base_img, seiz_img = create_volumes(seizure, mri)
     base_data = base_img.get_data()
     seiz_data = seiz_img.get_data()
     affine = seiz_img.affine
@@ -158,7 +156,7 @@ def create_source_image(seizure, mri, freqs, montage, low_freq=120,
     seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
         extract_power(seizure, start=seiz_delay)
     seizure['baseline']['img'], seizure['seizure']['img'] = \
-        map_seeg_data(seizure, montage)
+        map_seeg_data(seizure, montage, mri)
     base_img = seizure['baseline']['img']
     seiz_img = seizure['seizure']['img']
 
