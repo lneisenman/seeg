@@ -138,9 +138,9 @@ def map_seeg_data(seizure, montage, mri):
     return base_img, seiz_img
 
 
-def create_source_image(seizure, mri, freqs, montage, low_freq=120,
-                        high_freq=200, seiz_delay=0):
-    ''' create and display the SEEG source image as per David et. al. 2011'''
+def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
+                                 high_freq=200, seiz_delay=0):
+    ''' calculate power data for SEEG source image as per David et. al. 2011'''
     seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
         utils.clip_eeg(seizure)
     seizure['baseline']['bipolar'] = \
@@ -155,6 +155,11 @@ def create_source_image(seizure, mri, freqs, montage, low_freq=120,
         ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
     seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
         extract_power(seizure, start=seiz_delay)
+
+    return seizure
+
+
+def calc_sorce_image_from_power(seizure, montage, mri):
     seizure['baseline']['img'], seizure['seizure']['img'] = \
         map_seeg_data(seizure, montage, mri)
     base_img = seizure['baseline']['img']
@@ -173,3 +178,15 @@ def create_source_image(seizure, mri, freqs, montage, low_freq=120,
         n_jobs=2)  # can be changed to use more CPUs
 
     return nifti_masker.inverse_transform(t_scores)
+
+
+def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
+                            high_freq=200, seiz_delay=0):
+    ''' create the SEEG source image t-map as per David et. al. 2011'''
+    seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
+                                           high_freq, seiz_delay)
+    return calc_sorce_image_from_power(seizure, montage, mri)
+
+
+def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
+    plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)

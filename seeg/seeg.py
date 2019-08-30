@@ -20,23 +20,23 @@ import pandas as pd
 from scipy import stats as sps
 
 from .epi_index import calculate_EI
-from .source_image import create_source_image
+from .source_image import create_source_image_map, plot_source_image_map
 from .utils import create_montage, read_edf
 
 
 class Seeg():
     '''Class to wrap EEG data, electrode locations and functions'''
 
-    def __init__(self, subject, subject_dir, electrode_names=None, bads=None,
+    def __init__(self, subject, subjects_dir, electrode_names=None, bads=None,
                  baseline_times=(0, 5), seizure_times=(0, 5)):
-        self.subject_dir = subject_dir
+        self.subjects_dir = subjects_dir
         self.subject = subject
-        self.subject_path = os.path.join(subject_dir, subject)
+        self.subject_path = os.path.join(subjects_dir, subject)
         self.mri_file = os.path.join(self.subject_path, 'mri/orig.mgz')
         self.baseline_eeg_file = os.path.join(self.subject_path,
                                               'eeg/Interictal.edf')
         self.seizure_eeg_file = os.path.join(self.subject_path,
-                                             'eeg/Seizure_1.edf')
+                                             'eeg/Seizure1.edf')
         self.electrode_file = os.path.join(self.subject_path, 'eeg/recon.fcsv')
         self.electrode_names = electrode_names
         self.recording = dict()
@@ -68,12 +68,13 @@ class Seeg():
             read_edf(self.seizure_eeg_file, self.contacts,
                      self.recording['bads'])
 
-    def create_source_image(self, freqs, low_freq, high_freq):
-        self.img = create_source_image(self.recording, self.mri_file, freqs,
-                                       self.montage, low_freq, high_freq)
+    def create_source_image_map(self, freqs, low_freq, high_freq):
+        self.t_map = create_source_image_map(self.recording, self.mri_file,
+                                             freqs, self.montage, low_freq,
+                                             high_freq)
 
-    def show_source_img(self, threshold=2):
-        plot_stat_map(self.img, self.mri_file, threshold=threshold)
+    def show_source_image_map(self, cut_coords=None, threshold=2):
+        plot_source_image_map(self.t_map, self.mri_file, cut_coords, threshold)
 
     def calculate_EI(self, freqs, bias=1, threshold=1, tau=1, H=5):
         self.EI = calculate_EI(self.recording['seizure']['raw'], freqs,
