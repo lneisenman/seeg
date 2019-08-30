@@ -21,7 +21,7 @@ from . import gin
 
 def plot_eeg(eeg, depth, label_color='black'):
     channels = [channel for channel in eeg.ch_names if depth in channel]
-    electrode = eeg.pick_channels(channels)
+    electrode = eeg.copy().pick_channels(channels)
     data, times = electrode.get_data(return_times=True)
     rows = len(channels)
     fig, ax = plt.subplots(rows, 1, sharex=True)
