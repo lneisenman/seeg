@@ -28,7 +28,7 @@ class Seeg():
     '''Class to wrap EEG data, electrode locations and functions'''
 
     def __init__(self, subject, subjects_dir, electrode_names=None, bads=None,
-                 baseline_times=(0, 5), seizure_times=(0, 5)):
+                 baseline_times=(0, 5), seizure_times=(0, 5), seiz_delay=0):
         self.subjects_dir = subjects_dir
         self.subject = subject
         self.subject_path = os.path.join(subjects_dir, subject)
@@ -39,6 +39,7 @@ class Seeg():
                                              'eeg/Seizure1.edf')
         self.electrode_file = os.path.join(self.subject_path, 'eeg/recon.fcsv')
         self.electrode_names = electrode_names
+        self.seiz_delay = seiz_delay
         self.recording = dict()
         self.recording['electrodes'] = electrode_names
         self.recording['bads'] = bads
@@ -71,7 +72,7 @@ class Seeg():
     def create_source_image_map(self, freqs, low_freq, high_freq):
         self.t_map = create_source_image_map(self.recording, self.mri_file,
                                              freqs, self.montage, low_freq,
-                                             high_freq)
+                                             high_freq, self.seiz_delay)
 
     def show_source_image_map(self, cut_coords=None, threshold=2):
         plot_source_image_map(self.t_map, self.mri_file, cut_coords, threshold)
