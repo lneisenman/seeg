@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from . import gin
 from .epi_index import *
 from .plots import *
 from .seeg import *
-from .source_image import *
 from .utils import *
 
 

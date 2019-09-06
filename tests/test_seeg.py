@@ -7,9 +7,6 @@ test_seeg
 Tests for `seeg` module.
 """
 
-from __future__ import (print_function, division, absolute_import,
-                        unicode_literals)
-
 import matplotlib.pyplot as plt
 from nilearn.input_data import NiftiMasker
 from nilearn.mass_univariate import permuted_ols
@@ -21,142 +18,18 @@ import pytest
 import seeg
 
 
-HOME = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
+# HOME = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
 # HOME = r'C:\Users\leisenman\Documents\brainstorm_db'
 
 
-@pytest.fixture
-def seizure():
-    names = [r"l'", r"g'"]
-    directory = HOME + r'\tutorial_epimap\seeg'
-
-    seizure = {'bads': ["v'1", "f'1"],
-               'electrodes': names,
-               'baseline': {'start': 72.800, 'end': 77.800,
-                            'eeg_file_name': directory+'\\sz1.trc'},
-               'seizure': {'start': 110.8, 'end': 160.8,
-                           'eeg_file_name': directory+'\\sz1.trc'}
-               }
-
-    return seizure
-
-
-@pytest.fixture
-def freqs():
-    return np.arange(10, 220, 3)
-
-
-@pytest.fixture
-def montage():
-    electrode_file = r'\tutorial_epimap\anat\implantation\elec_pos_patient.txt'
-    file_name = HOME + electrode_file
-    electrodes = pd.read_table(file_name, header=None,
-                               names=['contact', 'x', 'y', 'z'])
-    # skip ecg locations
-    electrodes = electrodes[0:-2].copy()
-    electrodes['x'] /= 1000
-    electrodes['y'] /= 1000
-    electrodes['z'] /= 1000
-    mont, __ = seeg.create_montage(electrodes)
-    return mont
-
-
-@pytest.fixture
-def raw(montage, seizure):
-    return seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
-
-
-@pytest.fixture
-def mri():
-    return HOME + r'\tutorial_epimap\anat\MRI\3DT1pre_deface.nii'
-
-
-def test_brainstorm_seizure1(montage, mri):
-    names = [r"l'", r"g'"]
-    directory = HOME + r'\tutorial_epimap\seeg'
-
-    seizure1 = {'bads': ["v'1", "f'1"],
-                'electrodes': names,
-                'baseline': {'start': 72.800, 'end': 77.800,
-                             'eeg_file_name': directory+'\\sz1.trc',
-                             'bads': ["v'1", "f'1"]},
-                'seizure': {'start': 110.8, 'end': 160.8,
-                            'eeg_file_name': directory+'\\sz1.trc',
-                            'bads': ["v'1", "f'1"]}
-                }
-    seizure2 = {'bads': ["v'1", "t'8"],
-                'electrodes': names,
-                'baseline': {'start': 103.510, 'end': 108.510,
-                             'eeg_file_name': directory+'\\sz2.trc'},
-                'seizure': {'start': 133.510, 'end': 183.510,
-                            'eeg_file_name': directory+'\\sz2.trc'}
-                }
-    seizure3 = {'bads': ["o'1", "t'8"],
-                'electrodes': names,
-                'baseline': {'start': 45.287, 'end': 50.287,
-                             'eeg_file_name': directory+'\\sz3.trc'},
-                'seizure': {'start': 110.287, 'end': 160.287,
-                            'eeg_file_name': directory+'\\sz3.trc'}
-                }
-    seizures = [seizure1, seizure2, seizure3]
-    seizures = [seizure1]
-    freqs = np.arange(10, 220, 3)
-
-    for seizure in seizures:
-        raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
-        seizure['baseline']['raw'] = raw
-        seizure['seizure']['raw'] = raw
-        seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
-            seeg.clip_eeg(seizure)
-        seizure['baseline']['bipolar'] = \
-            seeg.create_bipolar(seizure['baseline']['eeg'],
-                                seizure['electrodes'])
-        seizure['seizure']['bipolar'] = \
-            seeg.create_bipolar(seizure['seizure']['eeg'],
-                                seizure['electrodes'])
-        seizure['baseline']['power'] = \
-            seeg.calc_power(seizure['baseline']['bipolar'], freqs)
-        seizure['seizure']['power'] = \
-            seeg.calc_power(seizure['seizure']['bipolar'], freqs)
-        seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
-            seeg.ave_power_over_freq_band(seizure, freqs)
-        seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
-            seeg.extract_power(seizure, start=10)
-        seizure['baseline']['img'], seizure['seizure']['img'] = \
-            seeg.map_seeg_data(seizure, montage)
-
-    base_img = seizures[0]['baseline']['img']
-    seiz_img = seizures[0]['seizure']['img']
-    # base_img = nib.load('baseline.nii.gz')
-    # seiz_img = nib.load('seizure.nii.gz')
-    # base = base_img.get_data()
-    # seiz = seiz_img.get_data()
-
-    nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)
-    base_masked = nifti_masker.fit_transform(base_img)
-    seiz_masked = nifti_masker.fit_transform(seiz_img)
-    data = np.concatenate((base_masked, seiz_masked))
-    labels = np.zeros(30, dtype=np.int)
-    labels[15:] = 1
-    neg_log_pvals, t_scores, _ = permuted_ols(
-        labels, data,
-        # + intercept as a covariate by default
-        n_perm=10000, two_sided_test=True,
-        n_jobs=2)  # can be changed to use more CPUs
-    p_pt_img = nifti_masker.inverse_transform(neg_log_pvals)
-    plot_stat_map(p_pt_img, mri, threshold=1.3)
-    t_pt_img = nifti_masker.inverse_transform(t_scores)
-    plot_stat_map(t_pt_img, mri, threshold=2)
-    plt.show()
-
-
-def test_create_source_image(raw, seizure, mri, freqs, montage):
-    # raw = seeg.read_micromed_eeg(montage.dig_ch_pos, seizure)
+def test_create_source_image_map(raw, seizure, mri, freqs, montage):
     seizure['baseline']['raw'] = raw
     seizure['seizure']['raw'] = raw
-    t_pt_img = seeg.create_source_image(seizure, mri, freqs, montage,
-                                        seiz_delay=10)
-    plot_stat_map(t_pt_img, mri, threshold=2)
+    t_map = seeg.create_source_image_map(seizure, mri, freqs, montage,
+                                         low_freq=120, high_freq=200,
+                                         seiz_delay=10)
+    seeg.plot_source_image_map(t_map, mri)
+    seeg.plot_source_image_map(t_map, mri, cut_coords=(-38, -50, -12))
     plt.show()
 
 
