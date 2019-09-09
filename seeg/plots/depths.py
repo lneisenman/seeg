@@ -13,13 +13,17 @@ class Depth():
     '''Class to encapsulate data for individual SEEG electrodes'''
 
     def __init__(self, name, num_contacts, locations, diam=0.8, contact_len=2,
-                 spacing=1.5):
+                 spacing=1.5, active=True):
         self.name = name
         self.num_contacts = num_contacts
         self.locations = locations
         self.diam = diam
         self.contact_len = contact_len
         self.spacing = spacing
+        if isinstance(active, bool):
+            active = [active]*num_contacts
+
+        self.active = active
         self.fit_locations()
 
     def _calc_contacts(self, shift):
@@ -108,27 +112,28 @@ class Depth():
         tubeActor = tvtk.Actor(mapper=tubeMapper, property=p)
         fig.scene.add_actor(tubeActor)
 
-        for contact in self.contacts:
-            contactSource = tvtk.LineSource(point1=contact[0],
-                                            point2=contact[1])
-            contactMapper = tvtk.PolyDataMapper()
-            configure_input_data(contactMapper, contactSource.output)
-            contactSource.update()
-            contact_prop = tvtk.Property(opacity=0)
-            contactActor = tvtk.Actor(mapper=lineMapper, property=contact_prop)
-            fig.scene.add_actor(contactActor)
+        for i, contact in enumerate(self.contacts):
+            if self.active[i]:
+                contactSource = tvtk.LineSource(point1=contact[0],
+                                                point2=contact[1])
+                contactMapper = tvtk.PolyDataMapper()
+                configure_input_data(contactMapper, contactSource.output)
+                contactSource.update()
+                contact_prop = tvtk.Property(opacity=0)
+                contactActor = tvtk.Actor(mapper=lineMapper, property=contact_prop)
+                fig.scene.add_actor(contactActor)
 
-            contactFilter = tvtk.TubeFilter()
-            configure_input_data(contactFilter, contactSource.output)
-            contactFilter.radius = (self.diam/2) + 0.125
-            contactFilter.number_of_sides = 50
-            contactFilter.update()
-            contact_tubeMapper = tvtk.PolyDataMapper()
-            configure_input_data(contact_tubeMapper, contactFilter.output)
-            p_contact = tvtk.Property(opacity=1, color=SILVER)
-            contact_tubeActor = tvtk.Actor(mapper=contact_tubeMapper,
-                                           property=p_contact)
-            fig.scene.add_actor(contact_tubeActor)
+                contactFilter = tvtk.TubeFilter()
+                configure_input_data(contactFilter, contactSource.output)
+                contactFilter.radius = (self.diam/2) + 0.125
+                contactFilter.number_of_sides = 50
+                contactFilter.update()
+                contact_tubeMapper = tvtk.PolyDataMapper()
+                configure_input_data(contact_tubeMapper, contactFilter.output)
+                p_contact = tvtk.Property(opacity=1, color=SILVER)
+                contact_tubeActor = tvtk.Actor(mapper=contact_tubeMapper,
+                                            property=p_contact)
+                fig.scene.add_actor(contact_tubeActor)
 
         return fig
 
@@ -138,15 +143,16 @@ class Depth():
             fig = mlab.figure()
 
         radius = self.contact_len/1.5
-        for location in self.locations:
-            sphereSource = tvtk.SphereSource(center=location, radius=radius)
-            sphereMapper = tvtk.PolyDataMapper()
-            configure_input_data(sphereMapper, sphereSource.output)
-            sphereSource.update()
-            sphere_prop = tvtk.Property(opacity=0.3, color=(1, 1, 0))
-            sphereActor = tvtk.Actor(mapper=sphereMapper,
-                                     property=sphere_prop)
-            fig.scene.add_actor(sphereActor)
+        for i, location in enumerate(self.locations):
+            if self.active[i]:
+                sphereSource = tvtk.SphereSource(center=location, radius=radius)
+                sphereMapper = tvtk.PolyDataMapper()
+                configure_input_data(sphereMapper, sphereSource.output)
+                sphereSource.update()
+                sphere_prop = tvtk.Property(opacity=0.3, color=(1, 1, 0))
+                sphereActor = tvtk.Actor(mapper=sphereMapper,
+                                        property=sphere_prop)
+                fig.scene.add_actor(sphereActor)
 
         return fig
 
@@ -156,14 +162,14 @@ def create_depths(electrode_names, ch_names, electrodes):
     depth_list = list()
     for name in electrode_names:
         contacts = electrodes.loc[electrodes.contact.str.startswith(name), :]
-        # df['include'] = [contact in ch_names for contact in df.contact]
+        active = [contact in ch_names for contact in contacts.contact]
         # contacts = df.loc[df.include.values, :]
         locations = np.zeros((len(contacts), 3))
         locations[:, 0] = contacts.x.values
         locations[:, 1] = contacts.y.values
         locations[:, 2] = contacts.z.values
         locations *= 1000
-        depth = Depth(name, locations.shape[0], locations)
+        depth = Depth(name, locations.shape[0], locations, active=active)
         depth_list.append(depth)
 
     return depth_list
