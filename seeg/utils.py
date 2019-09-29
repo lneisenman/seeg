@@ -42,7 +42,8 @@ def create_montage(electrodes, sfreq=1000, show=False):
                              electrodes['z'][i]])
                   for i in range(len(electrodes))}
 
-    montage = mne.channels.DigMontage(dig_ch_pos=dig_ch_pos)
+    montage = mne.channels.make_dig_montage(ch_pos=dig_ch_pos,
+                                            coord_frame='head')
     names = list(electrodes['contact'].values)
     contact_info = mne.create_info(ch_names=names, sfreq=sfreq,
                                    ch_types='seeg', montage=montage)
