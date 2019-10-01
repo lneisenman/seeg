@@ -115,8 +115,10 @@ def map_seeg_data(seizure, montage, mri):
             cathode = electrode + str(i+1)
             if (anode in contacts) and (cathode in contacts):
                 if not ((anode in bads) or (cathode in bads)):
-                    loc1 = montage.dig_ch_pos[anode]*1000
-                    loc2 = montage.dig_ch_pos[cathode]*1000
+                    anode_idx = montage.ch_names.index(anode)
+                    cathode_idx = montage.ch_names.index(cathode)
+                    loc1 = montage.dig[anode_idx]['r']*1000
+                    loc2 = montage.dig[cathode_idx]['r']*1000
                     coord_list[contact_num] = (loc1 + loc2)/2
                     contact_num += 1
 
