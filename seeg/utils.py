@@ -10,7 +10,7 @@ import pandas as pd
 def read_electrode_file(file_name):
     if file_name[-4:] == 'fcsv':
         skiprows = 2
-        sep = None
+        sep = ','
         names = None
         header = 'infer'
     else:
