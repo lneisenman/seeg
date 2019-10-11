@@ -9,6 +9,22 @@ from tvtk.api import tvtk
 from tvtk.common import configure_input_data
 
 
+SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
+YELLOW = (1, 1, 0)
+ROSA_COLORS = [(255, 0, 0),
+               (0, 112, 192),
+               (0, 176, 80),
+               (112, 48, 160),
+               (229, 145, 42),
+               (0, 276, 140),
+               (146, 208, 80),
+               (214, 69, 209),
+               (255, 238, 162),
+               (241, 193, 240),
+               (181, 110, 22),
+               (179, 214, 253)]
+
+
 class Depth():
     '''Class to encapsulate data for individual SEEG electrodes'''
 
@@ -85,10 +101,18 @@ class Depth():
 
         self.base = G + self.vector*(20 + self.num_contacts*dist)
 
-    def draw(self, fig=None, colors=None):
+    def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0)):
         '''Draw fit of locations as a cylindrical depth'''
-        SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
 
+        if ((len(contact_colors) == len(self.contacts)) and
+             len(contact_colors[0] == 3)):
+
+            c_colors = contact_colors  # list of RGB colors for each contact
+        elif len(contact_colors) == 3:
+            c_colors = [contact_colors]*len(self.contacts)
+        else:
+            raise ValueError('contact_colors needs to be an RGB',
+                             'value or a list of RGBs')
         if fig is None:
             fig = mlab.figure()
 
@@ -108,7 +132,7 @@ class Depth():
         tubeFilter.update()
         tubeMapper = tvtk.PolyDataMapper()
         configure_input_data(tubeMapper, tubeFilter.output)
-        p = tvtk.Property(opacity=0.3, color=(1, 0, 0))
+        p = tvtk.Property(opacity=0.3, color=depth_color)
         tubeActor = tvtk.Actor(mapper=tubeMapper, property=p)
         fig.scene.add_actor(tubeActor)
 
@@ -120,7 +144,8 @@ class Depth():
                 configure_input_data(contactMapper, contactSource.output)
                 contactSource.update()
                 contact_prop = tvtk.Property(opacity=0)
-                contactActor = tvtk.Actor(mapper=lineMapper, property=contact_prop)
+                contactActor = tvtk.Actor(mapper=lineMapper,
+                                          property=contact_prop)
                 fig.scene.add_actor(contactActor)
 
                 contactFilter = tvtk.TubeFilter()
@@ -130,28 +155,37 @@ class Depth():
                 contactFilter.update()
                 contact_tubeMapper = tvtk.PolyDataMapper()
                 configure_input_data(contact_tubeMapper, contactFilter.output)
-                p_contact = tvtk.Property(opacity=1, color=SILVER)
+                p_contact = tvtk.Property(opacity=1, color=c_colors[i])
                 contact_tubeActor = tvtk.Actor(mapper=contact_tubeMapper,
-                                            property=p_contact)
+                                               property=p_contact)
                 fig.scene.add_actor(contact_tubeActor)
 
         return fig
 
-    def show_locations(self, fig=None, colors=None):
+    def show_locations(self, fig=None, colors=YELLOW):
         '''Draw actual locations as spheres'''
         if fig is None:
             fig = mlab.figure()
 
+        if ((len(colors) == len(self.contacts)) and len(colors[0] == 3)):
+            c_colors = colors  # list of RGB colors for each contact
+        elif len(colors) == 3:
+            c_colors = [colors]*len(self.contacts)
+        else:
+            raise ValueError('colors needs to be an RGB',
+                             'value or a list of RGBs')
+
         radius = self.contact_len/1.5
         for i, location in enumerate(self.locations):
             if self.active[i]:
-                sphereSource = tvtk.SphereSource(center=location, radius=radius)
+                sphereSource = tvtk.SphereSource(center=location,
+                                                 radius=radius)
                 sphereMapper = tvtk.PolyDataMapper()
                 configure_input_data(sphereMapper, sphereSource.output)
                 sphereSource.update()
-                sphere_prop = tvtk.Property(opacity=0.3, color=(1, 1, 0))
+                sphere_prop = tvtk.Property(opacity=0.3, color=c_colors[i])
                 sphereActor = tvtk.Actor(mapper=sphereMapper,
-                                        property=sphere_prop)
+                                         property=sphere_prop)
                 fig.scene.add_actor(sphereActor)
 
         return fig
