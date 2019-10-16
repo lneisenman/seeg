@@ -133,13 +133,14 @@ def find_num_contacts(contacts, electrode):
     return np.max(numbers)
 
 
-def setup_bipolar(electrode, raw):
-    contacts = [i for i in raw.ch_names if i.startswith(electrode)]
+def setup_bipolar(electrode, ch_names, bads):
+    print(electrode, ch_names)
+    contacts = [i for i in ch_names if i.startswith(electrode)]
+    print(contacts)
     anodes = list()
     cathodes = list()
     ch_names = list()
     num_contacts = find_num_contacts(contacts, electrode)
-    bads = raw.info['bads']
     for i in range(num_contacts):
         anode = electrode + str(i)
         cathode = electrode + str(i+1)
@@ -157,7 +158,7 @@ def create_bipolar(raw, electrodes):
     cathodes = list()
     ch_names = list()
     for name in electrodes:
-        temp = setup_bipolar(name, raw)
+        temp = setup_bipolar(name, raw.ch_names, raw.info['bads'])
         anodes.extend(temp[0])
         cathodes.extend(temp[1])
         ch_names.extend(temp[2])

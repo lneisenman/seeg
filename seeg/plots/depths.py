@@ -10,7 +10,7 @@ from tvtk.api import tvtk
 from tvtk.common import configure_input_data
 
 from . import gin
-
+from .. import utils
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
 YELLOW = (1, 1, 0)
@@ -103,6 +103,7 @@ class Depth():
                                   (b + i*dist*self.vector)))
 
         self.base = G + self.vector*(20 + self.num_contacts*dist)
+        self.tip = a    # Make sure tip extends to end of distal contact
 
     def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0)):
         '''Draw fit of locations as a cylindrical depth'''
@@ -222,7 +223,7 @@ def plot_depths(depth_list, subject_id, subjects_dir, contact_colors='silver'):
     return fig
 
 
-def show_bipolar_values(depth_list, fig, values, cmap='cold_hot'):
+def show_bipolar_values(depth_list, fig, values, bads=[], cmap='cold_hot'):
     vmin = np.min(values)
     vmax = np.max(values)
     if vmin < 0:
@@ -235,6 +236,28 @@ def show_bipolar_values(depth_list, fig, values, cmap='cold_hot'):
     color_map = mpl.cm.get_cmap(cmap)
     mapped_values = color_map(norm(values))[:, :3]
     for depth in depth_list:
-        print(depth.name)
+        contacts = [depth.name + str(i+1) for i in range(depth.num_contacts)
+                    if depth.active[i]]
+        anodes, cathodes, __ = utils.setup_bipolar(depth.name, contacts,
+                                                   bads)
+        start = len(depth.name)
+        radius = depth.contact_len/1.5
+        val_idx = 0
+        for i, (anode, cathode) in enumerate(zip(anodes, cathodes)):
+            a_idx = int(anode[start:]) - 1
+            c_idx = int(cathode[start:]) - 1
+            an = (depth.contacts[a_idx][0] + depth.contacts[a_idx][1])/2
+            ca = (depth.contacts[c_idx][0] + depth.contacts[c_idx][1])/2
+            midpoint = (an + ca)/2
+            sphereSource = tvtk.SphereSource(center=midpoint, radius=radius)
+            sphereMapper = tvtk.PolyDataMapper()
+            configure_input_data(sphereMapper, sphereSource.output)
+            sphereSource.update()
+            color = (mapped_values[i+val_idx][0], mapped_values[i+val_idx][1],
+                     mapped_values[i+val_idx][2])
+            sphere_prop = tvtk.Property(opacity=0.3, color=color)
+            sphereActor = tvtk.Actor(mapper=sphereMapper, property=sphere_prop)
+            fig.scene.add_actor(sphereActor)
+            val_idx += len(anode)
 
-    return None
+    return fig
