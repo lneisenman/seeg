@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
 
@@ -23,5 +26,5 @@ cdict = {'red':   ((0.0, 1.0, 1.0),
                    (1.0, 1.0, 1.0))
          }
 
-gin = LinearSegmentedColormap('gin', cdict)
-plt.register_cmap(cmap=gin)
+gin = LinearSegmentedColormap('gin', cdict, mpl.cm.LUTSIZE)
+plt.register_cmap(name='gin', cmap=gin)

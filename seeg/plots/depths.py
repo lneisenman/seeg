@@ -2,11 +2,14 @@
 
 import matplotlib as mpl
 from mayavi import mlab
+from nilearn.plotting.cm import cold_hot
 import numpy as np
 from scipy.optimize import minimize
 from surfer import Brain
 from tvtk.api import tvtk
 from tvtk.common import configure_input_data
+
+from . import gin
 
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
@@ -217,3 +220,21 @@ def plot_depths(depth_list, subject_id, subjects_dir, contact_colors='silver'):
         depth.draw(fig=fig)
 
     return fig
+
+
+def show_bipolar_values(depth_list, fig, values, cmap='cold_hot'):
+    vmin = np.min(values)
+    vmax = np.max(values)
+    if vmin < 0:
+        if abs(vmin) > vmax:
+            vmax = abs(vmin)
+        else:
+            vmin = -vmax
+
+    norm = mpl.colors.Normalize(vmin, vmax)
+    color_map = mpl.cm.get_cmap(cmap)
+    mapped_values = color_map(norm(values))[:, :3]
+    for depth in depth_list:
+        print(depth.name)
+
+    return None

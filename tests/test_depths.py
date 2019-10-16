@@ -45,3 +45,13 @@ def test2(electrode_names, electrodes, raw):
                                     electrodes)
     seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     mlab.show()
+
+
+def test_show_bipolar_values(electrode_names, electrodes, raw):
+    depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
+                                    electrodes)
+    fig = None # seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    values = 10*np.random.normal(size=len(raw.info['ch_names']))
+    test_fig = seeg.show_bipolar_values(depth_list, fig, values)
+    assert 1==0
+    # mlab.show()
