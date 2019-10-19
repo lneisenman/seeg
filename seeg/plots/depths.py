@@ -14,18 +14,27 @@ from .. import utils
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
 YELLOW = (1, 1, 0)
-ROSA_COLORS = [(255, 0, 0),
-               (0, 112, 192),
-               (0, 176, 80),
-               (112, 48, 160),
-               (229, 145, 42),
-               (0, 276, 140),
-               (146, 208, 80),
-               (214, 69, 209),
-               (255, 238, 162),
-               (241, 193, 240),
-               (181, 110, 22),
-               (179, 214, 253)]
+ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
+                   (0.0, 0.4392, 0.7529),       # (0, 112, 192),
+                   (0.0, 0.6902, 0.3137),       # (0, 176, 80),
+                   (0.4392, 0.1882, 0.6275),    # (112, 48, 160),
+                   (0.898, 0.5686, 0.1647),     # (229, 145, 42),
+                   (0.0, 0.6902, 0.549),         # (0, 176, 140),
+                   (0.5725, 0.8157, 0.3137),    # (146, 208, 80),
+                   (0.8392, 0.2706, 0.8196),    # (214, 69, 209),
+                   (1.0, 0.9333, 0.6353),       # (255, 238, 162),
+                   (0.9451, 0.7569, 0.9412),    # (241, 193, 240),
+                   (0.7098, 0.4314, 0.08627),   # (181, 110, 22),
+                   (0.702, 0.8392, 0.9922),     # (179, 214, 253)
+                   ]
+
+
+def rosa_colors():
+    i = 0
+    num_colors = len(ROSA_COLOR_LIST)
+    while (True):
+        yield ROSA_COLOR_LIST[i%num_colors]
+        i += 1
 
 
 class Depth():
@@ -213,12 +222,13 @@ def create_depths(electrode_names, ch_names, electrodes):
     return depth_list
 
 
-def plot_depths(depth_list, subject_id, subjects_dir, contact_colors='silver'):
+def plot_depths(depth_list, subject_id, subjects_dir, depth_colors=rosa_colors(),
+                contact_colors='silver'):
     fig = mlab.figure()
     Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
           cortex='ivory', alpha=0.5, figure=fig)
-    for depth in depth_list:
-        depth.draw(fig=fig)
+    for depth, color in zip(depth_list, depth_colors):
+        depth.draw(fig=fig, depth_color=color)
 
     return fig
 
