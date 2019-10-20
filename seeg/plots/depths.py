@@ -223,12 +223,12 @@ def create_depths(electrode_names, ch_names, electrodes):
 
 
 def plot_depths(depth_list, subject_id, subjects_dir, depth_colors=rosa_colors(),
-                contact_colors='silver'):
+                contact_colors=SILVER):
     fig = mlab.figure()
     Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
           cortex='ivory', alpha=0.5, figure=fig)
     for depth, color in zip(depth_list, depth_colors):
-        depth.draw(fig=fig, depth_color=color)
+        depth.draw(fig=fig, contact_colors=contact_colors, depth_color=color)
 
     return fig
 
