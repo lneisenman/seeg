@@ -40,7 +40,7 @@ def test1():
     mlab.show()
 
 
-def test2(electrode_names, electrodes, raw):
+def test_plot_depths(electrode_names, electrodes, raw):
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
     seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
