@@ -41,3 +41,10 @@ def test_setup_bipolar(raw):
     assert cathodes == ["v'3", "v'4", "v'13", "v'14", "v'15"]
     assert ch_names == ["v'2-v'3", "v'3-v'4", "v'12-v'13", "v'13-v'14",
                         "v'14-v'15"]
+
+
+def test_EEG(raw):
+    eeg = seeg.EEG(['A'])
+    eeg['baseline']['raw'] = raw
+    print(eeg['baseline'])
+    print(eeg['bad key'])

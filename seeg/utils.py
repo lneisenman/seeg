@@ -7,6 +7,39 @@ import numpy as np
 import pandas as pd
 
 
+class EEG:
+
+    def __init__(self, electrode_names, bads=None):
+        self.electrodes = electrode_names
+        self.bads = bads
+        self.baseline = dict()
+        self.seizure = dict()
+
+    def __getitem__(self, key):
+        if key is 'baseline':
+            return self.baseline
+        elif key is 'seizure':
+            return self.seizure
+        elif key is 'electrodes':
+            return self.electrodes
+        elif key is 'bads':
+            return self.bads
+        else:
+            raise KeyError('{} is not a valid key'.format(key))
+
+    def set_baseline(self, start, end, raw, file_name=None):
+        self.baseline['start'] = start
+        self.baseline['end'] = end
+        self.baseline['raw'] = raw
+        self.baseline['file_name'] = file_name
+
+    def set_seizure(self, start, end, raw, file_name=None):
+        self.seizure['start'] = start
+        self.seizure['end'] = end
+        self.seizure['raw'] = raw
+        self.seizure['file_name'] = file_name
+
+
 def read_electrode_file(file_name):
     if file_name[-4:] == 'fcsv':
         skiprows = 2
@@ -134,9 +167,7 @@ def find_num_contacts(contacts, electrode):
 
 
 def setup_bipolar(electrode, ch_names, bads):
-    print(electrode, ch_names)
     contacts = [i for i in ch_names if i.startswith(electrode)]
-    print(contacts)
     anodes = list()
     cathodes = list()
     ch_names = list()
