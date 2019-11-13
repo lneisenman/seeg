@@ -22,10 +22,8 @@ import seeg
 # HOME = r'C:\Users\leisenman\Documents\brainstorm_db'
 
 
-def test_create_source_image_map(raw, seizure, mri, freqs, montage):
-    seizure['baseline']['raw'] = raw
-    seizure['seizure']['raw'] = raw
-    t_map = seeg.create_source_image_map(seizure, mri, freqs, montage,
+def test_create_source_image_map(eeg, mri, freqs, montage):
+    t_map = seeg.create_source_image_map(eeg, mri, freqs, montage,
                                          low_freq=120, high_freq=200,
                                          seiz_delay=10)
     seeg.plot_source_image_map(t_map, mri)
@@ -33,8 +31,8 @@ def test_create_source_image_map(raw, seizure, mri, freqs, montage):
     plt.show()
 
 
-def test_setup_bipolar(raw):
-    anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw)
+def test_setup_bipolar(raw, bads):
+    anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw.ch_names, bads)
     print(anodes)
     print(cathodes)
     assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"]  # v'1 is bad!

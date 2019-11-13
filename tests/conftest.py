@@ -28,15 +28,8 @@ def electrode_names():
 
 
 @pytest.fixture
-def seizure():
-    seizure = {'bads': BADS,
-               'electrodes': ELECTRODE_NAMES,
-               'baseline': {'start': 72.800, 'end': 77.800,
-                            'eeg_file_name': EEG_FILE},
-               'seizure': {'start': 110.8, 'end': 160.8,
-                           'eeg_file_name': EEG_FILE}
-               }
-    return seizure
+def bads():
+    return BADS
 
 
 @pytest.fixture
@@ -64,3 +57,11 @@ def raw(electrodes):
 @pytest.fixture
 def mri():
     return os.path.join(BASE_DIR, r'anat\MRI\3DT1pre_deface.nii')
+
+
+@pytest.fixture
+def eeg(raw):
+    eeg = seeg.EEG(ELECTRODE_NAMES, BADS)
+    eeg.set_baseline(72.8, 77.8, raw, EEG_FILE)
+    eeg.set_seizure(110.8, 160.8, raw, EEG_FILE)
+    return eeg
