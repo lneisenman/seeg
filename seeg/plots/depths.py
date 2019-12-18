@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import matplotlib as mpl
 from mayavi import mlab
+from nibabel.freesurfer import io as fio
 from nilearn.plotting.cm import cold_hot
 import numpy as np
 from scipy.optimize import minimize
@@ -33,7 +36,7 @@ def rosa_colors():
     i = 0
     num_colors = len(ROSA_COLOR_LIST)
     while (True):
-        yield ROSA_COLOR_LIST[i%num_colors]
+        yield ROSA_COLOR_LIST[i % num_colors]
         i += 1
 
 
@@ -41,10 +44,10 @@ class Depth():
     '''Class to encapsulate data for individual SEEG electrodes'''
 
     def __init__(self, name, num_contacts, locations, diam=0.8, contact_len=2,
-                 spacing=1.5, active=True):
+                 spacing=1.5, active=True, cras=np.zeros(3)):
         self.name = name
         self.num_contacts = num_contacts
-        self.locations = locations
+        self.locations = locations - cras
         self.diam = diam
         self.contact_len = contact_len
         self.spacing = spacing
@@ -52,6 +55,7 @@ class Depth():
             active = [active]*num_contacts
 
         self.active = active
+        self.cras = cras
         self.fit_locations()
 
     def _calc_contacts(self, shift):
@@ -118,7 +122,7 @@ class Depth():
         '''Draw fit of locations as a cylindrical depth'''
 
         if ((len(contact_colors) == len(self.contacts)) and
-             len(contact_colors[0] == 3)):
+            len(contact_colors[0] == 3)):
 
             c_colors = contact_colors  # list of RGB colors for each contact
         elif len(contact_colors) == 3:
@@ -204,7 +208,7 @@ class Depth():
         return fig
 
 
-def create_depths(electrode_names, ch_names, electrodes):
+def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
     ''' returns a list of Depth's '''
     depth_list = list()
     for name in electrode_names:
@@ -216,14 +220,15 @@ def create_depths(electrode_names, ch_names, electrodes):
         locations[:, 1] = contacts.y.values
         locations[:, 2] = contacts.z.values
         locations *= 1000
-        depth = Depth(name, locations.shape[0], locations, active=active)
+        depth = Depth(name, locations.shape[0], locations, active=active,
+                      cras=cras)
         depth_list.append(depth)
 
     return depth_list
 
 
-def plot_depths(depth_list, subject_id, subjects_dir, depth_colors=rosa_colors(),
-                contact_colors=SILVER):
+def plot_depths(depth_list, subject_id, subjects_dir,
+                depth_colors=rosa_colors(), contact_colors=SILVER):
     fig = mlab.figure()
     Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
           cortex='ivory', alpha=0.5, figure=fig)
@@ -233,7 +238,8 @@ def plot_depths(depth_list, subject_id, subjects_dir, depth_colors=rosa_colors()
     return fig
 
 
-def show_bipolar_values(depth_list, fig, values, bads=[], cmap='cold_hot'):
+def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
+                        cmap='cold_hot'):
     vmin = np.min(values)
     vmax = np.max(values)
     if vmin < 0:
@@ -242,16 +248,24 @@ def show_bipolar_values(depth_list, fig, values, bads=[], cmap='cold_hot'):
         else:
             vmin = -vmax
 
+    vmin *= 1.1
+    vmax *= 1.1
     norm = mpl.colors.Normalize(vmin, vmax)
     color_map = mpl.cm.get_cmap(cmap)
-    mapped_values = color_map(norm(values))[:, :3]
+    mapped_values = color_map(norm(values))
+    print(mapped_values.shape)
+    # mpl.pyplot.scatter(range(len(values)), values, color=mapped_values)
+    # mpl.pyplot.show()
+    print(fig, fig.scene)
     for depth in depth_list:
+        if radius is None:
+            radius = depth.contact_len/1.5
+
         contacts = [depth.name + str(i+1) for i in range(depth.num_contacts)
                     if depth.active[i]]
         anodes, cathodes, __ = utils.setup_bipolar(depth.name, contacts,
                                                    bads)
         start = len(depth.name)
-        radius = depth.contact_len/1.5
         val_idx = 0
         for i, (anode, cathode) in enumerate(zip(anodes, cathodes)):
             a_idx = int(anode[start:]) - 1
@@ -263,11 +277,19 @@ def show_bipolar_values(depth_list, fig, values, bads=[], cmap='cold_hot'):
             sphereMapper = tvtk.PolyDataMapper()
             configure_input_data(sphereMapper, sphereSource.output)
             sphereSource.update()
-            color = (mapped_values[i+val_idx][0], mapped_values[i+val_idx][1],
-                     mapped_values[i+val_idx][2])
+            color = (mapped_values[i+val_idx, 0], mapped_values[i+val_idx, 1],
+                     mapped_values[i+val_idx, 2])
+            print(color)
             sphere_prop = tvtk.Property(opacity=0.3, color=color)
             sphereActor = tvtk.Actor(mapper=sphereMapper, property=sphere_prop)
             fig.scene.add_actor(sphereActor)
             val_idx += len(anode)
 
     return fig
+
+
+def read_cras(SUBJECT_ID, SUBJECTS_DIR):
+    file_name = os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'surf/lh.pial')
+    coords, faces, info = fio.read_geometry(file_name, read_metadata=True)
+    cras = info['cras']
+    return cras

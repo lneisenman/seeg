@@ -54,3 +54,16 @@ def test_show_bipolar_values(electrode_names, electrodes, raw):
     values = 10*np.random.normal(size=len(raw.info['ch_names']))
     seeg.show_bipolar_values(depth_list, fig, values)
     mlab.show()
+
+
+def test_create_depth_source_image_map(eeg, freqs, montage, electrode_names,
+                                       electrodes, raw):
+    t_map = seeg.create_depth_source_image_map(eeg, freqs, montage,
+                                               low_freq=120, high_freq=200,
+                                               seiz_delay=10)
+    print(t_map[0].min(), t_map[0].max())
+    depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
+                                    electrodes)
+    fig = seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    seeg.show_bipolar_values(depth_list, fig, t_map[0], radius=3)
+    mlab.show()

@@ -186,3 +186,26 @@ def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
 
 def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
     plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)
+
+
+def calc_depth_sorce_image_from_power(seizure, montage):
+    base = seizure['baseline']['ex_power'].T
+    seiz = seizure['seizure']['ex_power'].T
+    data = np.concatenate((base, seiz))
+    labels = np.zeros(30, dtype=np.int)
+    labels[15:] = 1
+    __, t_scores, _ = permuted_ols(
+        labels, data,
+        # + intercept as a covariate by default
+        n_perm=10000, two_sided_test=True,
+        n_jobs=2)  # can be changed to use more CPUs
+
+    return t_scores
+
+
+def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
+                                  high_freq=200, seiz_delay=0):
+    seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
+                                           high_freq, seiz_delay)
+    return calc_depth_sorce_image_from_power(seizure, montage)
+  
