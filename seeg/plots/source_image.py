@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import nibabel as nib
 from nibabel.affines import apply_affine
+from nibabel import processing as nbp
 import nilearn
 from nilearn.input_data import NiftiMasker
 from nilearn.mass_univariate import permuted_ols
@@ -78,10 +79,10 @@ def extract_power(seizure, D=3, dt=0.2, start=0):
 
 def create_volumes(seizure, mri):
     img = nib.load(mri)
-    shape = np.round(np.asarray(img.shape)/3).astype(np.int)
+    resized = nbp.resample_to_output(img, voxel_sizes=3)
+    shape = resized.dataobj.shape
     shape = np.append(shape, seizure['baseline']['ex_power'].shape[-1])
-    affine = img.affine.copy()
-    affine[:3, :3] = img.affine[:3, :3] * 3
+    affine = resized.affine.copy()
     baseline = np.zeros(shape)
     baseline_img = nib.Nifti1Image(baseline, affine)
 
