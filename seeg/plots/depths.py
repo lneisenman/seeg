@@ -227,15 +227,16 @@ def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
     return depth_list
 
 
-def plot_depths(depth_list, subject_id, subjects_dir,
-                depth_colors=rosa_colors(), contact_colors=SILVER):
-    fig = mlab.figure()
-    Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
-          cortex='ivory', alpha=0.5, figure=fig)
+def create_depths_plot(depth_list, subject_id, subjects_dir,
+                       depth_colors=rosa_colors(), contact_colors=SILVER):
+    ''' create a Brain and plot depths. Returns the Brain '''
+    brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
+                  cortex='ivory', alpha=0.5)
+    fig = mlab.gcf()
     for depth, color in zip(depth_list, depth_colors):
         depth.draw(fig=fig, contact_colors=contact_colors, depth_color=color)
 
-    return fig
+    return brain
 
 
 def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,

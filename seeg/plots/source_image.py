@@ -8,8 +8,10 @@ import nilearn
 from nilearn.input_data import NiftiMasker
 from nilearn.mass_univariate import permuted_ols
 from nilearn.plotting import plot_stat_map
+from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.linalg as npl
+from vispy.color import Colormap
 
 from . import gin
 from .. import utils
@@ -209,4 +211,42 @@ def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
     seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
                                            high_freq, seiz_delay)
     return calc_depth_sorce_image_from_power(seizure, montage)
-  
+
+
+def plot_3d_source_image_map(t_map, mri):
+    try:
+        import napari
+    except ImportError:
+        print('This function requires napari')
+        return
+
+    img = nib.load(mri)
+    temp = nib.Nifti1Image(t_map.get_fdata()[:, :, :, 0],
+                           t_map.affine)
+    resized = nbp.resample_from_to(temp, img)
+
+    coronal_img_data = set_coronal(img)
+    coronal_map_data = set_coronal(resized)
+
+    controls = np.linspace(0, 1, 101)
+    colors = [cold_hot(i) for i in controls]
+    for i in range(48, 53):
+        colors[i] = (colors[i][0], colors[i][1], colors[i][2], 0)
+
+    cmap = Colormap(colors, controls)
+    min_ = np.min(coronal_map_data)
+    max_ = np.max(coronal_map_data)
+    limits = (min_, -min_)
+    if abs(min_) < max_:
+        limits = (-max_, max_)
+    with napari.gui_qt():
+        viewer = napari.Viewer()
+        viewer.add_image(coronal_img_data, name='image')
+        viewer.add_image(coronal_map_data, name='t-map', opacity=0.5,
+                         contrast_limits=limits, colormap=cmap)
+
+
+def set_coronal(img):
+    ''' reorient image to display in napari as coronal slices '''
+    canon = nib.funcs.as_closest_canonical(img)
+    return np.fliplr(np.moveaxis(canon.get_fdata(), [1, 2], [0, 1]))
