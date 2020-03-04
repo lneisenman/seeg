@@ -32,27 +32,26 @@ def test1():
                             [36.24816648, -8.74560596, 9.14894606],
                             [39.72038864, -8.34878128, 9.33921808]])
     depth = seeg.Depth('A', 5, locations, contact_len=2, spacing=1.5)
-    fig = mlab.figure()
-    Brain(SUBJECT_ID, "rh", "pial", subjects_dir=SUBJECTS_DIR,
-          cortex='ivory', alpha=0.5, figure=fig)
-    depth.draw(fig=fig)
-    depth.show_locations(fig=fig)
+    brain = Brain(SUBJECT_ID, "rh", "pial", subjects_dir=SUBJECTS_DIR,
+                  cortex='ivory', alpha=0.5)
+    depth.draw(fig=mlab.gcf())
+    depth.show_locations(fig=mlab.gcf())
     mlab.show()
 
 
-def test_plot_depths(electrode_names, electrodes, raw):
+def test_create_depths_plot(electrode_names, electrodes, raw):
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
-    seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     mlab.show()
 
 
 def test_show_bipolar_values(electrode_names, electrodes, raw):
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
-    fig = seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     values = 10*np.random.normal(size=len(raw.info['ch_names']))
-    seeg.show_bipolar_values(depth_list, fig, values)
+    seeg.show_bipolar_values(depth_list, mlab.gcf(), values)
     mlab.show()
 
 
@@ -64,6 +63,6 @@ def test_create_depth_source_image_map(eeg, freqs, montage, electrode_names,
     print(t_map[0].min(), t_map[0].max())
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
-    fig = seeg.plot_depths(depth_list, SUBJECT_ID, SUBJECTS_DIR)
-    seeg.show_bipolar_values(depth_list, fig, t_map[0], radius=3)
+    brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    seeg.show_bipolar_values(depth_list, mlab.gcf(), t_map[0], radius=3)
     mlab.show()

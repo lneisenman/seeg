@@ -45,4 +45,5 @@ def test_EEG(raw):
     eeg = seeg.EEG(['A'])
     eeg['baseline']['raw'] = raw
     print(eeg['baseline'])
-    print(eeg['bad key'])
+    with pytest.raises(KeyError):
+        print(eeg['bad key'])
