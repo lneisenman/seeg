@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+""" Encapsulating class and utilities for plotting SEEG depth electrodes"""
 
 import os
 
@@ -33,6 +34,13 @@ ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
 
 
 def rosa_colors():
+    """Generate a repeating list of colors used by ROSA software for electrodes
+
+    Yields
+    ------
+    next sequential RGB color from ROSA_COLOR_LIST
+    """
+
     i = 0
     num_colors = len(ROSA_COLOR_LIST)
     while (True):
@@ -41,7 +49,31 @@ def rosa_colors():
 
 
 class Depth():
-    '''Class to encapsulate data for individual SEEG electrodes'''
+    """Class to encapsulate data for individual SEEG electrodes.
+
+    Data for each depth is stored and the contact locations are fit to
+    a line. Idealized locations are calcuated from the fit and used for
+    drawing the depth.
+
+    Parameters
+    ----------
+    name : string
+        name of Depth
+    num_contacts : int
+        number of contacts in the depth
+    locations : array-like
+        list of coordinates of each contact
+    diam : float, optional
+        diameter of the depth electrode (default = 0.8 mm)
+    contact_len : float, optional
+        length of each contact (default = 2 mm)
+    spacing : float, optional
+        distance between contacts (default = 1.5 mm)
+    active : boolean or list of boolean, optional
+        if a single value, all contacts have that value. Otherwise,
+        list of each whether or not each contact is active
+        (default = True)
+    """
 
     def __init__(self, name, num_contacts, locations, diam=0.8, contact_len=2,
                  spacing=1.5, active=True, cras=np.zeros(3)):
@@ -59,6 +91,9 @@ class Depth():
         self.fit_locations()
 
     def _calc_contacts(self, shift):
+        """ calculate idealized contact locations based on fit of
+        actual locations"""
+
         contacts = list()
         dist = self.contact_len + self.spacing
         for i in range(self.num_contacts):
@@ -67,6 +102,8 @@ class Depth():
         return contacts
 
     def _distance(self, x):
+        """ cost function for fitting line to contact locations"""
+
         shift = x[0]
         contacts = self._calc_contacts(shift)
         distance = 0
@@ -77,12 +114,18 @@ class Depth():
         return distance
 
     def fit_locations(self):
-        ''' Finding the point on a given line that is closest to an arbitrary
-            point in space involves finding the appropriate perpendicular line
-            just like in 2 dimensions. I used this [formulation](https://math.stackexchange.com/questions/1521128/given-a-line-and-a-point-in-3d-how-to-find-the-closest-point-on-the-line)
-            For a point P and a line defined by the points Q and R,
-            the closest point on the line G is given by G=Q+t(R−Q)
-            where t=(R−Q)⋅(Q−P)/(R−Q)⋅(R−Q).'''
+        """Fit actual contact locations to a line.
+
+        Notes
+        -----
+        Finding the point on a given line that is closest to an arbitrary
+        point in space involves finding the appropriate perpendicular line
+        just like in 2 dimensions. I used this
+        [formulation](https://math.stackexchange.com/questions/1521128/given-a-line-and-a-point-in-3d-how-to-find-the-closest-point-on-the-line)
+        For a point P and a line defined by the points Q and R,
+        the closest point on the line G is given by G=Q+t(R−Q)
+        where t=(R−Q)⋅(Q−P)/(R−Q)⋅(R−Q).          
+        """
 
         ave = np.mean(self.locations, axis=0)
         centered = self.locations - ave
@@ -119,11 +162,27 @@ class Depth():
         self.tip = a    # Make sure tip extends to end of distal contact
 
     def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0)):
-        '''Draw fit of locations as a cylindrical depth'''
+        ''''''
+        """Draw fit of locations as a cylindrical depth
+
+        Parameters
+        ----------
+        fig : mayavi mlab figure
+            figure on which to draw the Depth
+        contact_colors : RGB or list of RBG colors, optional
+            If a single color is given, draw all contacts in that color.
+            Otherwise list of colors for corresponding contacts
+        depth_color : RGB color, optional
+            Color used to draw the Depth
+
+        Returns
+        -------
+        fig : mayavi mlab figure
+            figure showing cylindrical depth electrode
+        """
 
         if ((len(contact_colors) == len(self.contacts)) and
-            len(contact_colors[0] == 3)):
-
+           len(contact_colors[0] == 3)):
             c_colors = contact_colors  # list of RGB colors for each contact
         elif len(contact_colors) == 3:
             c_colors = [contact_colors]*len(self.contacts)
@@ -180,7 +239,22 @@ class Depth():
         return fig
 
     def show_locations(self, fig=None, colors=YELLOW):
-        '''Draw actual locations as spheres'''
+        """Draw actual contact locations as spheres
+
+        Parameters
+        ----------
+        fig : mayavi mlab figure, optional
+            figure on which to draw the Depth
+        colors : RGB or list of RBG colors, optional
+            If a single color is given, draw all contacts in that color.
+            Otherwise list of colors for corresponding contacts
+
+        Returns
+        -------
+        fig : mayavi mlab figure
+            figure showing cylindrical depth electrode
+        """
+
         if fig is None:
             fig = mlab.figure()
 
@@ -209,7 +283,28 @@ class Depth():
 
 
 def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
-    ''' returns a list of Depth's '''
+    """Create a list of Depths
+
+    For each electrode in `electrode_names` create a Depth and add to a list
+
+    Parameters
+    ----------
+    electrode_names : list
+        list of electrode names (strings)
+    ch_names : list
+        list of names of all contacts (strings) which are assumed to be in the
+        form of electrode name followed by a number
+    electrodes : Pandas DataFrame
+        contains columns for contact name and x,y,z coordinates in meters
+    cras : numpy nd-array of length 3, optional
+        correction for some Freesurfer file coordinates
+
+    Returns
+    -------
+    depth_list : list
+        List of Depth's
+    """
+
     depth_list = list()
     for name in electrode_names:
         contacts = electrodes.loc[electrodes.contact.str.startswith(name), :]
@@ -229,7 +324,28 @@ def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
 
 def create_depths_plot(depth_list, subject_id, subjects_dir,
                        depth_colors=rosa_colors(), contact_colors=SILVER):
-    ''' create a Brain and plot depths. Returns the Brain '''
+    """Create a pysurfer Brain and plot Depths. Returns the Brain
+
+    Parameters
+    ----------
+    depth_list : list
+        list of Depth's
+    subject_id : string
+        name of subject folder in Freesurfer subjects directory
+    subjects_dir : string
+        location of Freesurfer subjects directory
+    depth_colors: list
+        list of RGB tuples for the colors of the Depth's
+    contact_colors: RGB tuple or list of tuples
+        color of all contacts if a single value given. Otherwise list of
+        colors for each contact
+
+    Returns
+    -------
+    brain : pysurfer Brain
+        pysurfer Brain showing transparent pial surface and Depths
+    """
+
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
                   cortex='ivory', alpha=0.5)
     fig = mlab.gcf()
@@ -241,6 +357,32 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
 
 def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
                         cmap='cold_hot'):
+    """Plot contact values as color coded spheres on each Depth contact
+
+    Plot contact values on the translucent pial surface in `fig` from
+    the parameter `values` as sphere of radius `radius` on each contact
+
+    Parameters
+    ----------
+    depth_list : list
+        list of Depths
+    fig : Mayavi mlab figure
+        figure of translucent pial surface on which to plot Depth's
+    values : array-like
+        values of each contact.
+    bads : list, optional
+        list of bad contacts
+    radius : float, optional
+        radius of spheres
+    cmap : matplotlib colormap
+        colormap for color coding spheres
+
+    Returns
+    -------
+    fig : mayavi mlab figure
+        figure of translucent pial surface with depth electrodes
+    """
+
     vmin = np.min(values)
     vmax = np.max(values)
     if vmin < 0:
@@ -289,8 +431,26 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
     return fig
 
 
-def read_cras(SUBJECT_ID, SUBJECTS_DIR):
-    file_name = os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'surf/lh.pial')
+def read_cras(subject_id, subjects_dir):
+    """read the RAS at the center of the volume.
+
+    Reading the RAS at the center of the volume allow for correction
+    of surfaces that are not centered at (0, 0, 0)
+
+    Parameters
+    ----------
+    subject_id : string
+        name of subject folder in Freesurfer subjects directory
+    subjects_dir : string
+        location of Freesurfer subjects directory
+
+    Returns
+    -------
+    cras : ndarray
+        RAS at the center of the volume.
+    """
+
+    file_name = os.path.join(subjects_dir, subject_id, 'surf/lh.pial')
     coords, faces, info = fio.read_geometry(file_name, read_metadata=True)
     cras = info['cras']
     return cras
