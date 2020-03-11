@@ -162,7 +162,6 @@ class Depth():
         self.tip = a    # Make sure tip extends to end of distal contact
 
     def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0)):
-        ''''''
         """Draw fit of locations as a cylindrical depth
 
         Parameters
