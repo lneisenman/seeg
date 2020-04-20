@@ -1,5 +1,7 @@
-from __future__ import (print_function, division, absolute_import,
-                        unicode_literals)
+# -*- coding: utf-8 -*-
+""" Code for generating plots
+
+"""
 
 import matplotlib.pyplot as plt
 from mayavi import mlab
@@ -20,6 +22,21 @@ from . import gin
 
 
 def plot_eeg(eeg, depth, label_color='black'):
+    """ Plots eeg data for a given depth electrode
+
+    Arguments:
+        eeg : MNE raw object
+            contains EEG data to plot
+        depth : string
+            name of depth electrode
+
+    Keyword Arguments:
+        label_color : string
+            color of axis labels (default: {'black'})
+
+    Returns:
+        matplotlib figure
+    """
     channels = [channel for channel in eeg.ch_names if depth in channel]
     electrode = eeg.copy().pick_channels(channels)
     data, times = electrode.get_data(return_times=True)
@@ -43,6 +60,25 @@ def plot_eeg(eeg, depth, label_color='black'):
 
 
 def plot_power(power, ch_names, depth, label_color='black'):
+    """ plot EEG power
+
+    Parameters
+    ----------
+    power : ndarray
+        array of EEG power
+    ch_names : list
+        list of channel names
+    depth : string
+        name of depth electrode whose power is being plotted
+    label_color : str, optional
+        color of axis labels, by default 'black'
+
+    Returns
+    -------
+    matplotlib figure
+        plot of EEG power
+    """
+
     rows = [i for i in range(len(ch_names)) if depth in ch_names[i]]
     labels = [ch_names[row] for row in rows]
     fig, ax = plt.subplots(len(rows), 1, sharex=True)
@@ -59,8 +95,7 @@ def plot_power(power, ch_names, depth, label_color='black'):
 
 
 def calc_z_scores(baseline, seizure):
-    '''
-    This function is meant to generate the figures shown in the  Brainstorm
+    """ This function is meant to generate the figures shown in the  Brainstorm
     demo used to select the 120-200 Hz frequency band. It should also
     be similar to panel 2 in figure 1 in David et al 2011.
 
@@ -69,34 +104,52 @@ def calc_z_scores(baseline, seizure):
     frequency. In the demo, the power spectrum is calculated for the 1st
     10 seconds of all three seizures and then averaged. Controls are
     similarly averaged
-    '''
+
+    Parameters
+    ----------
+    baseline : ndarray
+        power spectrum of baseline EEG
+    seizure : ndarray
+        power spectrum of seizure EEG
+
+    Returns
+    -------
+    ndarray
+        seizure power spectrum scaled to a z-score by baseline power spectrum
+        mean and SD
+    """
 
     mean = np.mean(baseline, 1)
     sd = np.std(baseline, 1)
     z_scores = (seizure - mean)/sd
-    '''
-    for index, electrode in enumerate(seizures[0]['seizure']['bipolar'].ch_names):
-        baseline = np.zeros_like(seizures[0]['baseline']['power'][0, index, :, :])
-        z_score = np.zeros_like(seizures[0]['seizure']['power'][0, index, :, :])
-        for seizure in seizures:
-            baseline += seizure['baseline']['power'][0, index, :, :]
-            z_score += seizure['seizure']['power'][0, index, :, :]
-
-        num = len(seizures)
-        baseline /= num
-        z_score /= num
-        baseline = compress_data(baseline, 512, 1)
-        z_score = compress_data(z_score, 512, 1)
-        for i in range(z_score.shape[1]):
-            z_score[:, i] -= mean
-            z_score[:, i] /= sd
-
-        z_scores[electrode] = z_score
-    '''
     return z_scores
 
 
-def plot_z_scores(times, freqs, z_scores, ch_names, depth, label_color='black'):
+def plot_z_scores(times, freqs, z_scores, ch_names, depth,
+                  label_color='black'):
+    """ Plots Z-scores
+
+    Parameters
+    ----------
+    times : ndarray
+        x-axis of plot
+    freqs : ndarray
+        y-axis of plot
+    z_scores : ndarray
+        array of Z-scores being plotted by color code
+    ch_names : list
+        list of channel names
+    depth : string
+        name of depth being plotted
+    label_color : str, optional
+        color of axis labels, by default 'black'
+
+    Returns
+    -------
+    matplotlib figure
+        color coded Z-score plot
+    """
+
     rows = [i for i in range(len(ch_names)) if depth in ch_names[i]]
     labels = [ch_names[row] for row in rows]
     fig, ax = plt.subplots(len(rows), 1, sharex=True)

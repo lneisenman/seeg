@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Create the 'gin' colormap from the Brainstorm package
 
+"""
 import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt

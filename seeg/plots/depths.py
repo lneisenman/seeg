@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-""" Encapsulating class and utilities for plotting SEEG depth electrodes"""
+""" Encapsulating class and utilities for plotting SEEG depth electrodes
+
+"""
 
 import os
 
@@ -295,7 +297,7 @@ def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
         form of electrode name followed by a number
     electrodes : Pandas DataFrame
         contains columns for contact name and x,y,z coordinates in meters
-    cras : numpy nd-array of length 3, optional
+    cras : ndarray of length 3, optional
         correction for some Freesurfer file coordinates
 
     Returns
