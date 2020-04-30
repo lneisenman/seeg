@@ -8,7 +8,16 @@ import pandas as pd
 
 
 class EEG:
+    """ Dict like class to contain EEG data
+    
+Parameters
+    ----------
+    electrode_names : list of string
+        list of all electrode names
+    bads : list of string
+        list of bad electrode names  
 
+   """
     def __init__(self, electrode_names, bads=None):
         self.electrodes = electrode_names
         self.bads = bads
@@ -41,6 +50,18 @@ class EEG:
 
 
 def read_electrode_file(file_name):
+    """ Read electrode names and coordinates (in meters)
+    
+    Parameters
+    ----------
+    file_name : string
+        path to file
+    
+    Returns
+    -------
+    Pandas Dataframe
+        Dataframe with columns for the contact name and x, y and z coordinates
+    """
     if file_name[-4:] == 'fcsv':
         skiprows = 2
         sep = ','
@@ -63,13 +84,26 @@ def read_electrode_file(file_name):
 
 
 def create_montage(electrodes, sfreq=1000, show=False):
-    '''
-    Create a montage from a pandas dataframe containing contact names
+    """ Create a montage from a pandas dataframe containing contact names
     and locations in meters
+    
+    Parameters
+    ----------
+    electrodes : Pandas Dataframe
+        pandas dataframe with columns named "contact", "x", "y" and "z"
+    sfreq : int, optional
+        EEG sampling frequency, by default 1000
+    show : bool, optional
+        show the montage if True, by default False
+    
+    Returns
+    -------
+    montage : MNE montage
+        the EEG montage
+    contact_info : MNE info
+        MNE info data structure
+    """
 
-    electrodes : pandas dataframe with columns named "contact", "x", "y"
-                 and "z"
-    '''
     dig_ch_pos = {electrodes['contact'][i]:
                   np.asarray([electrodes['x'][i], electrodes['y'][i],
                              electrodes['z'][i]])

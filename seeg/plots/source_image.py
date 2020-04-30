@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" Functions to create a source image analagous to that from the Brainstorm demo
+
+"""
 
 import matplotlib.pyplot as plt
 import nibabel as nib
@@ -80,6 +83,22 @@ def extract_power(seizure, D=3, dt=0.2, start=0):
 
 
 def create_volumes(seizure, mri):
+    """ create Nifti1Images for the baseline and seizure data
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        eeg data
+    mri : string
+        path to MRI file
+    
+    Returns
+    -------
+    baseline_img : Nifti1Image
+        image for baseline eeg data
+    seizure_img : Nifti1Image
+        image for seizure eeg data
+    """
     img = nib.load(mri)
     resized = nbp.resample_to_output(img, voxel_sizes=3)
     shape = resized.dataobj.shape
@@ -95,11 +114,43 @@ def create_volumes(seizure, mri):
 
 
 def voxel_coords(mri_coords, inverse):
+    """convert mri coordiantes to voxel coordinates in integers using the inverse affine
+    
+    Parameters
+    ----------
+    mri_coords : tuple
+        MRI coordinates
+    inverse : affine
+        affine to convert to voxel coordiantes from MRI coordinates
+    
+    Returns
+    -------
+    tuple of integers
+        voxel coordinates (integer)
+    """
     coords = apply_affine(inverse, mri_coords)
     return coords.astype(np.int)
 
 
 def map_seeg_data(seizure, montage, mri):
+    """map contact data to surrounding voxels and smooth
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        eeg data
+    montage : MNE DigMontage
+        eeg montage
+    mri : string
+        path to MRI file
+    
+    Returns
+    -------
+    base_img : Nifti1Image
+        Image with data mapped from baseline eeg
+    seiz_img : Nifti1Image
+        Image with data mapped from seizure eeg
+    """
     base_img, seiz_img = create_volumes(seizure, mri)
     base_data = base_img.get_data()
     seiz_data = seiz_img.get_data()
@@ -139,7 +190,29 @@ def map_seeg_data(seizure, montage, mri):
 
 def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
                                  high_freq=200, seiz_delay=0):
-    ''' calculate power data for SEEG source image as per David et. al. 2011'''
+    """ calculate power data for SEEG source image as per David et. al. 2011
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        eeg data
+    freqs : ndarray
+        array of frequencies
+    montage : MNE DigMontage
+        eeg montage
+    low_freq : int, optional
+        low frequency cutoff, by default 120
+    high_freq : int, optional
+        high frequency cutoff, by default 200
+    seiz_delay : float, optional
+        time from beginning of eeg file to seizure onset, by default 0
+    
+    Returns
+    -------
+    EEG | dict
+        eeg data including power data
+    """
+    
     seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
         utils.clip_eeg(seizure)
     seizure['baseline']['bipolar'] = \
@@ -159,6 +232,22 @@ def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
 
 
 def calc_sorce_image_from_power(seizure, montage, mri):
+    """Create source image from power data
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        eeg data
+    montage : MNE DigMontage
+        eeg montage
+    mri : string
+        path to file containing MRI
+    
+    Returns
+    -------
+    Nifti1Image
+        Image where voxel values represent corresponding t-values
+    """
     seizure['baseline']['img'], seizure['seizure']['img'] = \
         map_seeg_data(seizure, montage, mri)
     base_img = seizure['baseline']['img']
@@ -181,17 +270,64 @@ def calc_sorce_image_from_power(seizure, montage, mri):
 
 def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
                             high_freq=200, seiz_delay=0):
-    ''' create the SEEG source image t-map as per David et. al. 2011'''
+    """ create the source image t-map as per David et. al. 2011'
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        structure containing EEG data
+    mri : string
+        Path to location of MRI file
+    freqs : ndarray
+        array of frequencies
+    montage : MNE DigMontage
+        EEG montage
+    low_freq : int, optional
+        low frequency cut-off, by default 120
+    high_freq : int, optional
+        high frequency cut-off, by default 200
+    seiz_delay : int, optional
+        delay from the beginnign of the EEG clip to the seizure onset, by default 0
+    """
+    
     seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
                                            high_freq, seiz_delay)
     return calc_sorce_image_from_power(seizure, montage, mri)
 
 
 def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
+    """ Use Nilearn to create a Matplotlib plot of the t_map superimposed on the MRI
+
+    Parameters
+    ----------
+    t_map : Nifti1Image
+        Image where voxel values represent t-value
+    mri : string
+        Path to location of MRI file
+    cut_coords : tuple, optional
+        x, y, z coordinates used to center the image, by default None
+    threshod : float, optional
+        minimum t-value to display, by default 0
+   """
     plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)
 
 
 def calc_depth_sorce_image_from_power(seizure, montage):
+    """ Calculate t-map image analagous to Brainstorm demo
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        baseline and seizure EEG data
+    montage : MNE DigMontage
+        EEG montage
+    
+    Returns
+    -------
+    ndarray
+        t values
+    """
+
     base = seizure['baseline']['ex_power'].T
     seiz = seizure['seizure']['ex_power'].T
     data = np.concatenate((base, seiz))
@@ -208,12 +344,45 @@ def calc_depth_sorce_image_from_power(seizure, montage):
 
 def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
                                   high_freq=200, seiz_delay=0):
+    """ Calculate t-values for each individual (non-bad) depth contact
+    
+    Parameters
+    ----------
+    seizure : EEG | dict
+        baseline and seizure EEG data
+    freqs : ndarray
+        array of frequencies
+    montage : MNE DigMontage
+        EEG montage
+    low_freq : int, optional
+        lower frequency limit for calculation, by default 120
+    high_freq : int, optional
+        upper frequency limit for calculation, by default 200
+    seiz_delay : float, by default 0
+        delay between the beginning of the EEG data and the seizure onset, by default 0
+    
+    Returns
+    -------
+    ndarray
+        t-values for depth contacts
+    """
+
     seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
                                            high_freq, seiz_delay)
     return calc_depth_sorce_image_from_power(seizure, montage)
 
 
 def plot_3d_source_image_map(t_map, mri):
+    """Use Napari to display a coronal 3D view of the t_map superimposed on the MRI
+    
+    Parameters
+    ----------
+    t_map : Nifti1Image
+        Image where pixel values are corresponding t-values
+    mri : string
+        path to mri file
+    """
+
     try:
         import napari
     except ImportError:
@@ -225,8 +394,8 @@ def plot_3d_source_image_map(t_map, mri):
                            t_map.affine)
     resized = nbp.resample_from_to(temp, img)
 
-    coronal_img_data = set_coronal(img)
-    coronal_map_data = set_coronal(resized)
+    coronal_img_data = _set_coronal(img)
+    coronal_map_data = _set_coronal(resized)
 
     controls = np.linspace(0, 1, 101)
     colors = [cold_hot(i) for i in controls]
@@ -246,7 +415,7 @@ def plot_3d_source_image_map(t_map, mri):
                          contrast_limits=limits, colormap=cmap)
 
 
-def set_coronal(img):
+def _set_coronal(img):
     ''' reorient image to display in napari as coronal slices '''
     canon = nib.funcs.as_closest_canonical(img)
     return np.fliplr(np.moveaxis(canon.get_fdata(), [1, 2], [0, 1]))
