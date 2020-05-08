@@ -7,19 +7,22 @@ import pytest
 
 import seeg
 
-BASE_DIR = r'C:\Users\eisenmanl\Documents'
+BASE_DIR = r'R:\Active\SEEG'
 if not os.path.exists(BASE_DIR):
-    BASE_DIR = os.path.join(r'C:\Users\leisenman\Documents',
-                            r'brainstorm_db\tutorial_epimap')
-else:
-    BASE_DIR = os.path.join(BASE_DIR, r'brainstorm_data_files\tutorial_epimap')
+    BASE_DIR = r'C:\Users\leisenman\Box\SEEG'
+    if not os.path.exists(BASE_DIR):
+        BASE_DIR = r'C:\Users\eisenmanl\Box\SEEG'
+
+SUBJECT_ID = 'seeg_brainstorm'
+SUBJECTS_DIR = os.path.join(BASE_DIR, 'subjects')
 
 ELECTRODE_NAMES = [r"y'", r"t'", r"u'", r"v'", r"x'", r"et'", r"b'", r"c'",
                    r"d'", r"e'", r"f'", r"l'", r"g'", r"s'", r"o'"]
 BADS = ["v'1", "f'1"]
-EEG_FILE = os.path.join(BASE_DIR, r'seeg\sz1.trc')
-ELECTRODE_FILE = os.path.join(BASE_DIR,
-                              r'anat\implantation\elec_pos_patient.txt')
+
+EEG_FILE = os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'eeg\sz1.trc')
+ELECTRODE_FILE = os.path.join(SUBJECTS_DIR, SUBJECT_ID,
+                              r'eeg\elec_pos_patient.txt')
 
 
 @pytest.fixture
@@ -56,7 +59,7 @@ def raw(electrodes):
 
 @pytest.fixture
 def mri():
-    return os.path.join(BASE_DIR, r'anat\MRI\3DT1pre_deface.nii')
+    return os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'mri\orig\001.mgz')
 
 
 @pytest.fixture
