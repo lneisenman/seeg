@@ -24,7 +24,7 @@ from .. import utils
 def compress_data(data, old_freq, new_freq):
     """ compress data from old frequency to new frequency
 
-    Parameters 
+    Parameters
     ----------
     data : ndarray
         2-d array of data

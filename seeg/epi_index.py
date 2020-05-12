@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" Calculate epileptogenicity index as per Bartolomei, Brain 131:1818 2008 
+
+"""
 
 import matplotlib.pyplot as plt
 from mayavi import mlab
@@ -99,6 +102,36 @@ def find_onsets(U_n, sfreq, ch_names, threshold=1, H=5, step_size=1):
 
 
 def calculate_EI(raw, freqs, bias=0.1, threshold=1, tau=1, H=5):
+    """ Calculate EI for all channels
+
+    Parameters
+    ----------
+    raw : MNE io.Raw
+        eeg data
+    freqs : ndarray
+        array of frequencies
+    bias : float, optional
+        bias for the Page-Hinkley CUSUM algorithm, by default 0.1
+    threshold : int, optional
+        threshold for the Page-Hinkley CUSUM algorithm, by default 1
+    tau : int, optional
+        tau for the EI calculation, by default 1
+    H : int, optional
+        duration over which ER is calculated, by default 5
+
+    Returns
+    -------
+    onsets: pandas dataframe
+        onsets for each channel in raw
+
+    Notes
+    -----
+
+    EI is calculated as
+
+    .. math:: EI_i=\frac{1}{N_{di} - N_0 + \tau}\sum_{n=N_{di}}^{N_{di}+H}ER[n],\quad \tau>0
+
+    """
     ER = calc_ER(raw, freqs)
     U_n = cusum(ER, bias)
     onsets = find_onsets(U_n, raw.info['sfreq'], raw.ch_names, threshold, H)
