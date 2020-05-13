@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" Utility classes and functions
+
+"""
 
 from mayavi import mlab
 import mne
@@ -37,12 +40,18 @@ Parameters
             raise KeyError('{} is not a valid key'.format(key))
 
     def set_baseline(self, start, end, raw, file_name=None):
+        """ set parameters for baseline EEG
+
+        """
         self.baseline['start'] = start
         self.baseline['end'] = end
         self.baseline['raw'] = raw
         self.baseline['file_name'] = file_name
 
     def set_seizure(self, start, end, raw, file_name=None):
+        """ set parameters for seizure EEG
+
+        """
         self.seizure['start'] = start
         self.seizure['end'] = end
         self.seizure['raw'] = raw
@@ -127,6 +136,18 @@ def create_montage(electrodes, sfreq=1000, show=False):
 
 
 def match_ch_type(name):
+    """ return channel type based on channel name
+    
+    Parameters
+    ----------
+    name : string
+        name of channel
+    
+    Returns
+    -------
+    out: string
+        channel type
+    """
     out = 'seeg'
     if 'ecg' in name:
         out = 'ecg'
@@ -136,6 +157,24 @@ def match_ch_type(name):
 
 
 def read_micromed_eeg(file_name, electrodes, bads):
+    """ read micromed eeg file
+    
+    Parameters
+    ----------
+    file_name : string
+        path to EEG file
+    electrodes : list of strings
+        names of electrodes
+    bads : list of strings
+        names of bad electrodes
+    
+    Returns
+    -------
+    raw : MNE Raw
+        EEG data
+    montage : MNE Montage
+        EEG montage data
+    """
     reader = neo.rawio.MicromedRawIO(filename=file_name)
     reader.parse_header()
     ch_names = list(reader.header['signal_channels']['name'])
@@ -162,6 +201,24 @@ def read_micromed_eeg(file_name, electrodes, bads):
 
 
 def read_edf(eeg_file, electrodes, bads=None, notch=False):
+    """ read data from edf file
+    
+    Parameters
+    ----------
+    eeg_file : string
+        path to EEG file
+    electrodes : list of strings
+        names of electrodes
+    bads : list of strings, optional
+        names of bad channels, by default None
+    notch : bool, optional
+        apply notch filter to EEG data, by default False
+    
+    Returns
+    -------
+    eeg : MNE Raw
+        eeg data
+    """
     raw = mne.io.read_raw_edf(eeg_file, preload=True)
     mapping = dict()
     LABELS = ['POL {}', 'EEG {}-Ref', 'EEG {}-Ref-0',
@@ -183,6 +240,23 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
 
 
 def clip_eeg(seizure, show=False):
+    """ Clip EEG files to keep only the seizure onset or corresponding
+    duration of baseline
+    
+    Parameters
+    ----------
+    seizure : Dict | EEG
+        EEG data
+    show : bool, optional
+        plot the EEG data, by default False
+    
+    Returns
+    -------
+    baseline : NME Raw
+        clipped baseine EEG data
+    seizure : MNE Raw
+        clipped seizure EEG data
+    """
     start, end = seizure['baseline']['start'], seizure['baseline']['end']
     baseline = seizure['baseline']['raw'].copy().crop(start, end)
 
@@ -195,12 +269,47 @@ def clip_eeg(seizure, show=False):
 
 
 def find_num_contacts(contacts, electrode):
+    """ find the number of contacts on a given depth electrode
+    
+    Parameters
+    ----------
+    contacts : list of strings
+        names of all contacts
+    electrode : string
+        electrode to be counted
+    
+    Returns
+    -------
+    int
+        number of contacts on `electrode`
+    """
     start = len(electrode)
     numbers = [int(contact[start:]) for contact in contacts]
     return np.max(numbers)
 
 
 def setup_bipolar(electrode, ch_names, bads):
+    """ create lists of names for resetting and EEG to a bipolar montage
+    
+    Parameters
+    ----------
+    electrode : string
+        name of electrode
+    ch_names : list of strings
+        names of channels
+    bads : list of strings
+        names of bad channels
+    
+    Returns
+    -------
+    anodes : list of strings
+        names of anode electrodes
+    cathodes : list of strings
+        names of cathode electrodes
+    ch_names : list of strings
+        names of bipolar channels
+    """
+
     contacts = [i for i in ch_names if i.startswith(electrode)]
     anodes = list()
     cathodes = list()
@@ -219,6 +328,20 @@ def setup_bipolar(electrode, ch_names, bads):
 
 
 def create_bipolar(raw, electrodes):
+    """ create EEG data in a bipolar montage
+    
+    Parameters
+    ----------
+    raw : MNE Raw
+        EEG data
+    electrodes : list of strings
+        names of electrodes
+    
+    Returns
+    -------
+    bipolar : MNE Raw
+        EEG data in a bipolar montage
+    """
     anodes = list()
     cathodes = list()
     ch_names = list()
@@ -236,6 +359,24 @@ def create_bipolar(raw, electrodes):
 
 
 def calc_power(raw, freqs, n_cycles=7., output='power'):
+    """ Calculate power in each channel using multitapers
+    
+    Parameters
+    ----------
+    raw : MNE Raw
+        EEG data
+    freqs : ndarray
+        array of frequencies
+    n_cycles : float, optional
+        multitaper parameter, by default 7.
+    output : str, optional
+        multitaper calculation parameter, by default 'power'
+    
+    Returns
+    -------
+    ndarray
+        power data
+    """
     # n_cycles = freqs
     n_channels = raw.info['nchan']
     n_times = raw.n_times
