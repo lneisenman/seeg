@@ -23,7 +23,24 @@ from . import utils
 
 
 def calc_ER(raw, freqs, low=(4, 12), high=(13, 100)):
-    '''Calculate the ratio of beta+gamma to theta+alpha'''
+    """ Calculate the ratio of beta+gamma energy to theta+alpha energy
+
+    Parameters
+    ----------
+    raw : MNE Raw
+        EEG data
+    freqs : ndarray
+        array of frequencies
+    low : tuple of floats, optional
+        range of theta-alpha frequencies, by default (4, 12)
+    high : tuple of floats, optional
+        range of beta-gamma frequencies, by default (4, 12)
+
+    Returns
+    -------
+    ndarray
+        Energy ratio for each channel
+    """
     power = utils.calc_power(raw, freqs, freqs)
     numerator = np.sum(power[0, :, high[0]:high[1], :], axis=1)
     denominator = np.sum(power[0, :, low[0]:low[1], :], axis=1)
@@ -31,6 +48,20 @@ def calc_ER(raw, freqs, low=(4, 12), high=(13, 100)):
 
 
 def cusum(data, bias=0.1):
+    """ calculate the Page-Hinkley Cusum
+    
+    Parameters
+    ----------
+    data : ndarray
+        Energy ratio for each channel
+    bias : float, optional
+        a positive value contributing to the rate of decrease of U_n, by default 0.1
+    
+    Returns
+    -------
+    U_n : ndarray
+        Page-Hinkley value for each channel
+    """
     ER_n = np.cumsum(data, axis=1)/np.arange(1, 1+data.shape[-1])
     U = data - ER_n - bias
     U_n = np.cumsum(U, axis=1)
@@ -38,6 +69,28 @@ def cusum(data, bias=0.1):
 
 
 def find_onsets(U_n, sfreq, ch_names, threshold=1, H=5, step_size=1):
+    """ Calculate onset based on the Page-Hinkley CUSUM algorithm
+    
+    Parameters
+    ----------
+    U_n : ndarray
+        Page-Hinkley Cusums for each channel
+    sfreq : int | float
+        signal sampling frequency
+    ch_names : list of strings
+        list of channel names
+    threshold : float , optional
+        minimum increase above the local minimun to be considered significant, by default 1
+    H : float, optional
+        width of the window being searched, by default 5
+    step_size : float, optional
+        amount of time to shift the window with each iteration, by default 1
+    
+    Returns
+    -------
+    onsets : DataFrame
+        dataframe containing minimum times and threshold times for each channel
+    """
     window_len = int(H*sfreq)
     step = int(step_size*sfreq)
     seizure = False
