@@ -12,13 +12,13 @@ import pandas as pd
 
 class EEG:
     """ Dict like class to contain EEG data
-    
+
 Parameters
     ----------
     electrode_names : list of string
         list of all electrode names
     bads : list of string
-        list of bad electrode names  
+        list of bad electrode names
 
    """
     def __init__(self, electrode_names, bads=None):
@@ -28,13 +28,13 @@ Parameters
         self.seizure = dict()
 
     def __getitem__(self, key):
-        if key is 'baseline':
+        if key == 'baseline':
             return self.baseline
-        elif key is 'seizure':
+        elif key == 'seizure':
             return self.seizure
-        elif key is 'electrodes':
+        elif key == 'electrodes':
             return self.electrodes
-        elif key is 'bads':
+        elif key == 'bads':
             return self.bads
         else:
             raise KeyError('{} is not a valid key'.format(key))
@@ -60,12 +60,12 @@ Parameters
 
 def read_electrode_file(file_name):
     """ Read electrode names and coordinates (in meters)
-    
+
     Parameters
     ----------
     file_name : string
         path to file
-    
+
     Returns
     -------
     Pandas Dataframe
@@ -92,19 +92,17 @@ def read_electrode_file(file_name):
     return electrodes
 
 
-def create_montage(electrodes, sfreq=1000, show=False):
+def create_montage(electrodes, sfreq=1000):
     """ Create a montage from a pandas dataframe containing contact names
     and locations in meters
-    
+
     Parameters
     ----------
     electrodes : Pandas Dataframe
         pandas dataframe with columns named "contact", "x", "y" and "z"
     sfreq : int, optional
         EEG sampling frequency, by default 1000
-    show : bool, optional
-        show the montage if True, by default False
-    
+
     Returns
     -------
     montage : MNE montage
@@ -122,27 +120,19 @@ def create_montage(electrodes, sfreq=1000, show=False):
                                             coord_frame='head')
     names = list(electrodes['contact'].values)
     contact_info = mne.create_info(ch_names=names, sfreq=sfreq,
-                                   ch_types='seeg', montage=montage)
-
-    if show:
-        sdir = r'C:\Users\eisenmanl\Desktop\ubuntu_shared\subjects'
-        mne.viz.plot_alignment(contact_info, subject='seeg_brainstorm',
-                               subjects_dir=sdir, surfaces=['pial'],
-                               meg=False, coord_frame='head')
-        mlab.view(200, 70)
-        mlab.show()
+                                   ch_types='seeg').set_montage(montage)
 
     return montage, contact_info
 
 
 def match_ch_type(name):
     """ return channel type based on channel name
-    
+
     Parameters
     ----------
     name : string
         name of channel
-    
+
     Returns
     -------
     out: string
@@ -158,7 +148,7 @@ def match_ch_type(name):
 
 def read_micromed_eeg(file_name, electrodes, bads):
     """ read micromed eeg file
-    
+
     Parameters
     ----------
     file_name : string
@@ -167,7 +157,7 @@ def read_micromed_eeg(file_name, electrodes, bads):
         names of electrodes
     bads : list of strings
         names of bad electrodes
-    
+
     Returns
     -------
     raw : MNE Raw
@@ -202,7 +192,7 @@ def read_micromed_eeg(file_name, electrodes, bads):
 
 def read_edf(eeg_file, electrodes, bads=None, notch=False):
     """ read data from edf file
-    
+
     Parameters
     ----------
     eeg_file : string
@@ -213,7 +203,7 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
         names of bad channels, by default None
     notch : bool, optional
         apply notch filter to EEG data, by default False
-    
+
     Returns
     -------
     eeg : MNE Raw
@@ -242,14 +232,14 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
 def clip_eeg(seizure, show=False):
     """ Clip EEG files to keep only the seizure onset or corresponding
     duration of baseline
-    
+
     Parameters
     ----------
     seizure : Dict | EEG
         EEG data
     show : bool, optional
         plot the EEG data, by default False
-    
+
     Returns
     -------
     baseline : NME Raw
@@ -270,14 +260,14 @@ def clip_eeg(seizure, show=False):
 
 def find_num_contacts(contacts, electrode):
     """ find the number of contacts on a given depth electrode
-    
+
     Parameters
     ----------
     contacts : list of strings
         names of all contacts
     electrode : string
         electrode to be counted
-    
+
     Returns
     -------
     int
@@ -290,7 +280,7 @@ def find_num_contacts(contacts, electrode):
 
 def setup_bipolar(electrode, ch_names, bads):
     """ create lists of names for resetting and EEG to a bipolar montage
-    
+
     Parameters
     ----------
     electrode : string
@@ -299,7 +289,7 @@ def setup_bipolar(electrode, ch_names, bads):
         names of channels
     bads : list of strings
         names of bad channels
-    
+
     Returns
     -------
     anodes : list of strings
@@ -329,14 +319,14 @@ def setup_bipolar(electrode, ch_names, bads):
 
 def create_bipolar(raw, electrodes):
     """ create EEG data in a bipolar montage
-    
+
     Parameters
     ----------
     raw : MNE Raw
         EEG data
     electrodes : list of strings
         names of electrodes
-    
+
     Returns
     -------
     bipolar : MNE Raw
@@ -360,7 +350,7 @@ def create_bipolar(raw, electrodes):
 
 def calc_power(raw, freqs, n_cycles=7., output='power'):
     """ Calculate power in each channel using multitapers
-    
+
     Parameters
     ----------
     raw : MNE Raw
@@ -371,7 +361,7 @@ def calc_power(raw, freqs, n_cycles=7., output='power'):
         multitaper parameter, by default 7.
     output : str, optional
         multitaper calculation parameter, by default 'power'
-    
+
     Returns
     -------
     ndarray
