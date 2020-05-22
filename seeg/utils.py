@@ -39,22 +39,19 @@ Parameters
         else:
             raise KeyError('{} is not a valid key'.format(key))
 
-    def set_baseline(self, start, end, raw, file_name=None):
+    def set_baseline(self, raw, pre=0, post=5, file_name=None):
         """ set parameters for baseline EEG
 
         """
-        self.baseline['start'] = start
-        self.baseline['end'] = end
-        self.baseline['raw'] = raw
+        self.baseline['eeg'] = clip_eeg(raw, pre, post)
         self.baseline['file_name'] = file_name
 
-    def set_seizure(self, start, end, raw, file_name=None):
+    def set_seizure(self, raw, pre=5, post=5, file_name=None):
         """ set parameters for seizure EEG
 
         """
-        self.seizure['start'] = start
-        self.seizure['end'] = end
         self.seizure['raw'] = raw
+        self.seizure['eeg'] = clip_eeg(raw, pre, post)
         self.seizure['file_name'] = file_name
 
 
@@ -229,33 +226,28 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
     return eeg
 
 
-def clip_eeg(seizure, show=False):
-    """ Clip EEG files to keep only the seizure onset or corresponding
-    duration of baseline
+def clip_eeg(raw, pre=5, post=5):
+    """ Clip EEG file
 
     Parameters
     ----------
-    seizure : Dict | EEG
+    raw : MNE Raw
         EEG data
-    show : bool, optional
-        plot the EEG data, by default False
+    pre : float, optional
+        how much time prior to the onset to clip, by default 5
+    post : float, optional
+        how much time after to the onset to clip, by default 5
 
     Returns
     -------
-    baseline : NME Raw
-        clipped baseine EEG data
-    seizure : MNE Raw
-        clipped seizure EEG data
+    NME Raw
     """
-    start, end = seizure['baseline']['start'], seizure['baseline']['end']
-    baseline = seizure['baseline']['raw'].copy().crop(start, end)
+    onset = raw.annotations.onset[0]
+    start = onset - pre
+    end = onset + post
+    clipped = raw.copy().crop(start, end)
 
-    start, end = seizure['seizure']['start'], seizure['seizure']['end']
-    seizure = seizure['seizure']['raw'].copy().crop(start, end)
-    if show:
-        seizure.plot()
-
-    return baseline, seizure
+    return clipped
 
 
 def find_num_contacts(contacts, electrode):

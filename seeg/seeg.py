@@ -2,6 +2,7 @@
 
 import os
 
+import mne
 import pandas as pd
 
 from .epi_index import calculate_EI
@@ -22,22 +23,22 @@ class Seeg():
         names of electrodes, by default None
     bads : list of strings, optional
         names of bad channels, by default None
-    baseline_times : tuple of floats, optional
-        start and end times for the baseline EEG, by default (0, 5)
-    seizure_times : tuple of floats, optional
-        start and end times for the seizure EEG, by default (0, 5)
+    baseline_time : float
+        start of baseline EEG
+    seizure_time : float
+        time of seizure onset
     seiz_delay : float, optional
-        delay from the beginning of the seizure EEG to the seizure onset, by default 0
+        delay from the beginning of the EEG to the seizure onset, by default 5
     """
 
-    def __init__(self, subject, subjects_dir, electrode_names=None, bads=None,
-                 baseline_times=(0, 5), seizure_times=(0, 5), seiz_delay=0):
+    def __init__(self, subject, subjects_dir, electrode_names, bads,
+                 baseline_time, seizure_time, seiz_delay=5):
         self.subject = subject
         self.subjects_dir = subjects_dir
         self.electrode_names = electrode_names
         self.bads = bads
-        self.baseline_times = baseline_times
-        self.seizure_times = seizure_times
+        self.baseline_time = baseline_time
+        self.seizure_time = seizure_time
         self.seiz_delay = seiz_delay
         self.subject_path = os.path.join(subjects_dir, subject)
         self.mri_file = os.path.join(self.subject_path, 'mri/orig.mgz')
@@ -46,7 +47,7 @@ class Seeg():
         self.seizure_eeg_file = os.path.join(self.subject_path,
                                              'eeg/Seizure1.edf')
         self.electrode_file = os.path.join(self.subject_path, 'eeg/recon.fcsv')
-        self.recording = EEG(electrode_names, bads)
+        self.eeg = EEG(electrode_names, bads)
         self.read_electrode_locations()
         self.montage, __ = create_montage(self.contacts)
         self.load_eeg()
@@ -62,20 +63,18 @@ class Seeg():
 
         """
         raw = read_edf(self.baseline_eeg_file, self.contacts, self.bads)
-        self.recording.set_baseline(self.baseline_times[0],
-                                    self.baseline_times[1], raw,
-                                    self.baseline_eeg_file)
+        raw.set_annotations(mne.Annotations(self.baseline_time, 0, 'Seizure'))
+        self.eeg.set_baseline(raw, file_name=self.baseline_eeg_file)
         raw = read_edf(self.seizure_eeg_file, self.contacts, self.bads)
-        self.recording.set_seizure(self.seizure_times[0],
-                                   self.seizure_times[1], raw,
-                                   self.seizure_eeg_file)
+        raw.set_annotations(mne.Annotations(self.seizure_time, 0, 'Seizure'))
+        self.eeg.set_seizure(raw, file_name=self.seizure_eeg_file)
 
     def create_source_image_map(self, freqs, low_freq, high_freq):
         """ calculate the source image map analagous to David et al 2011
             and the Brainstorm tutorial
-    
+
         """
-        self.t_map = create_source_image_map(self.recording, self.mri_file,
+        self.t_map = create_source_image_map(self.eeg, self.mri_file,
                                              freqs, self.montage, low_freq,
                                              high_freq, self.seiz_delay)
 
@@ -89,6 +88,6 @@ class Seeg():
         """ calculate the epileptogenicity index as per Bartolomi et al 2008
 
         """
-        self.EI = calculate_EI(self.recording['seizure']['raw'], freqs,
+        self.EI = calculate_EI(self.eeg['seizure']['raw'], freqs,
                                bias=bias, threshold=threshold,
                                tau=tau, H=H)

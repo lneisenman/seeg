@@ -59,7 +59,7 @@ def test_create_depth_source_image_map(eeg, freqs, montage, electrode_names,
                                        electrodes, raw):
     t_map = seeg.create_depth_source_image_map(eeg, freqs, montage,
                                                low_freq=120, high_freq=200,
-                                               seiz_delay=10)
+                                               seiz_delay=5)
     print(t_map[0].min(), t_map[0].max())
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)

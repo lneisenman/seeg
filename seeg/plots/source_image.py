@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" Functions to create a source image analagous to that from the Brainstorm demo
-    of David et al. 2011
+""" Functions to create a source image analagous to that from the Brainstorm
+    demo of David et al. 2011
 
 """
 
@@ -180,7 +180,8 @@ def create_volumes(seizure, mri):
 
 
 def voxel_coords(mri_coords, inverse):
-    """convert mri coordiantes to voxel coordinates in integers using the inverse affine
+    """ convert mri coordiantes to voxel coordinates in integers using the
+        inverse affine
 
     Parameters
     ----------
@@ -278,9 +279,7 @@ def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
     EEG | dict
         eeg data including power data
     """
-    
-    seizure['baseline']['eeg'], seizure['seizure']['eeg'] = \
-        utils.clip_eeg(seizure)
+
     seizure['baseline']['bipolar'] = \
         utils.create_bipolar(seizure['baseline']['eeg'], seizure['electrodes'])
     seizure['seizure']['bipolar'] = \
@@ -353,7 +352,7 @@ def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
     high_freq : int, optional
         high frequency cut-off, by default 200
     seiz_delay : int, optional
-        delay from the beginnign of the EEG clip to the seizure onset, by default 0
+        delay from the beginning of the clip to the seizure onset, by default 0
     """
 
     seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
@@ -362,7 +361,8 @@ def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
 
 
 def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
-    """ Use Nilearn to create a Matplotlib plot of the t_map superimposed on the MRI
+    """ Use Nilearn to create a Matplotlib plot of the t_map superimposed
+        on the MRI
 
     Parameters
     ----------
@@ -425,7 +425,8 @@ def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
     high_freq : int, optional
         upper frequency limit for calculation, by default 200
     seiz_delay : float, by default 0
-        delay between the beginning of the EEG data and the seizure onset, by default 0
+        delay between the beginning of the EEG data and the seizure onset,
+        by default 0
 
     Returns
     -------
@@ -439,7 +440,8 @@ def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
 
 
 def plot_3d_source_image_map(t_map, mri):
-    """Use Napari to display a coronal 3D view of the t_map superimposed on the MRI
+    """ Use Napari to display a coronal 3D view of the t_map superimposed on
+        the MRI
 
     Parameters
     ----------

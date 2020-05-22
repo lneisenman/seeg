@@ -2,6 +2,7 @@
 
 import os
 
+import mne
 import numpy as np
 import pytest
 
@@ -65,6 +66,8 @@ def mri():
 @pytest.fixture
 def eeg(raw):
     eeg = seeg.EEG(ELECTRODE_NAMES, BADS)
-    eeg.set_baseline(72.8, 77.8, raw, EEG_FILE)
-    eeg.set_seizure(110.8, 160.8, raw, EEG_FILE)
+    raw.set_annotations(mne.Annotations(72.8, 0, 'Seizure'))
+    eeg.set_baseline(raw, file_name=EEG_FILE)
+    raw.set_annotations(mne.Annotations(120.8, 0, 'Seizure'))
+    eeg.set_seizure(raw, file_name=EEG_FILE)
     return eeg
