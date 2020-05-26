@@ -244,11 +244,35 @@ def clip_eeg(raw, pre=5, post=5):
     """
     onset = raw.annotations.onset[0]
     start = onset - pre
+    if start < 0:
+        start = 0
     end = onset + post
     clipped = raw.copy().crop(start, end)
 
     return clipped
 
+
+def read_onsets(file_name):
+    """ read `onset_times.tsv` file and return baseeline and seizure data
+        in separate dataframes
+    
+    Parameters
+    ----------
+    file_name : string
+        path to `onset_times.tsv` file
+    
+    Returns
+    -------
+    baseline_onsets : pandas DataFrame
+        baseline onset info
+    seizure_onsets : pandas DataFrame
+        seizure onset info
+    """
+    onset_times = pd.read_table(file_name, delim_whitespace=True)
+    grouped = onset_times.groupby('study_type')
+    baseline_onsets = grouped.get_group('Baseline')
+    seizure_onsets = grouped.get_group('Seizure')
+    return baseline_onsets, seizure_onsets
 
 def find_num_contacts(contacts, electrode):
     """ find the number of contacts on a given depth electrode

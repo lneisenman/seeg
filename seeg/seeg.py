@@ -7,7 +7,8 @@ import pandas as pd
 
 from .epi_index import calculate_EI
 from .plots.source_image import create_source_image_map, plot_source_image_map
-from .utils import EEG, read_electrode_file, create_montage, read_edf
+from .utils import (EEG, read_electrode_file, create_montage, read_edf,
+                    read_onsets)
 
 
 class Seeg():
@@ -32,20 +33,33 @@ class Seeg():
     """
 
     def __init__(self, subject, subjects_dir, electrode_names, bads,
-                 baseline_time, seizure_time, seiz_delay=5):
+                 seiz_delay=5):
+        print('init')
         self.subject = subject
         self.subjects_dir = subjects_dir
         self.electrode_names = electrode_names
         self.bads = bads
-        self.baseline_time = baseline_time
-        self.seizure_time = seizure_time
         self.seiz_delay = seiz_delay
         self.subject_path = os.path.join(subjects_dir, subject)
+        self.eeg_path = os.path.join(self.subject_path, 'eeg')
         self.mri_file = os.path.join(self.subject_path, 'mri/orig.mgz')
-        self.baseline_eeg_file = os.path.join(self.subject_path,
-                                              'eeg/Interictal.edf')
-        self.seizure_eeg_file = os.path.join(self.subject_path,
-                                             'eeg/Seizure1.edf')
+        self.onsets_file = os.path.join(self.eeg_path, 'onset_times.tsv')
+        self.baseline_onsets, self.seizure_onsets = \
+            read_onsets(self.onsets_file)
+        fn = self.baseline_onsets.loc[self.baseline_onsets['run'] == 1,
+                                     'file_name'].values[0]
+        self.baseline_eeg_file = os.path.join(self.eeg_path, fn)
+        self.baseline_time = \
+            self.baseline_onsets.loc[self.baseline_onsets['run'] == 1,
+                                     'onset_time'].values[0]
+        print(f'baseline time = {self.baseline_time}')
+        fn = self.seizure_onsets.loc[self.seizure_onsets['run'] == 1,
+                                     'file_name'].values[0]
+        self.seizure_eeg_file = os.path.join(self.eeg_path, fn)
+        self.seizure_time = \
+            self.seizure_onsets.loc[self.seizure_onsets['run'] == 1,
+                                    'onset_time'].values[0]
+        print(f'seizure time = {self.seizure_time}')
         self.electrode_file = os.path.join(self.subject_path, 'eeg/recon.fcsv')
         self.eeg = EEG(electrode_names, bads)
         self.read_electrode_locations()
