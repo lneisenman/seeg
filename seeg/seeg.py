@@ -28,23 +28,19 @@ class Seeg():
         start of baseline EEG
     seizure_time : float
         time of seizure onset
-    seiz_delay : float, optional
-        delay from the beginning of the EEG to the seizure onset, by default 5
     """
 
-    def __init__(self, subject, subjects_dir, electrode_names, bads,
-                 seiz_delay=5):
+    def __init__(self, subject, subjects_dir, electrode_names, bads):
         print('init')
         self.subject = subject
         self.subjects_dir = subjects_dir
         self.electrode_names = electrode_names
         self.bads = bads
-        self.seiz_delay = seiz_delay
         self.subject_path = os.path.join(subjects_dir, subject)
         self.eeg_path = os.path.join(self.subject_path, 'eeg')
         self.mri_file = os.path.join(self.subject_path, 'mri/orig.mgz')
         self.onsets_file = os.path.join(self.eeg_path, 'onset_times.tsv')
-        self.baseline_onsets, self.seizure_onsets = \
+        self.baseline_onsets, self.seizure_onsets, self.delays = \
             read_onsets(self.onsets_file)
         fn = self.baseline_onsets.loc[self.baseline_onsets['run'] == 1,
                                      'file_name'].values[0]
@@ -52,15 +48,18 @@ class Seeg():
         self.baseline_time = \
             self.baseline_onsets.loc[self.baseline_onsets['run'] == 1,
                                      'onset_time'].values[0]
-        print(f'baseline time = {self.baseline_time}')
+        
         fn = self.seizure_onsets.loc[self.seizure_onsets['run'] == 1,
                                      'file_name'].values[0]
         self.seizure_eeg_file = os.path.join(self.eeg_path, fn)
         self.seizure_time = \
             self.seizure_onsets.loc[self.seizure_onsets['run'] == 1,
                                     'onset_time'].values[0]
-        print(f'seizure time = {self.seizure_time}')
-        self.electrode_file = os.path.join(self.subject_path, 'eeg/recon.fcsv')
+        
+        self.seiz_delay = \
+            self.delays.loc[self.delays['run'] == 1, 'onset_time']
+
+        self.electrode_file = os.path.join(self.eeg_path, 'recon.fcsv')
         self.eeg = EEG(electrode_names, bads)
         self.read_electrode_locations()
         self.montage, __ = create_montage(self.contacts)

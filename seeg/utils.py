@@ -226,7 +226,7 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
     return eeg
 
 
-def clip_eeg(raw, pre=5, post=5):
+def clip_eeg(raw, pre=5, post=10):
     """ Clip EEG file
 
     Parameters
@@ -267,12 +267,16 @@ def read_onsets(file_name):
         baseline onset info
     seizure_onsets : pandas DataFrame
         seizure onset info
+    delays : pandas DataFram
+        seizure delays
     """
     onset_times = pd.read_table(file_name, delim_whitespace=True)
+    onset_times['study_type'] = onset_times['study_type'].str.lower()
     grouped = onset_times.groupby('study_type')
-    baseline_onsets = grouped.get_group('Baseline')
-    seizure_onsets = grouped.get_group('Seizure')
-    return baseline_onsets, seizure_onsets
+    baseline_onsets = grouped.get_group('baseline')
+    seizure_onsets = grouped.get_group('seizure')
+    delays = grouped.get_group('delay')
+    return baseline_onsets, seizure_onsets, delays
 
 def find_num_contacts(contacts, electrode):
     """ find the number of contacts on a given depth electrode
