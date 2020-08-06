@@ -255,12 +255,12 @@ def clip_eeg(raw, pre=5, post=10):
 def read_onsets(file_name):
     """ read `onset_times.tsv` file and return baseeline and seizure data
         in separate dataframes
-    
+
     Parameters
     ----------
     file_name : string
         path to `onset_times.tsv` file
-    
+
     Returns
     -------
     baseline_onsets : pandas DataFrame
@@ -270,7 +270,7 @@ def read_onsets(file_name):
     delays : pandas DataFram
         seizure delays
     """
-    onset_times = pd.read_table(file_name, delim_whitespace=True)
+    onset_times = pd.read_table(file_name, sep='\s+')
     onset_times['study_type'] = onset_times['study_type'].str.lower()
     grouped = onset_times.groupby('study_type')
     baseline_onsets = grouped.get_group('baseline')
