@@ -273,10 +273,11 @@ def read_onsets(file_name):
     onset_times = pd.read_table(file_name, sep='\s+')
     onset_times['study_type'] = onset_times['study_type'].str.lower()
     grouped = onset_times.groupby('study_type')
-    baseline_onsets = grouped.get_group('baseline')
-    seizure_onsets = grouped.get_group('seizure')
-    delays = grouped.get_group('delay')
+    baseline_onsets = grouped.get_group('baseline').set_index('run')
+    seizure_onsets = grouped.get_group('seizure').set_index('run')
+    delays = grouped.get_group('delay').set_index('run')
     return baseline_onsets, seizure_onsets, delays
+
 
 def find_num_contacts(contacts, electrode):
     """ find the number of contacts on a given depth electrode
