@@ -223,7 +223,7 @@ def map_seeg_data(seizure, montage, mri):
     seiz_data = seiz_img.get_data()
     affine = seiz_img.affine
     inverse = npl.inv(affine)
-    electrodes = seizure['electrodes']
+    electrodes = seizure['electrode_names']
     eeg = seizure['baseline']['eeg']
     bads = eeg.info['bads']
     coord_list = dict()
@@ -281,9 +281,9 @@ def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
     """
 
     seizure['baseline']['bipolar'] = \
-        utils.create_bipolar(seizure['baseline']['eeg'], seizure['electrodes'])
+        utils.create_bipolar(seizure['baseline']['eeg'], seizure['electrode_names'])
     seizure['seizure']['bipolar'] = \
-        utils.create_bipolar(seizure['seizure']['eeg'], seizure['electrodes'])
+        utils.create_bipolar(seizure['seizure']['eeg'], seizure['electrode_names'])
     seizure['baseline']['power'] = \
         utils.calc_power(seizure['baseline']['bipolar'], freqs, n_cycles=freqs)
     seizure['seizure']['power'] = \

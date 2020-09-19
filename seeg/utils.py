@@ -2,6 +2,7 @@
 """ Utility classes and functions
 
 """
+import os
 
 from mayavi import mlab
 import mne
@@ -22,7 +23,7 @@ Parameters
 
    """
     def __init__(self, electrode_names, bads=None):
-        self.electrodes = electrode_names
+        self.electrode_names = electrode_names
         self.bads = bads
         self.baseline = dict()
         self.seizure = dict()
@@ -32,8 +33,8 @@ Parameters
             return self.baseline
         elif key == 'seizure':
             return self.seizure
-        elif key == 'electrodes':
-            return self.electrodes
+        elif key == 'electrode_names':
+            return self.electrode_names
         elif key == 'bads':
             return self.bads
         else:
@@ -87,6 +88,45 @@ def read_electrode_file(file_name):
     electrodes['y'] = contacts['y']/1000
     electrodes['z'] = contacts['z']/1000
     return electrodes
+
+
+def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
+                  electrode_file='recon.fcsv', onset_file='onset_times.tsv'):
+
+    electrode_file = os.path.join(EEG_DIR, electrode_file)
+    electrodes = read_electrode_file(electrode_file)
+
+    onset_times_file = os.path.join(EEG_DIR, onset_file)
+    baseline_onsets, seizure_onsets, delays = read_onsets(onset_times_file)
+
+    fn = baseline_onsets.file_name[1]
+    baseline_eeg_file = os.path.join(EEG_DIR, fn)
+    baseline_onset_time = baseline_onsets.onset_time[1]
+
+    fn = seizure_onsets.file_name[1]
+    seizure_eeg_file = os.path.join(EEG_DIR, fn)
+    seizure_onset_time = seizure_onsets.onset_time[1]
+
+    seiz_delay = delays.onset_time[1]
+
+    read_eeg = read_micromed_eeg
+    if fn[-3:] == 'edf':
+        read_eeg = read_edf
+
+    eeg = EEG(ELECTRODE_NAMES, BADS)
+    raw, montage = read_eeg(baseline_eeg_file, electrodes, BADS)
+    raw.set_annotations(mne.Annotations(baseline_onset_time, 0, 'Seizure'))
+    eeg.set_baseline(raw, file_name=baseline_eeg_file)
+
+    raw, montage = read_eeg(seizure_eeg_file, electrodes, BADS)
+    raw.set_annotations(mne.Annotations(seizure_onset_time, 0, 'Seizure'))
+    eeg.set_seizure(raw, file_name=seizure_eeg_file)
+
+    eeg.seiz_delay = seiz_delay
+    eeg.montage = montage
+    eeg.electrodes = electrodes
+
+    return eeg
 
 
 def create_montage(electrodes, sfreq=1000):
@@ -223,7 +263,8 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
     if notch:
         eeg.notch_filter(range(60, int(raw.info['sfreq']/2), 60))
 
-    return eeg
+    montage, __ = create_montage(electrodes)
+    return eeg, montage
 
 
 def clip_eeg(raw, pre=5, post=10):
@@ -252,7 +293,7 @@ def clip_eeg(raw, pre=5, post=10):
     return clipped
 
 
-def read_onsets(file_name):
+def read_onsets(file_name='onset_times.tsv'):
     """ read `onset_times.tsv` file and return baseeline and seizure data
         in separate dataframes
 
