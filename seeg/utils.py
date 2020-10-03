@@ -99,34 +99,51 @@ def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
     onset_times_file = os.path.join(EEG_DIR, onset_file)
     baseline_onsets, seizure_onsets, delays = read_onsets(onset_times_file)
 
-    fn = baseline_onsets.file_name[1]
-    baseline_eeg_file = os.path.join(EEG_DIR, fn)
-    baseline_onset_time = baseline_onsets.onset_time[1]
+    studies = list(range(1, len(seizure_onsets)+1))
+    if isinstance(seizure, int):
+        if seizure > 0:
+            studies = [seizure]
 
-    fn = seizure_onsets.file_name[1]
-    seizure_eeg_file = os.path.join(EEG_DIR, fn)
-    seizure_onset_time = seizure_onsets.onset_time[1]
+    eeg_list = list()
 
-    seiz_delay = delays.onset_time[1]
+    for i in studies:
+        j = i
+        if len(baseline_onsets) == 1:
+            j = 1
 
-    read_eeg = read_micromed_eeg
-    if fn[-3:] == 'edf':
-        read_eeg = read_edf
+        fn = baseline_onsets.file_name[j]
+        baseline_eeg_file = os.path.join(EEG_DIR, fn)
+        baseline_onset_time = baseline_onsets.onset_time[j]
 
-    eeg = EEG(ELECTRODE_NAMES, BADS)
-    raw, montage = read_eeg(baseline_eeg_file, electrodes, BADS)
-    raw.set_annotations(mne.Annotations(baseline_onset_time, 0, 'Seizure'))
-    eeg.set_baseline(raw, file_name=baseline_eeg_file)
+        fn = seizure_onsets.file_name[i]
+        seizure_eeg_file = os.path.join(EEG_DIR, fn)
+        seizure_onset_time = seizure_onsets.onset_time[i]
 
-    raw, montage = read_eeg(seizure_eeg_file, electrodes, BADS)
-    raw.set_annotations(mne.Annotations(seizure_onset_time, 0, 'Seizure'))
-    eeg.set_seizure(raw, file_name=seizure_eeg_file)
+        j = i
+        if len(delays) == 1:
+            j = 1
+        seiz_delay = delays.onset_time[j]
 
-    eeg.seiz_delay = seiz_delay
-    eeg.montage = montage
-    eeg.electrodes = electrodes
+        read_eeg = read_micromed_eeg
+        if fn[-3:] == 'edf':
+            read_eeg = read_edf
 
-    return eeg
+        eeg = EEG(ELECTRODE_NAMES, BADS)
+        raw, montage = read_eeg(baseline_eeg_file, electrodes, BADS)
+        raw.set_annotations(mne.Annotations(baseline_onset_time, 0, 'Seizure'))
+        eeg.set_baseline(raw, file_name=baseline_eeg_file)
+
+        raw, montage = read_eeg(seizure_eeg_file, electrodes, BADS)
+        raw.set_annotations(mne.Annotations(seizure_onset_time, 0, 'Seizure'))
+        eeg.set_seizure(raw, file_name=seizure_eeg_file)
+
+        eeg.seiz_delay = seiz_delay
+        eeg.montage = montage
+        eeg.electrodes = electrodes
+
+        eeg_list.append(eeg)
+
+    return eeg_list
 
 
 def create_montage(electrodes, sfreq=1000):
@@ -277,7 +294,7 @@ def clip_eeg(raw, pre=5, post=10):
     pre : float, optional
         how much time prior to the onset to clip, by default 5
     post : float, optional
-        how much time after to the onset to clip, by default 5
+        how much time after to the onset to clip, by default 10
 
     Returns
     -------
