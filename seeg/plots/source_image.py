@@ -21,6 +21,26 @@ from . import gin
 from .. import utils
 
 
+class SourceImage:
+
+    def __init__(self, eeg, mri, freqs, low_freq=120, high_freq=200,
+                 seiz_delay=0, step=3, num_steps=1):
+        self.freqs = freqs
+        self.mri = mri
+        self.low_freq = low_freq
+        self.high_freq = high_freq
+        self.seiz_delay = seiz_delay
+        self.step = step
+        self.t_maps = list()
+        for i in range(num_steps):
+            self.t_maps.append(create_source_image_map(eeg, mri, freqs,
+                                                       low_freq, high_freq,
+                                                       seiz_delay+(i*step)))
+
+    def plot(self, cut_coords=None, threshold=2):
+        image = plot_source_image_map(self.t_maps[0], self.mri)
+
+
 def compress_data(data, old_freq, new_freq):
     """ compress data from old frequency to new frequency
 
@@ -199,15 +219,13 @@ def voxel_coords(mri_coords, inverse):
     return coords.astype(np.int)
 
 
-def map_seeg_data(seizure, montage, mri):
+def map_seeg_data(seizure, mri):
     """map contact data to surrounding voxels and smooth
 
     Parameters
     ----------
     seizure : EEG | dict
         eeg data
-    montage : MNE DigMontage
-        eeg montage
     mri : string
         path to MRI file
 
@@ -226,6 +244,7 @@ def map_seeg_data(seizure, montage, mri):
     electrodes = seizure['electrode_names']
     eeg = seizure['baseline']['eeg']
     bads = eeg.info['bads']
+    montage = seizure.montage
     coord_list = dict()
     contact_num = 0
     for electrode in electrodes:
@@ -255,7 +274,7 @@ def map_seeg_data(seizure, montage, mri):
     return base_img, seiz_img
 
 
-def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
+def calc_source_image_power_data(seizure, freqs, low_freq=120,
                                  high_freq=200, seiz_delay=0):
     """ calculate power data for SEEG source image as per David et. al. 2011
 
@@ -265,8 +284,6 @@ def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
         eeg data
     freqs : ndarray
         array of frequencies
-    montage : MNE DigMontage
-        eeg montage
     low_freq : int, optional
         low frequency cutoff, by default 120
     high_freq : int, optional
@@ -296,15 +313,13 @@ def calc_source_image_power_data(seizure, freqs, montage, low_freq=120,
     return seizure
 
 
-def calc_sorce_image_from_power(seizure, montage, mri):
+def calc_sorce_image_from_power(seizure, mri):
     """Create source image from power data
 
     Parameters
     ----------
     seizure : EEG | dict
         eeg data
-    montage : MNE DigMontage
-        eeg montage
     mri : string
         path to file containing MRI
 
@@ -314,7 +329,7 @@ def calc_sorce_image_from_power(seizure, montage, mri):
         Image where voxel values represent corresponding t-values
     """
     seizure['baseline']['img'], seizure['seizure']['img'] = \
-        map_seeg_data(seizure, montage, mri)
+        map_seeg_data(seizure, mri)
     base_img = seizure['baseline']['img']
     seiz_img = seizure['seizure']['img']
 
@@ -333,7 +348,7 @@ def calc_sorce_image_from_power(seizure, montage, mri):
     return nifti_masker.inverse_transform(t_scores)
 
 
-def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
+def create_source_image_map(seizure, mri, freqs, low_freq=120,
                             high_freq=200, seiz_delay=0):
     """ create the source image t-map as per David et. al. 2011'
 
@@ -345,8 +360,6 @@ def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
         Path to location of MRI file
     freqs : ndarray
         array of frequencies
-    montage : MNE DigMontage
-        EEG montage
     low_freq : int, optional
         low frequency cut-off, by default 120
     high_freq : int, optional
@@ -355,9 +368,9 @@ def create_source_image_map(seizure, mri, freqs, montage, low_freq=120,
         delay from the beginning of the clip to the seizure onset, by default 0
     """
 
-    seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
+    seizure = calc_source_image_power_data(seizure, freqs, low_freq,
                                            high_freq, seiz_delay)
-    return calc_sorce_image_from_power(seizure, montage, mri)
+    return calc_sorce_image_from_power(seizure, mri)
 
 
 def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):

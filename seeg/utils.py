@@ -284,7 +284,7 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
     return eeg, montage
 
 
-def clip_eeg(raw, pre=5, post=10):
+def clip_eeg(raw, pre=5, post=20):
     """ Clip EEG file
 
     Parameters
@@ -294,7 +294,7 @@ def clip_eeg(raw, pre=5, post=10):
     pre : float, optional
         how much time prior to the onset to clip, by default 5
     post : float, optional
-        how much time after to the onset to clip, by default 10
+        how much time after to the onset to clip, by default 20
 
     Returns
     -------
