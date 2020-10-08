@@ -22,8 +22,8 @@ import seeg
 # HOME = r'C:\Users\leisenman\Documents\brainstorm_db'
 
 
-def test_create_source_image_map(eeg, mri, freqs, montage):
-    t_map = seeg.create_source_image_map(eeg, mri, freqs, montage,
+def test_create_source_image_map(eeg, mri, freqs):
+    t_map = seeg.create_source_image_map(eeg, mri, freqs,
                                          low_freq=120, high_freq=200,
                                          seiz_delay=5)
     seeg.plot_source_image_map(t_map, mri)

@@ -55,9 +55,9 @@ def test_show_bipolar_values(electrode_names, electrodes, raw):
     mlab.show()
 
 
-def test_create_depth_source_image_map(eeg, freqs, montage, electrode_names,
+def test_create_depth_source_image_map(eeg, freqs, electrode_names,
                                        electrodes, raw):
-    t_map = seeg.create_depth_source_image_map(eeg, freqs, montage,
+    t_map = seeg.create_depth_source_image_map(eeg, freqs,
                                                low_freq=120, high_freq=200,
                                                seiz_delay=5)
     print(t_map[0].min(), t_map[0].max())

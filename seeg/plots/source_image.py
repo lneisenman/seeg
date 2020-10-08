@@ -244,7 +244,7 @@ def map_seeg_data(seizure, mri):
     electrodes = seizure['electrode_names']
     eeg = seizure['baseline']['eeg']
     bads = eeg.info['bads']
-    montage = seizure.montage
+    montage = eeg.get_montage()
     coord_list = dict()
     contact_num = 0
     for electrode in electrodes:
@@ -298,9 +298,11 @@ def calc_source_image_power_data(seizure, freqs, low_freq=120,
     """
 
     seizure['baseline']['bipolar'] = \
-        utils.create_bipolar(seizure['baseline']['eeg'], seizure['electrode_names'])
+        utils.create_bipolar(seizure['baseline']['eeg'],
+                             seizure['electrode_names'])
     seizure['seizure']['bipolar'] = \
-        utils.create_bipolar(seizure['seizure']['eeg'], seizure['electrode_names'])
+        utils.create_bipolar(seizure['seizure']['eeg'],
+                             seizure['electrode_names'])
     seizure['baseline']['power'] = \
         utils.calc_power(seizure['baseline']['bipolar'], freqs, n_cycles=freqs)
     seizure['seizure']['power'] = \
@@ -391,7 +393,7 @@ def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
     plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)
 
 
-def calc_depth_sorce_image_from_power(seizure, montage):
+def calc_depth_source_image_from_power(seizure):
     """ Calculate t-map image analagous to Brainstorm demo
 
     Parameters
@@ -421,7 +423,7 @@ def calc_depth_sorce_image_from_power(seizure, montage):
     return t_scores
 
 
-def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
+def create_depth_source_image_map(seizure, freqs, low_freq=120,
                                   high_freq=200, seiz_delay=0):
     """ Calculate t-values for each individual (non-bad) depth contact
 
@@ -431,8 +433,6 @@ def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
         baseline and seizure EEG data
     freqs : ndarray
         array of frequencies
-    montage : MNE DigMontage
-        EEG montage
     low_freq : int, optional
         lower frequency limit for calculation, by default 120
     high_freq : int, optional
@@ -447,9 +447,9 @@ def create_depth_source_image_map(seizure, freqs, montage, low_freq=120,
         t-values for depth contacts
     """
 
-    seizure = calc_source_image_power_data(seizure, freqs, montage, low_freq,
+    seizure = calc_source_image_power_data(seizure, freqs, low_freq,
                                            high_freq, seiz_delay)
-    return calc_depth_sorce_image_from_power(seizure, montage)
+    return calc_depth_source_image_from_power(seizure)
 
 
 def plot_3d_source_image_map(t_map, mri):
