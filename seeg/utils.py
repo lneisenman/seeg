@@ -47,7 +47,7 @@ Parameters
         self.baseline['eeg'] = clip_eeg(raw, pre, post)
         self.baseline['file_name'] = file_name
 
-    def set_seizure(self, raw, pre=5, post=5, file_name=None):
+    def set_seizure(self, raw, pre=5, post=20, file_name=None):
         """ set parameters for seizure EEG
 
         """
@@ -97,7 +97,7 @@ def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
     electrodes = read_electrode_file(electrode_file)
 
     onset_times_file = os.path.join(EEG_DIR, onset_file)
-    baseline_onsets, seizure_onsets, delays = read_onsets(onset_times_file)
+    baseline_onsets, seizure_onsets = read_onsets(onset_times_file)
 
     studies = list(range(1, len(seizure_onsets)+1))
     if isinstance(seizure, int):
@@ -119,11 +119,6 @@ def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
         seizure_eeg_file = os.path.join(EEG_DIR, fn)
         seizure_onset_time = seizure_onsets.onset_time[i]
 
-        j = i
-        if len(delays) == 1:
-            j = 1
-        seiz_delay = delays.onset_time[j]
-
         read_eeg = read_micromed_eeg
         if fn[-3:] == 'edf':
             read_eeg = read_edf
@@ -137,7 +132,6 @@ def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
         raw.set_annotations(mne.Annotations(seizure_onset_time, 0, 'Seizure'))
         eeg.set_seizure(raw, file_name=seizure_eeg_file)
 
-        eeg.seiz_delay = seiz_delay
         eeg.montage = montage
         eeg.electrodes = electrodes
 
@@ -306,7 +300,8 @@ def clip_eeg(raw, pre=5, post=20):
         start = 0
     end = onset + post
     clipped = raw.copy().crop(start, end)
-
+    clipped.set_annotations(None)
+    clipped.set_annotations(mne.Annotations(onset-start, 0, 'Seizure'))
     return clipped
 
 
@@ -325,16 +320,13 @@ def read_onsets(file_name='onset_times.tsv'):
         baseline onset info
     seizure_onsets : pandas DataFrame
         seizure onset info
-    delays : pandas DataFram
-        seizure delays
     """
     onset_times = pd.read_table(file_name, sep='\s+')   # noqa: ignore=W605
     onset_times['study_type'] = onset_times['study_type'].str.lower()
     grouped = onset_times.groupby('study_type')
     baseline_onsets = grouped.get_group('baseline').set_index('run')
     seizure_onsets = grouped.get_group('seizure').set_index('run')
-    delays = grouped.get_group('delay').set_index('run')
-    return baseline_onsets, seizure_onsets, delays
+    return baseline_onsets, seizure_onsets
 
 
 def find_num_contacts(contacts, electrode):

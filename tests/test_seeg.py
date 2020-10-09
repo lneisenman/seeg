@@ -24,8 +24,7 @@ import seeg
 
 def test_create_source_image_map(eeg, mri, freqs):
     t_map = seeg.create_source_image_map(eeg, mri, freqs,
-                                         low_freq=120, high_freq=200,
-                                         seiz_delay=5)
+                                         low_freq=120, high_freq=200)
     seeg.plot_source_image_map(t_map, mri)
     seeg.plot_source_image_map(t_map, mri, cut_coords=(-38, -50, -12))
     plt.show()

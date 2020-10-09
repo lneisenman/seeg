@@ -152,7 +152,9 @@ def extract_power(seizure, D=3, dt=0.2, start=0):
     assert int(D/dt)*dt == D
     sfreq = seizure['seizure']['bipolar'].info['sfreq']
     num_steps = int(D/dt)
-    tstep0 = int((sfreq * start) + 1)
+    seiz = seizure.seizure['eeg']
+    onset = seiz.annotations.onset[0] - (seiz.first_samp/sfreq)
+    tstep0 = int(sfreq * (start+onset) + 1)
     baseline_ave_power = seizure['baseline']['ave_power']
     baseline_ex_power = np.zeros((baseline_ave_power.shape[0], num_steps))
     seizure_ave_power = seizure['seizure']['ave_power']
@@ -275,7 +277,7 @@ def map_seeg_data(seizure, mri):
 
 
 def calc_source_image_power_data(seizure, freqs, low_freq=120,
-                                 high_freq=200, seiz_delay=0):
+                                 high_freq=200, delay=0):
     """ calculate power data for SEEG source image as per David et. al. 2011
 
     Parameters
@@ -288,8 +290,8 @@ def calc_source_image_power_data(seizure, freqs, low_freq=120,
         low frequency cutoff, by default 120
     high_freq : int, optional
         high frequency cutoff, by default 200
-    seiz_delay : float, optional
-        time from beginning of eeg file to seizure onset, by default 0
+    delay : float, optional
+        time from beginning of seizure onset, by default 0
 
     Returns
     -------
@@ -310,7 +312,7 @@ def calc_source_image_power_data(seizure, freqs, low_freq=120,
     seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
         ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
     seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
-        extract_power(seizure, start=seiz_delay)
+        extract_power(seizure, start=delay)
 
     return seizure
 
@@ -351,7 +353,7 @@ def calc_sorce_image_from_power(seizure, mri):
 
 
 def create_source_image_map(seizure, mri, freqs, low_freq=120,
-                            high_freq=200, seiz_delay=0):
+                            high_freq=200, delay=0):
     """ create the source image t-map as per David et. al. 2011'
 
     Parameters
@@ -366,12 +368,12 @@ def create_source_image_map(seizure, mri, freqs, low_freq=120,
         low frequency cut-off, by default 120
     high_freq : int, optional
         high frequency cut-off, by default 200
-    seiz_delay : int, optional
-        delay from the beginning of the clip to the seizure onset, by default 0
+    delay : int, optional
+        delay from the beginning of the seizure, by default 0
     """
 
     seizure = calc_source_image_power_data(seizure, freqs, low_freq,
-                                           high_freq, seiz_delay)
+                                           high_freq, delay)
     return calc_sorce_image_from_power(seizure, mri)
 
 
@@ -424,7 +426,7 @@ def calc_depth_source_image_from_power(seizure):
 
 
 def create_depth_source_image_map(seizure, freqs, low_freq=120,
-                                  high_freq=200, seiz_delay=0):
+                                  high_freq=200, delay=0):
     """ Calculate t-values for each individual (non-bad) depth contact
 
     Parameters
@@ -438,8 +440,7 @@ def create_depth_source_image_map(seizure, freqs, low_freq=120,
     high_freq : int, optional
         upper frequency limit for calculation, by default 200
     seiz_delay : float, by default 0
-        delay between the beginning of the EEG data and the seizure onset,
-        by default 0
+        delay from the beginning of the seizure, by default 0
 
     Returns
     -------
@@ -448,7 +449,7 @@ def create_depth_source_image_map(seizure, freqs, low_freq=120,
     """
 
     seizure = calc_source_image_power_data(seizure, freqs, low_freq,
-                                           high_freq, seiz_delay)
+                                           high_freq, delay)
     return calc_depth_source_image_from_power(seizure)
 
 
