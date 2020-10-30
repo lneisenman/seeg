@@ -7,6 +7,7 @@ import os
 
 import matplotlib as mpl
 from mayavi import mlab
+import mne
 from nibabel.freesurfer import io as fio
 from nilearn.plotting.cm import cold_hot
 import numpy as np
@@ -17,6 +18,9 @@ from tvtk.common import configure_input_data
 
 from . import gin
 from .. import utils
+
+mne.viz.set_3d_backend('mayavi')
+Brain = mne.viz.get_brain_class()
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
 YELLOW = (1, 1, 0)
