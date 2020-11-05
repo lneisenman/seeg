@@ -76,7 +76,7 @@ def read_electrode_file(file_name):
         header = 'infer'
     else:
         skiprows = None
-        sep = '\t'
+        sep = '\s+'
         header = None
         names = ['label', 'x', 'y', 'z']
 
