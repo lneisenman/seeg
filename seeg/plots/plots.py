@@ -83,7 +83,7 @@ def plot_power(power, ch_names, depth, label_color='black'):
     labels = [ch_names[row] for row in rows]
     fig, ax = plt.subplots(len(rows), 1, sharex=True)
     for i, row in enumerate(rows):
-        ax[i].imshow(power[0, row, :, :]) #, cmap='gin')
+        ax[i].imshow(power[0, row, :, :])
         ax[i].set_ylabel(labels[i], labelpad=25, rotation=0, color=label_color)
         ax[i].yaxis.set_major_locator(plt.NullLocator())
         ax[i].tick_params(bottom=False, left=False)

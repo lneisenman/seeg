@@ -16,7 +16,7 @@ from surfer import Brain
 from tvtk.api import tvtk
 from tvtk.common import configure_input_data
 
-from . import gin
+from . import draw
 from .. import utils
 
 mne.viz.set_3d_backend('mayavi')
@@ -130,7 +130,7 @@ class Depth():
         [formulation](https://math.stackexchange.com/questions/1521128/given-a-line-and-a-point-in-3d-how-to-find-the-closest-point-on-the-line)
         For a point P and a line defined by the points Q and R,
         the closest point on the line G is given by G=Q+t(R−Q)
-        where t=(R−Q)⋅(Q−P)/(R−Q)⋅(R−Q).          
+        where t=(R−Q)⋅(Q−P)/(R−Q)⋅(R−Q).
         """
 
         ave = np.mean(self.locations, axis=0)
@@ -197,49 +197,12 @@ class Depth():
         if fig is None:
             fig = mlab.figure()
 
-        lineSource = tvtk.LineSource(point1=self.tip, point2=self.base)
-        lineMapper = tvtk.PolyDataMapper()
-        configure_input_data(lineMapper, lineSource.output)
-        lineSource.update()
-        line_prop = tvtk.Property(opacity=0)
-        lineActor = tvtk.Actor(mapper=lineMapper, property=line_prop)
-        fig.scene.add_actor(lineActor)
-
-        # Create a tube around the line
-        tubeFilter = tvtk.TubeFilter()
-        configure_input_data(tubeFilter, lineSource.output)
-        tubeFilter.radius = self.diam/2
-        tubeFilter.number_of_sides = 50
-        tubeFilter.update()
-        tubeMapper = tvtk.PolyDataMapper()
-        configure_input_data(tubeMapper, tubeFilter.output)
-        p = tvtk.Property(opacity=0.3, color=depth_color)
-        tubeActor = tvtk.Actor(mapper=tubeMapper, property=p)
-        fig.scene.add_actor(tubeActor)
+        draw.draw_cyl(fig, self.tip, self.base, self.diam, depth_color, 0.3)
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:
-                contactSource = tvtk.LineSource(point1=contact[0],
-                                                point2=contact[1])
-                contactMapper = tvtk.PolyDataMapper()
-                configure_input_data(contactMapper, contactSource.output)
-                contactSource.update()
-                contact_prop = tvtk.Property(opacity=0)
-                contactActor = tvtk.Actor(mapper=lineMapper,
-                                          property=contact_prop)
-                fig.scene.add_actor(contactActor)
-
-                contactFilter = tvtk.TubeFilter()
-                configure_input_data(contactFilter, contactSource.output)
-                contactFilter.radius = (self.diam/2) + 0.125
-                contactFilter.number_of_sides = 50
-                contactFilter.update()
-                contact_tubeMapper = tvtk.PolyDataMapper()
-                configure_input_data(contact_tubeMapper, contactFilter.output)
-                p_contact = tvtk.Property(opacity=1, color=c_colors[i])
-                contact_tubeActor = tvtk.Actor(mapper=contact_tubeMapper,
-                                               property=p_contact)
-                fig.scene.add_actor(contact_tubeActor)
+                draw.draw_cyl(fig, contact[0], contact[1], self.diam+0.25,
+                              c_colors[i], 1)
 
         return fig
 
@@ -272,17 +235,11 @@ class Depth():
                              'value or a list of RGBs')
 
         radius = self.contact_len/1.5
+        opacity = 0.3
+        print('showing locations')
         for i, location in enumerate(self.locations):
             if self.active[i]:
-                sphereSource = tvtk.SphereSource(center=location,
-                                                 radius=radius)
-                sphereMapper = tvtk.PolyDataMapper()
-                configure_input_data(sphereMapper, sphereSource.output)
-                sphereSource.update()
-                sphere_prop = tvtk.Property(opacity=0.3, color=c_colors[i])
-                sphereActor = tvtk.Actor(mapper=sphereMapper,
-                                         property=sphere_prop)
-                fig.scene.add_actor(sphereActor)
+                draw.draw_sphere(fig, location, radius, c_colors[i], opacity)
 
         return fig
 
@@ -401,10 +358,6 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
     norm = mpl.colors.Normalize(vmin, vmax)
     color_map = mpl.cm.get_cmap(cmap)
     mapped_values = color_map(norm(values))
-    print(mapped_values.shape)
-    # mpl.pyplot.scatter(range(len(values)), values, color=mapped_values)
-    # mpl.pyplot.show()
-    print(fig, fig.scene)
     for depth in depth_list:
         if radius is None:
             radius = depth.contact_len/1.5
@@ -415,22 +368,16 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
                                                    bads)
         start = len(depth.name)
         val_idx = 0
+        opacity = 0.3
         for i, (anode, cathode) in enumerate(zip(anodes, cathodes)):
             a_idx = int(anode[start:]) - 1
             c_idx = int(cathode[start:]) - 1
             an = (depth.contacts[a_idx][0] + depth.contacts[a_idx][1])/2
             ca = (depth.contacts[c_idx][0] + depth.contacts[c_idx][1])/2
             midpoint = (an + ca)/2
-            sphereSource = tvtk.SphereSource(center=midpoint, radius=radius)
-            sphereMapper = tvtk.PolyDataMapper()
-            configure_input_data(sphereMapper, sphereSource.output)
-            sphereSource.update()
             color = (mapped_values[i+val_idx, 0], mapped_values[i+val_idx, 1],
                      mapped_values[i+val_idx, 2])
-            print(color)
-            sphere_prop = tvtk.Property(opacity=0.3, color=color)
-            sphereActor = tvtk.Actor(mapper=sphereMapper, property=sphere_prop)
-            fig.scene.add_actor(sphereActor)
+            draw.draw_sphere(fig, midpoint, radius, color, opacity)
             val_idx += len(anode)
 
     return fig
