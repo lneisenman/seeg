@@ -13,8 +13,8 @@ from nilearn.plotting.cm import cold_hot
 import numpy as np
 from scipy.optimize import minimize
 from surfer import Brain
-from tvtk.api import tvtk
-from tvtk.common import configure_input_data
+# from tvtk.api import tvtk
+# from tvtk.common import configure_input_data
 
 from . import draw
 from .. import utils

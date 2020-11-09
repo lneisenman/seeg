@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Code to draw spheres and cylinders in Mayavi figures
+""" Code to draw spheres, cylinders and cubes in Mayavi figures
 
 """
 
