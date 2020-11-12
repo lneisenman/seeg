@@ -10,10 +10,12 @@ from . import draw
 
 
 def draw_volume(fig, t_map, cras=np.zeros(3)):
-    print(t_map.affine)
-    # print(t_map.header)
-    center = apply_affine(t_map.affine, (0, 0, 0))
-    print(center)
+    print(f'affine = {t_map.affine}')
+    data = t_map.get_fdata()
+    location = np.asarray(data.shape[:3])//2
+    print(f'location = {location}')
+    center = apply_affine(t_map.affine, location)
+    print(f'center = {center}')
     draw.draw_cube(fig, center-cras, 3, 3, 3, (1, 0, 0), 0.5)
 
     return fig

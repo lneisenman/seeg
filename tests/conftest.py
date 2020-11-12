@@ -16,6 +16,7 @@ if not os.path.exists(BASE_DIR):
 
 SUBJECT_ID = 'seeg_brainstorm'
 SUBJECTS_DIR = os.path.join(BASE_DIR, 'subjects')
+EEG_DIR = os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'eeg')
 
 ELECTRODE_NAMES = [r"y'", r"t'", r"u'", r"v'", r"x'", r"et'", r"b'", r"c'",
                    r"d'", r"e'", r"f'", r"l'", r"g'", r"s'", r"o'"]
@@ -64,10 +65,7 @@ def mri():
 
 
 @pytest.fixture
-def eeg(raw):
-    eeg = seeg.EEG(ELECTRODE_NAMES, BADS)
-    raw.set_annotations(mne.Annotations(72.8, 0, 'Seizure'))
-    eeg.set_baseline(raw, file_name=EEG_FILE)
-    raw.set_annotations(mne.Annotations(120.8, 0, 'Seizure'))
-    eeg.set_seizure(raw, file_name=EEG_FILE)
+def eeg():
+    eeg = seeg.load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
+                            electrode_file='elec_pos_patient.txt')[0]
     return eeg
