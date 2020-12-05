@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-from tests.conftest import electrode_names
 
 from mayavi import mlab
 import numpy as np
-import pytest
-from surfer import Brain
 
 import seeg
 
