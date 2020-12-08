@@ -80,7 +80,7 @@ def read_electrode_file(file_name):
         header = None
         names = ['label', 'x', 'y', 'z']
 
-    contacts = pd.read_csv(file_name, skiprows=skiprows, sep=sep,
+    contacts = pd.read_table(file_name, skiprows=skiprows, sep=sep,
                            header=header, names=names)
     electrodes = pd.DataFrame(columns=['contact', 'x', 'y', 'z'])
     electrodes['contact'] = contacts['label']
