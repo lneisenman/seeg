@@ -63,3 +63,5 @@ target/
 
 # pyenv python configuration file
 .python-version
+
+*.nii.gz
