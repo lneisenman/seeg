@@ -3,7 +3,9 @@
 
 """
 
+from seeg.plots.depths import read_cras
 from nibabel.affines import apply_affine
+from nilearn.plotting.cm import cold_hot
 import numpy as np
 
 from . import draw
@@ -11,11 +13,21 @@ from . import draw
 
 def draw_volume(fig, t_map, cras=np.zeros(3)):
     print(f'affine = {t_map.affine}')
-    data = t_map.get_fdata()
-    location = np.asarray(data.shape[:3])//2
-    print(f'location = {location}')
-    center = apply_affine(t_map.affine, location)
-    print(f'center = {center}')
-    draw.draw_cube(fig, center-cras, 3, 3, 3, (1, 0, 0), 0.5)
+    print(np.diag(t_map.affine))
+    xL, yL, zL = np.diag(t_map.affine)[:3]
+    data = t_map.get_fdata()[:, :, :, 0]
+    data -= np.min(data)
+    data /= np.max(data)
+    print(data.shape)
+    cutoff = 0.50*np.max(data)
+    print(f'cutoff = {cutoff}')
+    coords = np.transpose(np.nonzero(data > cutoff))
+    for coord in coords:
+        print(f'coord = {coord}')
+        cube = apply_affine(t_map.affine, coord)
+        color = cold_hot(data[tuple(coord)])[:3]
+        print(f'data = {data[tuple(coord)]}')
+        print(f'color = {color}')
+        draw.draw_cube(fig, cube+cras, xL, yL, zL, color, 0.5)
 
     return fig

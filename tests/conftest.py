@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+from _pytest.config import filename_arg
 
 import mne
 import numpy as np
+import nibabel as nib
 import pytest
 
 import seeg
@@ -67,5 +69,11 @@ def mri():
 @pytest.fixture
 def eeg():
     eeg = seeg.load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
-                            electrode_file='elec_pos_patient.txt')[0]
+                             electrode_file='elec_pos_patient.txt')[0]
     return eeg
+
+
+@pytest.fixture
+def t_map():
+    t_map = nib.load('tests/t_map.nii.gz')
+    return t_map
