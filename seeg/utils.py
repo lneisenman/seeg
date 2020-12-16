@@ -81,7 +81,7 @@ def read_electrode_file(file_name):
         names = ['label', 'x', 'y', 'z']
 
     contacts = pd.read_table(file_name, skiprows=skiprows, sep=sep,
-                           header=header, names=names)
+                             header=header, names=names, engine='python')
     electrodes = pd.DataFrame(columns=['contact', 'x', 'y', 'z'])
     electrodes['contact'] = contacts['label']
     electrodes['x'] = contacts['x']/1000

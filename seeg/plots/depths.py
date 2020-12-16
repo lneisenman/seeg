@@ -8,9 +8,12 @@ import os
 import matplotlib as mpl
 from mayavi import mlab
 import mne
+import nibabel as nib
+from nibabel.affines import apply_affine
 from nibabel.freesurfer import io as fio
 from nilearn.plotting.cm import cold_hot
 import numpy as np
+import numpy.linalg as npl
 from scipy.optimize import minimize
 from surfer import Brain
 # from tvtk.api import tvtk
@@ -82,10 +85,10 @@ class Depth():
     """
 
     def __init__(self, name, num_contacts, locations, diam=0.8, contact_len=2,
-                 spacing=1.5, active=True, cras=np.zeros(3)):
+                 spacing=1.5, active=True):
         self.name = name
         self.num_contacts = num_contacts
-        self.locations = locations - cras
+        self.locations = locations
         self.diam = diam
         self.contact_len = contact_len
         self.spacing = spacing
@@ -93,7 +96,6 @@ class Depth():
             active = [active]*num_contacts
 
         self.active = active
-        self.cras = cras
         self.fit_locations()
 
     def _calc_contacts(self, shift):
@@ -167,7 +169,8 @@ class Depth():
         self.base = G + self.vector*(20 + self.num_contacts*dist)
         self.tip = a    # Make sure tip extends to end of distal contact
 
-    def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0)):
+    def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0),
+             mri_inv=np.ones(4), Torig=np.ones(4)):
         """Draw fit of locations as a cylindrical depth
 
         Parameters
@@ -179,6 +182,10 @@ class Depth():
             Otherwise list of colors for corresponding contacts
         depth_color : RGB color, optional
             Color used to draw the Depth
+        mri_inv : numpy ndarray (4x4)
+            affine to convert coords back to voxels
+        Torig : numpy ndarray (4x4)
+            affine to convert voxels to Freesurfer surface coordinates
 
         Returns
         -------
@@ -197,15 +204,19 @@ class Depth():
         if fig is None:
             fig = mlab.figure()
 
-        draw.draw_cyl(fig, self.tip, self.base, self.diam, depth_color, 0.3)
+        tip = apply_affine(Torig, apply_affine(mri_inv, self.tip))
+        base = apply_affine(Torig, apply_affine(mri_inv, self.base))
+        draw.draw_cyl(fig, tip, base, self.diam, depth_color, 0.3)
+        x, y, z = base
+        mlab.text3d(x, y, z, self.name, scale=5, color=depth_color)
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:
-                draw.draw_cyl(fig, contact[0], contact[1], self.diam+0.25,
+                tip = apply_affine(Torig, apply_affine(mri_inv, contact[0]))
+                base = apply_affine(Torig, apply_affine(mri_inv, contact[1])) 
+                draw.draw_cyl(fig, tip, base, self.diam+0.25,
                               c_colors[i], 1)
 
-        x, y, z = self.base
-        mlab.text3d(x, y, z, self.name, scale=5, color=depth_color)
         return fig
 
     def show_locations(self, fig=None, colors=YELLOW):
@@ -246,7 +257,7 @@ class Depth():
         return fig
 
 
-def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
+def create_depths(electrode_names, ch_names, electrodes):
     """Create a list of Depths
 
     For each electrode in `electrode_names` create a Depth and add to a list
@@ -260,8 +271,6 @@ def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
         form of electrode name followed by a number
     electrodes : Pandas DataFrame
         contains columns for contact name and x,y,z coordinates in meters
-    cras : ndarray of length 3, optional
-        correction for some Freesurfer file coordinates
 
     Returns
     -------
@@ -279,8 +288,7 @@ def create_depths(electrode_names, ch_names, electrodes, cras=np.zeros(3)):
         locations[:, 1] = contacts.y.values
         locations[:, 2] = contacts.z.values
         locations *= 1000
-        depth = Depth(name, locations.shape[0], locations, active=active,
-                      cras=cras)
+        depth = Depth(name, locations.shape[0], locations, active=active)
         depth_list.append(depth)
 
     return depth_list
@@ -310,11 +318,16 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
         pysurfer Brain showing transparent pial surface and Depths
     """
 
+    mri_file = os.path.join(subjects_dir, subject_id, 'mri/T1.mgz')
+    mri = nib.load(mri_file)
+    mri_inv = npl.inv(mri.affine)
+    Torig = mri.header.get_vox2ras_tkr()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
                   cortex='ivory', alpha=0.5)
     fig = mlab.gcf()
     for depth, color in zip(depth_list, depth_colors):
-        depth.draw(fig=fig, contact_colors=contact_colors, depth_color=color)
+        depth.draw(fig=fig, contact_colors=contact_colors, depth_color=color,
+                   mri_inv=mri_inv, Torig=Torig)
 
     return brain
 
@@ -383,28 +396,3 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
             val_idx += len(anode)
 
     return fig
-
-
-def read_cras(subject_id, subjects_dir):
-    """read the RAS at the center of the volume.
-
-    Reading the RAS at the center of the volume allow for correction
-    of surfaces that are not centered at (0, 0, 0)
-
-    Parameters
-    ----------
-    subject_id : string
-        name of subject folder in Freesurfer subjects directory
-    subjects_dir : string
-        location of Freesurfer subjects directory
-
-    Returns
-    -------
-    cras : ndarray
-        RAS at the center of the volume.
-    """
-
-    file_name = os.path.join(subjects_dir, subject_id, 'surf/lh.pial')
-    coords, faces, info = fio.read_geometry(file_name, read_metadata=True)
-    cras = info['cras']
-    return cras

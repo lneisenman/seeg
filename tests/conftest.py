@@ -63,7 +63,7 @@ def raw(electrodes):
 
 @pytest.fixture
 def mri():
-    return os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'mri\orig\001.mgz')
+    return os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'mri\T1.mgz')
 
 
 @pytest.fixture
@@ -77,3 +77,7 @@ def eeg():
 def t_map():
     t_map = nib.load('tests/t_map.nii.gz')
     return t_map
+
+@pytest.fixture
+def Torig(mri):
+    return mri.header.get_vox2ras_tkr()
