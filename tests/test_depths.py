@@ -48,22 +48,24 @@ def test_create_depths_plot(electrode_names, electrodes, raw):
     mlab.show()
 
 
-def test_show_bipolar_values(electrode_names, electrodes, raw):
+def test_show_bipolar_values(electrode_names, electrodes, raw, T_x_inv):
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     values = 10*np.random.normal(size=len(raw.info['ch_names']))
-    seeg.show_bipolar_values(depth_list, mlab.gcf(), values)
+    seeg.show_bipolar_values(depth_list, mlab.gcf(), values, affine=T_x_inv)
     mlab.show()
 
 
 def test_create_depth_source_image_map(eeg, freqs, electrode_names,
-                                       electrodes, raw):
-    t_map = seeg.create_depth_source_image_map(eeg, freqs,
-                                               low_freq=120, high_freq=200)
-    print(t_map[0].min(), t_map[0].max())
+                                       electrodes, raw, T_x_inv):
+    values = seeg.create_depth_source_image_map(eeg, freqs,
+                                                low_freq=120, high_freq=200)
+    # print(type(values), values[0])
+    # assert 1==0
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
-    seeg.show_bipolar_values(depth_list, mlab.gcf(), t_map[0], radius=3)
+    seeg.show_bipolar_values(depth_list, mlab.gcf(), values[0], radius=3,
+                             affine=T_x_inv)
     mlab.show()

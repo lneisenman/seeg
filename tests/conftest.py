@@ -5,6 +5,7 @@ from _pytest.config import filename_arg
 
 import mne
 import numpy as np
+import numpy.linalg as npl
 import nibabel as nib
 import pytest
 
@@ -78,6 +79,27 @@ def t_map():
     t_map = nib.load('tests/t_map.nii.gz')
     return t_map
 
+
 @pytest.fixture
-def Torig(mri):
-    return mri.header.get_vox2ras_tkr()
+def image(mri):
+    image = nib.load(mri)
+    return image
+
+
+@pytest.fixture
+def Torig(image):
+    Torig = image.header.get_vox2ras_tkr()
+    return Torig
+
+
+@pytest.fixture
+def T_x_inv(image, Torig):
+   inv = npl.inv(image.affine)
+   T_x_inv = Torig@inv
+   return T_x_inv
+
+
+@pytest.fixture
+def affine(T_x_inv, t_map):
+    affine = T_x_inv@t_map.affine
+    return affine

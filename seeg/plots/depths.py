@@ -170,7 +170,7 @@ class Depth():
         self.tip = a    # Make sure tip extends to end of distal contact
 
     def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0),
-             mri_inv=np.ones(4), Torig=np.ones(4)):
+             affine=np.diag(np.ones(4))):
         """Draw fit of locations as a cylindrical depth
 
         Parameters
@@ -182,10 +182,8 @@ class Depth():
             Otherwise list of colors for corresponding contacts
         depth_color : RGB color, optional
             Color used to draw the Depth
-        mri_inv : numpy ndarray (4x4)
-            affine to convert coords back to voxels
-        Torig : numpy ndarray (4x4)
-            affine to convert voxels to Freesurfer surface coordinates
+        affine : numpy ndarray (4x4)
+            affine to convert coords to Freesurfer surface coordinates
 
         Returns
         -------
@@ -204,22 +202,23 @@ class Depth():
         if fig is None:
             fig = mlab.figure()
 
-        tip = apply_affine(Torig, apply_affine(mri_inv, self.tip))
-        base = apply_affine(Torig, apply_affine(mri_inv, self.base))
+        tip = apply_affine(affine, self.tip)
+        base = apply_affine(affine, self.base)
         draw.draw_cyl(fig, tip, base, self.diam, depth_color, 0.3)
         x, y, z = base
         mlab.text3d(x, y, z, self.name, scale=5, color=depth_color)
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:
-                tip = apply_affine(Torig, apply_affine(mri_inv, contact[0]))
-                base = apply_affine(Torig, apply_affine(mri_inv, contact[1])) 
+                tip = apply_affine(affine, contact[0])
+                base = apply_affine(affine, contact[1])
                 draw.draw_cyl(fig, tip, base, self.diam+0.25,
                               c_colors[i], 1)
 
         return fig
 
-    def show_locations(self, fig=None, colors=YELLOW):
+    def show_locations(self, fig=None, colors=YELLOW,
+                       affine=np.diag(np.ones(4))):
         """Draw actual contact locations as spheres
 
         Parameters
@@ -229,6 +228,8 @@ class Depth():
         colors : RGB or list of RBG colors, optional
             If a single color is given, draw all contacts in that color.
             Otherwise list of colors for corresponding contacts
+        affine : numpy ndarray (4x4)
+            affine to convert coords to Freesurfer surface coordinates
 
         Returns
         -------
@@ -252,7 +253,8 @@ class Depth():
         print('showing locations')
         for i, location in enumerate(self.locations):
             if self.active[i]:
-                draw.draw_sphere(fig, location, radius, c_colors[i], opacity)
+                loc = apply_affine(affine, location)
+                draw.draw_sphere(fig, loc, radius, c_colors[i], opacity)
 
         return fig
 
@@ -322,18 +324,19 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     mri = nib.load(mri_file)
     mri_inv = npl.inv(mri.affine)
     Torig = mri.header.get_vox2ras_tkr()
+    affine = Torig@mri_inv
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
                   cortex='ivory', alpha=0.5)
     fig = mlab.gcf()
     for depth, color in zip(depth_list, depth_colors):
         depth.draw(fig=fig, contact_colors=contact_colors, depth_color=color,
-                   mri_inv=mri_inv, Torig=Torig)
+                   affine=affine)
 
     return brain
 
 
 def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
-                        cmap='cold_hot'):
+                        cmap='cold_hot', affine=np.diag(np.ones(4))):
     """Plot contact values as color coded spheres on each Depth contact
 
     Plot contact values on the translucent pial surface in `fig` from
@@ -353,6 +356,8 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
         radius of spheres
     cmap : matplotlib colormap
         colormap for color coding spheres
+    affine : numpy ndarray (4x4)
+        affine to convert coords to Freesurfer surface coordinates
 
     Returns
     -------
@@ -389,7 +394,7 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
             c_idx = int(cathode[start:]) - 1
             an = (depth.contacts[a_idx][0] + depth.contacts[a_idx][1])/2
             ca = (depth.contacts[c_idx][0] + depth.contacts[c_idx][1])/2
-            midpoint = (an + ca)/2
+            midpoint = apply_affine(affine, (an + ca)/2)
             color = (mapped_values[i+val_idx, 0], mapped_values[i+val_idx, 1],
                      mapped_values[i+val_idx, 2])
             draw.draw_sphere(fig, midpoint, radius, color, opacity)
