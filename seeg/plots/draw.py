@@ -1,56 +1,82 @@
 # -*- coding: utf-8 -*-
-""" Code to draw spheres, cylinders and cubes in Mayavi figures
+""" Code to draw spheres, cylinders and cubes in Mayavi and Pyvista figures
 
 """
 
-from tvtk.api import tvtk
-from tvtk.common import configure_input_data
+import pyvista
+import vtk
 
 
-def draw_sphere(fig, center, radius, color, opacity):
-    sphereSource = tvtk.SphereSource(center=center, radius=radius)
-    sphereMapper = tvtk.PolyDataMapper()
-    configure_input_data(sphereMapper, sphereSource.output)
-    sphereSource.update()
-    sphere_prop = tvtk.Property(opacity=opacity, color=color)
-    sphereActor = tvtk.Actor(mapper=sphereMapper, property=sphere_prop)
-    fig.scene.add_actor(sphereActor)
+def draw_sphere(scene, center, radius, color, opacity):
+    sphereSource = vtk.vtkSphereSource()
+    sphereSource.SetCenter(*center)
+    sphereSource.SetRadius(radius)
 
-    return fig
+    sphereMapper = vtk.vtkPolyDataMapper()
+    sphereMapper.SetInputConnection(sphereSource.GetOutputPort())
 
+    sphereActor = vtk.vtkActor()
+    sphereActor.SetMapper(sphereMapper)
+    sphereActor.GetProperty().SetColor(*color)
+    sphereActor.GetProperty().SetOpacity(opacity)
 
-def draw_cyl(fig, tip, base, diam, color, opacity):
-    lineSource = tvtk.LineSource(point1=tip, point2=base)
-    lineMapper = tvtk.PolyDataMapper()
-    configure_input_data(lineMapper, lineSource.output)
-    lineSource.update()
-    line_prop = tvtk.Property(opacity=0)
-    lineActor = tvtk.Actor(mapper=lineMapper, property=line_prop)
-    fig.scene.add_actor(lineActor)
-
-    # Create a tube around the line
-    tubeFilter = tvtk.TubeFilter()
-    configure_input_data(tubeFilter, lineSource.output)
-    tubeFilter.radius = diam/2
-    tubeFilter.number_of_sides = 50
-    tubeFilter.update()
-    tubeMapper = tvtk.PolyDataMapper()
-    configure_input_data(tubeMapper, tubeFilter.output)
-    p = tvtk.Property(opacity=opacity, color=color)
-    tubeActor = tvtk.Actor(mapper=tubeMapper, property=p)
-    fig.scene.add_actor(tubeActor)
-
-    return fig
+    scene.add_actor(sphereActor)
 
 
-def draw_cube(fig, center, x_length, y_length, z_length, color, opacity):
-    cube = tvtk.CubeSource(center=center, x_length=x_length, y_length=y_length,
-                           z_length=z_length)
-    cube_mapper = tvtk.PolyDataMapper()
-    configure_input_data(cube_mapper, cube.output)
-    cube.update()
-    p = tvtk.Property(opacity=opacity, color=color)
-    cube_actor = tvtk.Actor(mapper=cube_mapper, property=p)
-    fig.scene.add_actor(cube_actor)
+def draw_cyl(scene, tip, base, diam, color, opacity):
+    lineSource = vtk.vtkLineSource()
+    lineSource.SetPoint1(*tip)
+    lineSource.SetPoint2(*base)
+    lineMapper = vtk.vtkPolyDataMapper()
+    lineMapper.SetInputConnection(lineSource.GetOutputPort())
 
-    return fig
+    lineActor = vtk.vtkActor()
+    lineActor.SetMapper(lineMapper)
+    lineActor.GetProperty().SetOpacity(0)
+
+    tubeFilter = vtk.vtkTubeFilter()
+    tubeFilter.SetInputConnection(lineSource.GetOutputPort())
+    tubeFilter.SetRadius(diam/2)
+    tubeFilter.SetNumberOfSides(50)
+    tubeFilter.Update()
+
+    tubeMapper = vtk.vtkPolyDataMapper()
+    tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
+
+    tubeActor = vtk.vtkActor()
+    tubeActor.SetMapper(tubeMapper)
+    tubeActor.GetProperty().SetColor(*color)
+    tubeActor.GetProperty().SetOpacity(opacity)
+
+    scene.add_actor(tubeActor)
+
+
+def draw_cube(scene, center, x_len, y_len, z_len, color, opacity):
+    cubeSource = vtk.vtkCubeSource()
+    cubeSource.SetCenter(center)
+    cubeSource.SetXLength(x_len)
+    cubeSource.SetYLength(y_len)
+    cubeSource.SetZLength(z_len)
+
+    cubeMapper = vtk.vtkPolyDataMapper()
+    cubeMapper.SetInputConnection(cubeSource.GetOutputPort())
+
+    cubeActor = vtk.vtkActor()
+    cubeActor.SetMapper(cubeMapper)
+    cubeActor.GetProperty().SetColor(*color)
+    cubeActor.GetProperty().SetOpacity(opacity)
+
+    scene.add_actor(cubeActor)
+
+
+def draw_text(scene, text, location, size, color):
+    textActor = vtk.vtkBillboardTextActor3D()
+    textActor.SetInput(text)
+    textActor.SetPosition(*location)
+    textActor.GetTextProperty().SetFontSize(size)
+    textActor.GetTextProperty().SetColor(*color)
+    
+    if isinstance(scene, pyvista.Renderer):
+        scene.AddActor(textActor)
+    else:
+        scene.add_actor(textActor)

@@ -22,8 +22,8 @@ from surfer import Brain
 from . import draw
 from .. import utils
 
-mne.viz.set_3d_backend('mayavi')
-Brain = mne.viz.get_brain_class()
+# mne.viz.set_3d_backend('mayavi')
+
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
 YELLOW = (1, 1, 0)
@@ -169,7 +169,7 @@ class Depth():
         self.base = G + self.vector*(20 + self.num_contacts*dist)
         self.tip = a    # Make sure tip extends to end of distal contact
 
-    def draw(self, fig=None, contact_colors=SILVER, depth_color=(1, 0, 0),
+    def draw(self, scene, contact_colors=SILVER, depth_color=(1, 0, 0),
              affine=np.diag(np.ones(4))):
         """Draw fit of locations as a cylindrical depth
 
@@ -199,25 +199,21 @@ class Depth():
         else:
             raise ValueError('contact_colors needs to be an RGB',
                              'value or a list of RGBs')
-        if fig is None:
-            fig = mlab.figure()
 
         tip = apply_affine(affine, self.tip)
         base = apply_affine(affine, self.base)
-        draw.draw_cyl(fig, tip, base, self.diam, depth_color, 0.3)
+        draw.draw_cyl(scene, tip, base, self.diam, depth_color, 0.3)
         x, y, z = base
-        mlab.text3d(x, y, z, self.name, scale=5, color=depth_color)
+        draw.draw_text(scene, self.name, base, 36, color=depth_color)
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:
                 tip = apply_affine(affine, contact[0])
                 base = apply_affine(affine, contact[1])
-                draw.draw_cyl(fig, tip, base, self.diam+0.25,
+                draw.draw_cyl(scene, tip, base, self.diam+0.25,
                               c_colors[i], 1)
 
-        return fig
-
-    def show_locations(self, fig=None, colors=YELLOW,
+    def show_locations(self, scene, colors=YELLOW,
                        affine=np.diag(np.ones(4))):
         """Draw actual contact locations as spheres
 
@@ -236,10 +232,7 @@ class Depth():
         fig : mayavi mlab figure
             figure showing cylindrical depth electrode
         """
-
-        if fig is None:
-            fig = mlab.figure()
-
+ 
         if ((len(colors) == len(self.contacts)) and len(colors[0] == 3)):
             c_colors = colors  # list of RGB colors for each contact
         elif len(colors) == 3:
@@ -250,13 +243,10 @@ class Depth():
 
         radius = self.contact_len/1.5
         opacity = 0.3
-        print('showing locations')
         for i, location in enumerate(self.locations):
             if self.active[i]:
                 loc = apply_affine(affine, location)
-                draw.draw_sphere(fig, loc, radius, c_colors[i], opacity)
-
-        return fig
+                draw.draw_sphere(scene, loc, radius, c_colors[i], opacity)
 
 
 def create_depths(electrode_names, ch_names, electrodes):
@@ -316,8 +306,8 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
 
     Returns
     -------
-    brain : pysurfer Brain
-        pysurfer Brain showing transparent pial surface and Depths
+    brain : MNE Brain
+        MNE Brain showing transparent pial surface and Depths
     """
 
     mri_file = os.path.join(subjects_dir, subject_id, 'mri/T1.mgz')
@@ -325,17 +315,22 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     mri_inv = npl.inv(mri.affine)
     Torig = mri.header.get_vox2ras_tkr()
     affine = Torig@mri_inv
+    Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
-                  cortex='ivory', alpha=0.5)
-    fig = mlab.gcf()
+                  cortex='classic', alpha=0.5)
+    if mne.viz.get_3d_backend() == 'pyvista':
+        scene = brain.plotter.renderer
+    else:
+        scene = mlab.gcf().scene
+
     for depth, color in zip(depth_list, depth_colors):
-        depth.draw(fig=fig, contact_colors=contact_colors, depth_color=color,
+        depth.draw(scene, contact_colors=contact_colors, depth_color=color,
                    affine=affine)
 
     return brain
 
 
-def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
+def show_bipolar_values(depth_list, scene, values, bads=[], radius=None,
                         cmap='cold_hot', affine=np.diag(np.ones(4))):
     """Plot contact values as color coded spheres on each Depth contact
 
@@ -346,7 +341,7 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
     ----------
     depth_list : list
         list of Depths
-    fig : Mayavi mlab figure
+    scene : VTK scene
         figure of translucent pial surface on which to plot Depth's
     values : array-like
         values of each contact.
@@ -359,10 +354,6 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
     affine : numpy ndarray (4x4)
         affine to convert coords to Freesurfer surface coordinates
 
-    Returns
-    -------
-    fig : mayavi mlab figure
-        figure of translucent pial surface with depth electrodes
     """
 
     vmin = np.min(values)
@@ -397,7 +388,5 @@ def show_bipolar_values(depth_list, fig, values, bads=[], radius=None,
             midpoint = apply_affine(affine, (an + ca)/2)
             color = (mapped_values[i+val_idx, 0], mapped_values[i+val_idx, 1],
                      mapped_values[i+val_idx, 2])
-            draw.draw_sphere(fig, midpoint, radius, color, opacity)
+            draw.draw_sphere(scene, midpoint, radius, color, opacity)
             val_idx += len(anode)
-
-    return fig

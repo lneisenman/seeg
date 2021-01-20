@@ -23,5 +23,5 @@ def test_cube(eeg, electrode_names, t_map, affine):
                                     eeg.baseline['eeg'].ch_names,
                                     eeg.electrodes)
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
-    seeg.draw_volume(mlab.gcf(), t_map, affine)
+    seeg.draw_volume(mlab.gcf().scene, t_map, affine)
     mlab.show()
