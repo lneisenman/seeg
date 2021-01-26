@@ -3,6 +3,7 @@
 import os
 
 from mayavi import mlab
+import mne
 import numpy as np
 
 import seeg
@@ -18,10 +19,22 @@ SUBJECT_ID = 'seeg_brainstorm'
 SUBJECTS_DIR = os.path.join(BASE_DIR, 'subjects')
 
 
-def test_cube(eeg, electrode_names, t_map, affine):
+def test_cube_mlab(eeg, electrode_names, t_map, affine):
+    mne.viz.set_3d_backend('mayavi')
     depth_list = seeg.create_depths(electrode_names,
                                     eeg.baseline['eeg'].ch_names,
                                     eeg.electrodes)
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     seeg.draw_volume(mlab.gcf().scene, t_map, affine)
     mlab.show()
+
+
+def test_cube_pv(eeg, electrode_names, t_map, affine):
+    mne.viz.set_3d_backend('pyvista')
+    depth_list = seeg.create_depths(electrode_names,
+                                    eeg.baseline['eeg'].ch_names,
+                                    eeg.electrodes)
+    brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    seeg.draw_volume(brain.plotter.renderer, t_map, affine)
+    brain.show()
+    
