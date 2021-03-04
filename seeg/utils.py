@@ -298,7 +298,11 @@ def clip_eeg(raw, pre=5, post=20):
     start = onset - pre
     if start < 0:
         start = 0
+
     end = onset + post
+    if end > raw.times[-1]:
+        end = raw.times[-1]
+
     clipped = raw.copy().crop(start, end)
     clipped.set_annotations(None)
     clipped.set_annotations(mne.Annotations(onset-start, 0, 'Seizure'))
