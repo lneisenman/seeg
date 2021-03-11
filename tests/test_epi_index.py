@@ -16,7 +16,7 @@ BIAS = 0.25
 @pytest.fixture
 def raw():
     SAMPLES = 5000
-    SFREQ = 250
+    SFREQ = 500
     np.random.seed(10)
     time = np.arange(SAMPLES)/SFREQ
     signal = np.random.rand(SAMPLES) - .5
@@ -41,14 +41,15 @@ def raw():
 
 
 def test_find_onsets(raw):
-    ER = seeg.calc_ER(raw, np.arange(1, HIGH_FREQ + 1))
+    ER = seeg.calc_ER(raw)
     U_n = seeg.cusum(ER, BIAS)
-    onsets = seeg.find_onsets(U_n, raw.info['sfreq'], raw.ch_names)
+    print(U_n.shape)
+    onsets = seeg.find_onsets(U_n, raw.ch_names)
     np.testing.assert_allclose(onsets['detection'], [np.nan, 4.552, 5.628])
     np.testing.assert_allclose(onsets['alarm'], [np.nan, 4.6, 5.668])
 
 
 def test_calculate_EI(raw):
-    onsets = seeg.calculate_EI(raw, np.arange(1, HIGH_FREQ + 1), BIAS)
+    onsets = seeg.calculate_EI(raw)
     np.testing.assert_allclose(onsets['EI'], [0, 1., 0.9185],
                                rtol=1e-3)
