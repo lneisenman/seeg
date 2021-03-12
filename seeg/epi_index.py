@@ -26,7 +26,7 @@ def calc_ER(raw, low=(4, 12), high=(12, 127)):
     """ Calculate the ratio of beta+gamma energy to theta+alpha energy
 
     This calculation is done using the Welch PSD in 1 second intervals and
-    0.25 second steps. These parameters match the defaults for the EI module 
+    0.25 second steps. These parameters match the defaults for the EI module
     in the [Anywave](https://meg.univ-amu.fr/wiki/AnyWave) package.
 
 
@@ -48,7 +48,7 @@ def calc_ER(raw, low=(4, 12), high=(12, 127)):
     """
     sfreq = int(raw.info['sfreq'])
     fmax = sfreq//2
-    overlap = int(0.75*sfreq)
+    overlap = int(0.75*sfreq)    
     psd, freqs = mne.time_frequency.psd_welch(raw, fmin=1, fmax=fmax,
                                               n_fft=sfreq, n_per_seg=sfreq,
                                               n_overlap=overlap, average=None)
@@ -65,7 +65,8 @@ def cusum(data, bias=0.1):
     data : ndarray
         Energy ratio for each channel
     bias : float, optional
-        a positive value contributing to the rate of decrease of U_n, by default 0.1
+        a positive value contributing to the rate of decrease of U_n,
+        by default 0.1
 
     Returns
     -------
@@ -78,105 +79,67 @@ def cusum(data, bias=0.1):
     return U_n
 
 
-# def find_onsets(U_n, sfreq, ch_names, threshold=1, H=5, step_size=0.25):
-#     """ Calculate onset based on the Page-Hinkley CUSUM algorithm
-    
-#     Parameters
-#     ----------
-#     U_n : ndarray
-#         Page-Hinkley Cusums for each channel
-#     sfreq : int | float
-#         signal sampling frequency
-#     ch_names : list of strings
-#         list of channel names
-#     threshold : float , optional
-#         minimum increase above the local minimun to be considered
-#         significant, by default 1
-#     H : float, optional
-#         width of the window being searched, by default 5
-#     step_size : float, optional
-#         amount of time to shift the window with each iteration, by default 1
-    
-#     Returns
-#     -------
-#     onsets : DataFrame
-#         dataframe containing minimum times and threshold times for each
-#         channel
-#     """
-#     window_len = int(3 + (4*(H - 1)))
-#     step = 1
-#     seizure = False
-#     index = int(0)
-#     end = U_n.shape[-1]
-#     onsets = pd.DataFrame(index=ch_names, dtype=np.double,
-#                           columns=['min', 'detection', 'alarm'])
-#     while not seizure and (index < end - window_len):
-#         limit = index + step
-#         local_min = np.min(U_n[:, index:limit], axis=1)
-#         min_idx = np.argmin(U_n[:, index:limit], axis=1) + index
-#         for i, ch in enumerate(ch_names):
-#             test = U_n[i, min_idx[i]:limit] - local_min[i] - threshold
-#             idx = np.where(test > 0)
-#             if (len(idx[0]) > 0):
-#                 onsets.loc[ch, 'min'] = local_min[i]
-#                 onsets.loc[ch, 'detection'] = (0.5 + 0.25*min_idx[i])
-#                 onsets.loc[ch, 'alarm'] = 0.5 + 0.25*(min_idx[i] + idx[0][0])
-#                 seizure = True
-
-#         index += step
-
-#     if seizure:
-#         detection = int(onsets['detection'].min(skipna=True))
-#         channel = onsets['detection'].idxmin(skipna=True)
-#         limit = int(detection + window_len)
-#         if limit > end:
-#             limit = end
-#             warnings.warn('Seizure detected at the end of the data. \
-#                            EI calculation may not be correct')
-#         for i, ch in enumerate(ch_names):
-#             if (ch != channel):
-#                 new_min = np.min(U_n[i, detection:limit])
-#                 new_idx = \
-#                     np.argmin(U_n[i, detection:limit]) + detection
-#                 test = U_n[i, new_idx:limit] - new_min - threshold
-#                 idx = np.where(test > 0)
-#                 if (len(idx[0]) > 0):
-#                     onsets.loc[ch, 'min'] = new_min
-#                     onsets.loc[ch, 'detection'] = 0.5 + 0.25*new_idx
-#                     onsets.loc[ch, 'alarm'] = 0.5 + 0.25*(new_idx + idx[0][0])
-
-#     elif (index < window_len):
-#         local_min = np.min(U_n[:, index:], axis=1)
-#         min_idx = np.argmin(U_n[:, index:], axis=1) + index
-#         for i, ch in enumerate(ch_names):
-#             test = U_n[i, min_idx[i]:] - local_min[i] - threshold
-#             idx = np.where(test > 0)
-#             if (len(idx[0]) > 0):
-#                 if not seizure:
-#                     warnings.warn('Seizure detected at the end of the data. \
-#                                    EI calculation may not be correct')
-#                 onsets.loc[ch, 'min'] = local_min[i]
-#                 onsets.loc[ch, 'detection'] = 0.5 + 0.25*min_idx[i]
-#                 onsets.loc[ch, 'alarm'] = 0.5 + 0.25*(min_idx[i] + idx[0][0])
-#                 seizure = True
-
-#     if not seizure:
-#         warnings.warn('No seizures identified')
-
-#     return onsets
-
-
-def find_onsets(U_n, ch_names):
-    onsets = onsets = pd.DataFrame(index=ch_names, dtype=np.double,
-                                   columns=['min', 'detection', 'alarm'])
-    idx_start = 0
-    idx_end = 2
+def _scan(U_n, ch_names, threshold):
+    columns = ['channel', 'min', 'detection_idx', 'detection_time', 'alarm_idx',                    'alarm_time']
+    onsets = onsets = pd.DataFrame(dtype=np.double, columns=columns)
+    onsets['channel'] = ch_names
     seizure = False
-    while idx_end < U_n.shape[-1]:
-        min = np.min(U_n[:, idx_start:idx_end], axis=1)
-        min_idx = np.argmin(U_n[:, idx_start:idx_end], axis=1)
-        print(np.where(min_idx<1)[0])
-        assert len(min) == 21
+    min_val = np.min(U_n, axis=1)
+    min_idx = np.argmin(U_n, axis=1)
+    for idx in np.where(min_idx < U_n.shape[-1])[0]:
+        # print(idx, min_val[idx], min_idx[idx], U_n[idx, min_idx[idx]])
+        test = np.where(U_n[idx, min_idx[idx]:] - min_val[idx] > threshold)[0]
+        if len(test) > 0:
+            onsets.loc[idx, 'min'] = min_val[idx]
+            onsets.loc[idx, 'detection_idx'] = min_idx[idx]
+            onsets.loc[idx, 'alarm_idx'] = test[0]+min_idx[idx]
+            seizure = True
+
+    return seizure, onsets
+
+
+def find_onsets(U_n, ch_names, threshold=1):
+    """ Calculate onset based on the Page-Hinkley CUSUM algorithm
+
+    Parameters
+    ----------
+    U_n : ndarray
+        Page-Hinkley Cusums for each channel
+    ch_names : list of strings
+        list of channel names
+    threshold : float , optional
+        minimum increase above the local minimun to be considered
+        significant, by default 1
+
+    Returns
+    -------
+    onsets : DataFrame
+        dataframe containing detection times and threshold times for each
+        channel
+    """
+    idx_start = 0
+    idx_end = 20
+    seizure = False
+    while (idx_end < U_n.shape[-1]) and not seizure:
+        seizure, onsets = _scan(U_n[:, idx_start:idx_end], ch_names, threshold)
+        if seizure:
+            idx = np.argmin(onsets.detection_idx)
+            idx_start += int(onsets.detection_idx[idx])
+            idx_end = int(idx_start + 20)
+            if idx_end >= U_n.shape[-1]:
+                idx_end = int(U_n.shape[-1] - 1)
+
+            ___, onsets = _scan(U_n[:, idx_start:idx_end], ch_names, threshold)
+            onsets.detection_idx += idx_start
+            onsets.detection_time = 0.5 + 0.25*onsets.detection_idx
+            onsets.alarm_idx += idx_start
+            onsets.alarm_time = 0.5 + 0.25*onsets.alarm_idx
+        else:
+            idx_start += 1
+            idx_end += 1
+
+    if not seizure:
+        warnings.warn('No seizures identified')
 
     return onsets
 
@@ -215,22 +178,20 @@ def calculate_EI(raw, low=(4, 12), high=(12, 127), bias=0.1, threshold=1,
     """
     ER = calc_ER(raw, low, high)
     U_n = cusum(ER, bias)
-    onsets = find_onsets(U_n, raw.info['sfreq'], raw.ch_names, threshold, H)
-    onsets['EI'] = 0
-    N0 = int(onsets['detection'].min(skipna=True))
-    H_samples = int(H * raw.info['sfreq'])
-    recording_end = U_n.shape[-1]
-    for i, ch in enumerate(raw.ch_names):
-        N_di = onsets.loc[ch, 'detection']
+    onsets = find_onsets(U_n, raw.ch_names, threshold)
+    onsets['EI_raw'] = 0
+    N0 = int(onsets.detection_time.min(skipna=True))
+    for i in range(len(raw.ch_names)):
+        N_di = onsets.detection_time[i]
         if not np.isnan(N_di):
             N_di = int(N_di)
-            denom = ((N_di - N0)/raw.info['sfreq']) + tau
-            end = N_di + H_samples
-            if end > recording_end:
-                onsets.loc[ch, 'EI'] = np.sum(ER[i, N_di:])/denom
+            denom = N_di - N0 + tau
+            end = N_di + 20
+            if end > ER.shape[-1]:
+                onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di:])/denom
             else:
-                onsets.loc[ch, 'EI'] = np.sum(ER[i, N_di:end])/denom
+                onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di:end])/denom
 
-    EI_max = onsets['EI'].max()
-    onsets.loc[:, 'EI'] = onsets.loc[:, 'EI']/EI_max
+    EI_max = onsets['EI_raw'].max()
+    onsets['EI'] = onsets.EI_raw/EI_max
     return onsets
