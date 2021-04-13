@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Calculate epileptogenicity index as per Bartolomei, Brain 131:1818 2008 
+""" Calculate epileptogenicity index as per Bartolomei, Brain 131:1818 2008
 
 """
 
@@ -47,13 +47,14 @@ def calc_ER(raw, low=(4, 12), high=(12, 127)):
         Energy ratio for each channel
     """
     sfreq = int(raw.info['sfreq'])
-    fmax = sfreq//2
-    overlap = int(0.75*sfreq)    
+    fmax = sfreq//4
+    overlap = int(0.75*sfreq)
     psd, freqs = mne.time_frequency.psd_welch(raw, fmin=1, fmax=fmax,
                                               n_fft=sfreq, n_per_seg=sfreq,
                                               n_overlap=overlap, average=None)
     numerator = np.sum(psd[:, high[0]:high[1], :], axis=1)
     denominator = np.sum(psd[:, low[0]:low[1], :], axis=1)
+    print(f'psd shape = {psd.shape}')
     return numerator/denominator
 
 
@@ -80,7 +81,8 @@ def cusum(data, bias=0.1):
 
 
 def _scan(U_n, ch_names, threshold):
-    columns = ['channel', 'min', 'detection_idx', 'detection_time', 'alarm_idx',                    'alarm_time']
+    columns = ['channel', 'min', 'detection_idx', 'detection_time',
+               'alarm_idx', 'alarm_time']
     onsets = onsets = pd.DataFrame(dtype=np.double, columns=columns)
     onsets['channel'] = ch_names
     seizure = False
@@ -125,7 +127,7 @@ def find_onsets(U_n, ch_names, threshold=1):
         if seizure:
             idx = np.argmin(onsets.detection_idx)
             idx_start += int(onsets.detection_idx[idx])
-            idx_end = int(idx_start + 20)
+            idx_end = int(idx_start + 10)
             if idx_end >= U_n.shape[-1]:
                 idx_end = int(U_n.shape[-1] - 1)
 
@@ -180,17 +182,17 @@ def calculate_EI(raw, low=(4, 12), high=(12, 127), bias=0.1, threshold=1,
     U_n = cusum(ER, bias)
     onsets = find_onsets(U_n, raw.ch_names, threshold)
     onsets['EI_raw'] = 0
-    N0 = int(onsets.detection_time.min(skipna=True))
+    N0 = onsets.detection_time.min(skipna=True)
     for i in range(len(raw.ch_names)):
         N_di = onsets.detection_time[i]
         if not np.isnan(N_di):
-            N_di = int(N_di)
             denom = N_di - N0 + tau
-            end = N_di + 20
+            N_di_idx = int(onsets.detection_idx[i])
+            end = N_di_idx + 20
             if end > ER.shape[-1]:
-                onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di:])/denom
+                onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di_idx:])/denom
             else:
-                onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di:end])/denom
+                onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di_idx:end])/denom
 
     EI_max = onsets['EI_raw'].max()
     onsets['EI'] = onsets.EI_raw/EI_max
