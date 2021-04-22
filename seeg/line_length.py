@@ -9,6 +9,7 @@ import numpy as np
 
 from .epi_index import cusum, find_onsets
 
+
 def line_length(raw, window=1, step=0.25):
     '''
     calculate line length is segments of width window with time steps
@@ -87,6 +88,7 @@ def ll_detect_seizure(raw, window=1, step=0.25, threshold=1):
             sz[i] = np.nan
 
     return sz + raw.times[0], ll, sd
+
 
 def line_length_EI(raw, window=1, step=0.25, tau=1, H=5):
     '''
