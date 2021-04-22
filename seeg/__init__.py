@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .epi_index import *
+from .line_length import *
 from .plots import *
 from .seeg import *
 from .utils import *

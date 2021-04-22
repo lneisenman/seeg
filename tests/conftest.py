@@ -94,12 +94,43 @@ def Torig(image):
 
 @pytest.fixture
 def T_x_inv(image, Torig):
-   inv = npl.inv(image.affine)
-   T_x_inv = Torig@inv
-   return T_x_inv
+    inv = npl.inv(image.affine)
+    T_x_inv = Torig@inv
+    return T_x_inv
 
 
 @pytest.fixture
 def affine(T_x_inv, t_map):
     affine = T_x_inv@t_map.affine
     return affine
+
+
+HIGH_FREQ = 100
+BIAS = 0.25
+
+
+@pytest.fixture
+def raw():
+    SAMPLES = 5000
+    SFREQ = 500
+    np.random.seed(10)
+    time = np.arange(SAMPLES)/SFREQ
+    signal = np.random.rand(SAMPLES) - .5
+    for freq in [5, 25]:
+        signal += np.sin(freq*2*np.pi*time)
+
+    temp = 2*np.sin(50*2*np.pi*time)
+    data = np.zeros((3, SAMPLES))
+    data[0, :] = signal[:] * 1e-5
+    temp[:1250] = 0
+    signal += temp
+    data[1, :] = signal[:] * 1e-5
+    signal -= temp
+    temp[:1500] = 0
+    signal += temp
+    data[2, :] = signal[:] * 1e-5
+
+    info = mne.create_info(['A1', 'A2', 'A3'], SFREQ, ch_types='seeg',
+                           verbose='error')
+    raw = mne.io.RawArray(data, info)
+    return raw

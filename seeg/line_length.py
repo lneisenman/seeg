@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+
 """ Calculate line length as per Esteller 2001
     http://ieeex plore.ieee.org/docum ent/10205 45/.
 
 """
 
-import mne
 import numpy as np
 
+from .epi_index import cusum, find_onsets
 
 def line_length(raw, window=1, step=0.25):
     '''
@@ -16,10 +18,10 @@ def line_length(raw, window=1, step=0.25):
     ----------
     raw : MNE Raw
         EEG data
-    window : float
-        window duration in seconds
-    step : float
-        step in seconds
+    window : float, optional
+        window duration in seconds, by default 1
+    step : float, optional
+        step in seconds, by default 0.25
 
     Returns
     -------
@@ -57,12 +59,13 @@ def ll_detect_seizure(raw, window=1, step=0.25, threshold=1):
     ----------
     raw : MNE Raw
         EEG data
-    window : float
-        window duration in seconds
-    step : float
-        step in seconds
-    threshold: float
-        number of standard deviations to use for the seizure threshold
+    window : float, optional
+        window duration in seconds, by default 1
+    step : float, optional
+        step in seconds, by default 0.25
+    threshold: float, optional
+        number of standard deviations to use for the seizure threshold,
+        by default 1
 
     Returns
     -------
@@ -84,3 +87,53 @@ def ll_detect_seizure(raw, window=1, step=0.25, threshold=1):
             sz[i] = np.nan
 
     return sz + raw.times[0], ll, sd
+
+def line_length_EI(raw, window=1, step=0.25, tau=1, H=5):
+    '''
+    Find the seizure onset in each channel defined as the first time that
+    line length is threshold standard deviations above the sd of the first
+    segment
+
+    Parameters
+    ----------
+    raw : MNE Raw
+        EEG data
+    window : float, optional
+        window duration in seconds, by default 1
+    step : float, optional
+        step in seconds, by default 0.25
+    tau: float, optional
+       tau for the EI calculation, by default 1
+    H : float, optional
+        time in seconds of the duration of the EI calculation, by default 5
+
+    Returns
+    -------
+    ndarray
+        seizure onset time for each channel of raw
+    ndarray
+        line length values for each channel
+    ndarray
+        standard deviation of the line length in the first interval
+    '''
+    ___, ll, sd = ll_detect_seizure(raw, window, step)
+    bias = np.max(sd)/5
+    threshold = bias*5
+    U_n = cusum(ll, bias)
+    onsets = find_onsets(U_n, raw.ch_names, threshold)
+    onsets['LLEI_raw'] = 0
+    N0 = onsets.detection_time.min(skipna=True)
+    for i in range(len(raw.ch_names)):
+        N_di = onsets.detection_time[i]
+        if not np.isnan(N_di):
+            denom = N_di - N0 + tau
+            N_di_idx = int(onsets.detection_idx[i])
+            end = N_di_idx + int(H/step)
+            if end > ll.shape[-1]:
+                onsets.loc[i, 'LLEI_raw'] = np.sum(ll[i, N_di_idx:])/denom
+            else:
+                onsets.loc[i, 'LLEI_raw'] = np.sum(ll[i, N_di_idx:end])/denom
+
+    EI_max = onsets['LLEI_raw'].max()
+    onsets['LLEI'] = onsets.LLEI_raw/EI_max
+    return onsets
