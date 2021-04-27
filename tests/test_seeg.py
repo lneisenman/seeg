@@ -41,8 +41,8 @@ def test_setup_bipolar(raw, bads):
 
 
 def test_EEG(raw):
-    eeg = seeg.EEG(['A'])
-    eeg['baseline']['raw'] = raw
-    print(eeg['baseline'])
+    test = seeg.EEG(['A'])
+    test['baseline']['raw'] = raw
+    print(test['baseline'])
     with pytest.raises(KeyError):
-        print(eeg['bad key'])
+        print(test['bad key'])

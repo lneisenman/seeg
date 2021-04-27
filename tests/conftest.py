@@ -110,7 +110,7 @@ BIAS = 0.25
 
 
 @pytest.fixture
-def raw():
+def synthetic():
     SAMPLES = 5000
     SFREQ = 500
     np.random.seed(10)
@@ -132,5 +132,5 @@ def raw():
 
     info = mne.create_info(['A1', 'A2', 'A3'], SFREQ, ch_types='seeg',
                            verbose='error')
-    raw = mne.io.RawArray(data, info)
-    return raw
+    synthetic = mne.io.RawArray(data, info)
+    return synthetic
