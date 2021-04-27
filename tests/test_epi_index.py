@@ -10,7 +10,7 @@ def test_find_onsets(raw):
     ER = seeg.calc_ER(raw)
     U_n = seeg.cusum(ER)
     print(U_n.shape)
-    onsets = seeg.find_onsets(U_n, raw.ch_names, 1, 0.25, 20)
+    onsets = seeg.find_onsets(U_n, raw.ch_names, 1, 0.25, 5)
     np.testing.assert_allclose(onsets['detection_time'], [np.nan, 2, 2.5])
     np.testing.assert_allclose(onsets['alarm_time'], [np.nan, 2.5, 3.])
 

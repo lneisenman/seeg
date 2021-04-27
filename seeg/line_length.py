@@ -119,10 +119,10 @@ def line_length_EI(raw, window=1, step=0.25, tau=1, H=5):
         standard deviation of the line length in the first interval
     '''
     ___, ll, sd = ll_detect_seizure(raw, window, step)
-    bias = np.max(sd)/5
-    threshold = bias*5
+    threshold = np.max(sd)
+    bias = threshold/5
     U_n = cusum(ll, bias)
-    onsets = find_onsets(U_n, raw.ch_names, threshold)
+    onsets = find_onsets(U_n, raw.ch_names, window, step, H, threshold)
     onsets['LLEI_raw'] = 0
     N0 = onsets.detection_time.min(skipna=True)
     for i in range(len(raw.ch_names)):

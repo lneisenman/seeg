@@ -105,7 +105,7 @@ def _scan(U_n, ch_names, threshold):
     return seizure, onsets
 
 
-def find_onsets(U_n, ch_names, window, step, EI_window, threshold=1):
+def find_onsets(U_n, ch_names, window, step, H, threshold=1):
     """ Calculate onset based on the Page-Hinkley CUSUM algorithm
 
     Parameters
@@ -118,8 +118,8 @@ def find_onsets(U_n, ch_names, window, step, EI_window, threshold=1):
         duration in seconds of section for Welch PSD calculation
     step : float
         duration in seconds to step for Welch PSD calculation
-    EI_window : int
-        number of points over which the EI is calculated
+    H : float
+        number of seconds over which the EI is calculated
     threshold : float , optional
         minimum increase above the local minimun to be considered
         significant, by default 1
@@ -132,6 +132,7 @@ def find_onsets(U_n, ch_names, window, step, EI_window, threshold=1):
     """
     start = window/2
     idx_start = 0
+    EI_window = np.int(H/step)
     idx_end = EI_window
     seizure = False
     while (idx_end < U_n.shape[-1]) and not seizure:
@@ -176,11 +177,11 @@ def calculate_EI(raw, low=(4, 12), high=(12, 127), window=1, step=0.25,
         duration in seconds to step for Welch PSD calculation, by default 0.25
     bias : float, optional
         bias for the Page-Hinkley CUSUM algorithm, by default 0.1
-    threshold : int, optional
+    threshold : float, optional
         threshold for the Page-Hinkley CUSUM algorithm, by default 1
-    tau : int, optional
+    tau : float, optional
         tau for the EI calculation, by default 1
-    H : int, optional
+    H : float, optional
         duration in seconds over which EI is calculated, by default 5
 
     Returns
@@ -196,10 +197,10 @@ def calculate_EI(raw, low=(4, 12), high=(12, 127), window=1, step=0.25,
     .. math:: EI_i=\frac{1}{N_{di} - N_0 + \tau}\sum_{n=N_{di}}^{N_{di}+H}ER[n],\quad \tau>0
 
     """
-    EI_window = int(H/step)
+    EI_window = np.int(H/step)
     ER = calc_ER(raw, low, high, window, step)
     U_n = cusum(ER, bias)
-    onsets = find_onsets(U_n, raw.ch_names, window, step, EI_window, threshold)
+    onsets = find_onsets(U_n, raw.ch_names, window, step, H, threshold)
     onsets['EI_raw'] = 0
     N0 = onsets.detection_time.min(skipna=True)
 
