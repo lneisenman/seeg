@@ -26,6 +26,7 @@ from .. import utils
 
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
+GRAY = (0.5, 0.5, 0.5)
 YELLOW = (1, 1, 0)
 ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
                    (0.0, 0.4392, 0.7529),       # (0, 112, 192),
@@ -171,12 +172,12 @@ class Depth():
 
     def draw(self, scene, contact_colors=SILVER, depth_color=(1, 0, 0),
              affine=np.diag(np.ones(4))):
-        """Draw fit of locations as a cylindrical depth
+        """Draw fit of locations as a cylindrical depth on the provided scene
 
         Parameters
         ----------
-        fig : mayavi mlab figure
-            figure on which to draw the Depth
+        scene : VTK scene from mayavi or pyvista
+            scene on which to draw the Depth
         contact_colors : RGB or list of RBG colors, optional
             If a single color is given, draw all contacts in that color.
             Otherwise list of colors for corresponding contacts
@@ -185,14 +186,9 @@ class Depth():
         affine : numpy ndarray (4x4)
             affine to convert coords to Freesurfer surface coordinates
 
-        Returns
-        -------
-        fig : mayavi mlab figure
-            figure showing cylindrical depth electrode
         """
-
         if ((len(contact_colors) == len(self.contacts)) and
-           len(contact_colors[0] == 3)):
+           len(contact_colors[0]) == 3):
             c_colors = contact_colors  # list of RGB colors for each contact
         elif len(contact_colors) == 3:
             c_colors = [contact_colors]*len(self.contacts)
@@ -215,24 +211,19 @@ class Depth():
 
     def show_locations(self, scene, colors=YELLOW,
                        affine=np.diag(np.ones(4))):
-        """Draw actual contact locations as spheres
+        """Draw actual contact locations as spheres on the provided scene
 
         Parameters
         ----------
-        fig : mayavi mlab figure, optional
-            figure on which to draw the Depth
+        scene : VTK scene from mayavi or pyvista
+            scene on which to draw the contact locations
         colors : RGB or list of RBG colors, optional
             If a single color is given, draw all contacts in that color.
             Otherwise list of colors for corresponding contacts
         affine : numpy ndarray (4x4)
             affine to convert coords to Freesurfer surface coordinates
 
-        Returns
-        -------
-        fig : mayavi mlab figure
-            figure showing cylindrical depth electrode
         """
- 
         if ((len(colors) == len(self.contacts)) and len(colors[0] == 3)):
             c_colors = colors  # list of RGB colors for each contact
         elif len(colors) == 3:
@@ -288,7 +279,7 @@ def create_depths(electrode_names, ch_names, electrodes):
 
 def create_depths_plot(depth_list, subject_id, subjects_dir,
                        depth_colors=rosa_colors(), contact_colors=SILVER):
-    """Create a pysurfer Brain and plot Depths. Returns the Brain
+    """Create a MNE Brain and plot Depths. Returns the Brain
 
     Parameters
     ----------
@@ -323,9 +314,27 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     else:
         scene = mlab.gcf().scene
 
+    if type(contact_colors[0]) is not float:
+        c_list = True
+        idx = 0
+    else:
+        c_list = False
+
     for depth, color in zip(depth_list, depth_colors):
-        depth.draw(scene, contact_colors=contact_colors, depth_color=color,
-                   affine=affine)
+        if c_list:
+            c_colors = list()
+            for i in range(depth.num_contacts):
+                if depth.active[i]:
+                    c_colors.append(contact_colors[idx])
+                    idx += 1
+                else:
+                    c_colors.append(GRAY)
+
+            depth.draw(scene, contact_colors=c_colors, depth_color=color,
+                       affine=affine)
+        else:
+            depth.draw(scene, contact_colors=contact_colors, depth_color=color,
+                       affine=affine)
 
     return brain
 
