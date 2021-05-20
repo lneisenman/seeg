@@ -76,7 +76,7 @@ def read_electrode_file(file_name):
         header = 'infer'
     else:
         skiprows = None
-        sep = '\s+'
+        sep = '\s+'  # noqa
         header = None
         names = ['label', 'x', 'y', 'z']
 
@@ -423,32 +423,48 @@ def create_bipolar(raw, electrodes):
     return bipolar
 
 
-def calc_power(raw, freqs, n_cycles=7., output='power'):
-    """ Calculate power in each channel using multitapers
+def calc_power_multi(raw, n_per_seg=1, n_overlap=0.25):
+    """ Calculate power in each channel using multitapers in sections,
+        analagous to the Welch PSD method
 
     Parameters
     ----------
     raw : MNE Raw
         EEG data
-    freqs : ndarray
-        array of frequencies
-    n_cycles : float, optional
-        multitaper parameter, by default 7.
-    output : str, optional
-        multitaper calculation parameter, by default 'power'
+    n_per_seg : int
+        number of points per segment
+    n_overlap : int
+        number of points of overlap
 
     Returns
     -------
-    ndarray
+    density : ndarray
         power data
     """
-    # n_cycles = freqs
-    n_channels = raw.info['nchan']
-    n_times = raw.n_times
-    data = np.zeros((1, n_channels, n_times))
-    data[0, :, :] = raw.get_data()[:, :]
-    sfreq = raw.info['sfreq']
-    return mne.time_frequency.tfr_array_multitaper(data, sfreq=sfreq,
-                                                   freqs=freqs,
-                                                   n_cycles=n_cycles,
-                                                   output=output)
+    start = 0
+    sfreq = int(raw.info['sfreq'])
+    end = sfreq
+    step = int(sfreq/4)
+    num_segs = 4*int(raw.n_times/sfreq) - 3
+    if raw.n_times/sfreq - int(raw.n_times/sfreq) >= 1/sfreq:
+        num_segs += 1
+
+    density = np.zeros((len(raw.ch_names), num_segs, int(sfreq/2)))
+    i = 0
+    data = raw.get_data()
+    for i in range(num_segs-1):
+        psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:end],
+                                                           sfreq)
+        # print(f'i = {i} and start = {start}')
+        # print(f'density.shape = {density.shape}')
+        # print(f'psd.shape = {psd.shape}')
+        density[:, i, :] = psd[:, 1:]
+        start += step
+        end += step
+
+    i = num_segs - 1
+    print(f'i = {i} start = {start} end = {end} and data.shape = {data.shape}')
+    psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:], sfreq)
+    density[:, i, :(psd.shape[-1]-1)] = psd[:, 1:]
+
+    return density

@@ -6,7 +6,7 @@ import mne
 import pandas as pd
 
 from .epi_index import calculate_EI
-from .plots.source_image import create_source_image_map, plot_source_image_map
+from .plots.epi_image import create_source_image_map, plot_source_image_map
 from .utils import (EEG, read_electrode_file, create_montage, read_edf,
                     load_eeg_data)
 

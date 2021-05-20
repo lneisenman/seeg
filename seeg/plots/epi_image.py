@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" Functions to create a source image analagous to that from the Brainstorm
-    demo of David et al. 2011
+""" Functions to create an epileptogenicity image analagous to that from the
+    Brainstorm demo of David et al. 2011
 
 """
 
@@ -21,7 +21,7 @@ from . import gin
 from .. import utils
 
 
-class SourceImage:
+class EpiImage:
 
     def __init__(self, eeg, mri, freqs, low_freq=120, high_freq=200,
                  seiz_delay=0, step=3, num_steps=1):
@@ -108,24 +108,6 @@ def ave_power_over_freq_band(seizure, freqs, low=120, high=200):
             np.mean(seizure_power[0, i, freq_index, :], 1)
 
     return baseline_ave_power, seizure_ave_power
-
-
-def plot_ave_power(seizure, channel='g7-g8'):
-    """ plot average power for both baseline and seizure eeg data
-
-    Parameters
-    ----------
-    seizure : EEG | dict
-        eeg data
-    channel : str, optional
-        bipolar eeg channel name, by default 'g7-g8'
-    """
-    plt.figure()
-    b_times = seizure['baseline']['bipolar'].times
-    s_times = seizure['seizure']['bipolar'].times
-    index = seizure['baseline']['bipolar'].ch_names.index(channel)
-    plt.plot(b_times, seizure['baseline']['ave_power'][index, :],
-             s_times, seizure['seizure']['ave_power'][index, :])
 
 
 def extract_power(seizure, D=3, dt=0.2, start=0):
@@ -306,9 +288,9 @@ def calc_source_image_power_data(seizure, freqs, low_freq=120,
         utils.create_bipolar(seizure['seizure']['eeg'],
                              seizure['electrode_names'])
     seizure['baseline']['power'] = \
-        utils.calc_power(seizure['baseline']['bipolar'], freqs, n_cycles=freqs)
+        utils.calc_power_multi(seizure['baseline']['bipolar'])
     seizure['seizure']['power'] = \
-        utils.calc_power(seizure['seizure']['bipolar'], freqs, n_cycles=freqs)
+        utils.calc_power_multi(seizure['seizure']['bipolar'])
     seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
         ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
     seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \

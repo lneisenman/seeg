@@ -59,6 +59,25 @@ def plot_eeg(eeg, depth, label_color='black'):
     return fig
 
 
+def plot_channel_ave_power(seizure, channel='g7-g8'):
+    """ plot average power for both baseline and seizure eeg data
+        for a single channel
+
+    Parameters
+    ----------
+    seizure : EEG | dict
+        eeg data
+    channel : str, optional
+        bipolar eeg channel name, by default 'g7-g8'
+    """
+    plt.figure()
+    b_times = seizure['baseline']['bipolar'].times
+    s_times = seizure['seizure']['bipolar'].times
+    index = seizure['baseline']['bipolar'].ch_names.index(channel)
+    plt.plot(b_times, seizure['baseline']['ave_power'][index, :],
+             s_times, seizure['seizure']['ave_power'][index, :])
+
+
 def plot_power(power, ch_names, depth, label_color='black'):
     """ plot EEG power
 
