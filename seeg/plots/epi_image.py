@@ -70,16 +70,14 @@ def compress_data(data, old_freq, new_freq):
     return new
 
 
-def ave_power_over_freq_band(seizure, freqs, low=120, high=200):
+def ave_power_over_freq_band(eeg, low=120, high=200):
     """ returns the average power between the specified low and high
         frequencies
 
     Parameters
     ----------
-    seizure : EEG | dict
+    eeg : EEG | dict
         eeg data
-    freqs : ndarray
-        array of frequencies
     low : int, optional
         low frequency, by default 120
     high : int, optional
@@ -93,19 +91,21 @@ def ave_power_over_freq_band(seizure, freqs, low=120, high=200):
         average power of seizure eeg in the specified range
     """
 
-    baseline_power = seizure['baseline']['power']
+    sfreq = eeg['baseline']['eeg'].info['sfreq']
+    freqs = np.arange(sfreq//2)
+    baseline_power = eeg['baseline']['power']
     shape = baseline_power.shape
-    baseline_ave_power = np.zeros((shape[1], shape[3]))
-    seizure_power = seizure['seizure']['power']
+    baseline_ave_power = np.zeros((shape[0], shape[1]))
+    seizure_power = eeg['seizure']['power']
     shape = seizure_power.shape
-    seizure_ave_power = np.zeros((shape[1], shape[3]))
+    seizure_ave_power = np.zeros((shape[0], shape[1]))
     freq_index = np.where(np.logical_and(freqs >= low, freqs <= high))
 
-    for i in range(len(seizure['seizure']['bipolar'].ch_names)):
+    for i in range(len(eeg['seizure']['bipolar'].ch_names)):
         baseline_ave_power[i, :] = \
-            np.mean(baseline_power[0, i, freq_index, :], 1)
+            np.mean(baseline_power[i, :, freq_index], 1)
         seizure_ave_power[i, :] = \
-            np.mean(seizure_power[0, i, freq_index, :], 1)
+            np.mean(seizure_power[i, :, freq_index], 1)
 
     return baseline_ave_power, seizure_ave_power
 
@@ -292,7 +292,7 @@ def calc_source_image_power_data(seizure, freqs, low_freq=120,
     seizure['seizure']['power'] = \
         utils.calc_power_multi(seizure['seizure']['bipolar'])
     seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
-        ave_power_over_freq_band(seizure, freqs, low=low_freq, high=high_freq)
+        ave_power_over_freq_band(seizure, low=low_freq, high=high_freq)
     seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
         extract_power(seizure, start=delay)
 
