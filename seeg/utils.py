@@ -454,7 +454,8 @@ def calc_power_multi(raw, n_per_seg=1, n_overlap=0.25):
     data = raw.get_data()
     for i in range(num_segs-1):
         psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:end],
-                                                           sfreq)
+                                                           sfreq,
+                                                           verbose=False)
         # print(f'i = {i} and start = {start}')
         # print(f'density.shape = {density.shape}')
         # print(f'psd.shape = {psd.shape}')
@@ -463,8 +464,8 @@ def calc_power_multi(raw, n_per_seg=1, n_overlap=0.25):
         end += step
 
     i = num_segs - 1
-    print(f'i = {i} start = {start} end = {end} and data.shape = {data.shape}')
-    psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:], sfreq)
+    psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:], sfreq,
+                                                       verbose=False)
     density[:, i, :(psd.shape[-1]-1)] = psd[:, 1:]
 
     return density

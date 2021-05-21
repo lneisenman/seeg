@@ -23,9 +23,8 @@ from .. import utils
 
 class EpiImage:
 
-    def __init__(self, eeg, mri, freqs, low_freq=120, high_freq=200,
+    def __init__(self, eeg, mri, low_freq=120, high_freq=200,
                  seiz_delay=0, step=3, num_steps=1):
-        self.freqs = freqs
         self.mri = mri
         self.low_freq = low_freq
         self.high_freq = high_freq
@@ -33,12 +32,13 @@ class EpiImage:
         self.step = step
         self.t_maps = list()
         for i in range(num_steps):
-            self.t_maps.append(create_source_image_map(eeg, mri, freqs,
+            self.t_maps.append(create_source_image_map(eeg, mri,
                                                        low_freq, high_freq,
                                                        seiz_delay+(i*step)))
 
     def plot(self, cut_coords=None, threshold=2):
-        image = plot_source_image_map(self.t_maps[0], self.mri)
+        image = plot_source_image_map(self.t_maps[0], self.mri, cut_coords,
+                                      threshold)
 
 
 def compress_data(data, old_freq, new_freq):
@@ -110,8 +110,8 @@ def ave_power_over_freq_band(eeg, low=120, high=200):
     return baseline_ave_power, seizure_ave_power
 
 
-def extract_power(seizure, D=3, dt=0.2, start=0):
-    """ resample power values
+def extract_power(eeg, D=3, dt=0.25, start=0):
+    """ extract power vaules for image
 
     Parameters
     ----------
@@ -132,27 +132,17 @@ def extract_power(seizure, D=3, dt=0.2, start=0):
         seizure power
     """
     assert int(D/dt)*dt == D
-    sfreq = seizure['seizure']['bipolar'].info['sfreq']
     num_steps = int(D/dt)
-    seiz = seizure.seizure['eeg']
-    onset = seiz.annotations.onset[0] - (seiz.first_samp/sfreq)
-    tstep0 = int(sfreq * (start+onset) + 1)
-    baseline_ave_power = seizure['baseline']['ave_power']
-    baseline_ex_power = np.zeros((baseline_ave_power.shape[0], num_steps))
-    seizure_ave_power = seizure['seizure']['ave_power']
-    seizure_ex_power = np.zeros((seizure_ave_power.shape[0], num_steps))
-    for i in range(num_steps):
-        t1 = int(i*dt*sfreq)
-        t2 = int((i+1)*dt*sfreq)
-        baseline_ex_power[:, i] = np.mean(baseline_ave_power[:, t1:t2], 1)
-        t1 += tstep0
-        t2 += tstep0
-        seizure_ex_power[:, i] = np.mean(seizure_ave_power[:, t1:t2], 1)
-
+    seiz = eeg['seizure']['eeg']
+    sfreq = seiz.info['sfreq']
+    onset = seiz.annotations.onset[0] - (seiz.first_samp/sfreq) + start
+    first = int(onset/dt)
+    baseline_ex_power = eeg['baseline']['ave_power'][:, :num_steps]
+    seizure_ex_power = eeg['seizure']['ave_power'][:, first:first+num_steps]
     return baseline_ex_power, seizure_ex_power
 
 
-def create_volumes(seizure, mri):
+def create_volumes(eeg, mri):
     """ create Nifti1Images for the baseline and seizure data
 
     Parameters
@@ -172,12 +162,11 @@ def create_volumes(seizure, mri):
     img = nib.load(mri)
     resized = nbp.resample_to_output(img, voxel_sizes=3)
     shape = resized.dataobj.shape
-    shape = np.append(shape, seizure['baseline']['ex_power'].shape[-1])
+    shape = np.append(shape, eeg['seizure']['ex_power'].shape[-1])
     affine = resized.affine.copy()
     baseline = np.zeros(shape)
     baseline_img = nib.Nifti1Image(baseline, affine)
 
-    shape[-1] = seizure['seizure']['ex_power'].shape[-1]
     seiz = np.zeros(shape)
     seizure_img = nib.Nifti1Image(seiz, affine)
     return baseline_img, seizure_img
@@ -203,7 +192,7 @@ def voxel_coords(mri_coords, inverse):
     return coords.astype(np.int)
 
 
-def map_seeg_data(seizure, mri):
+def map_seeg_data(eeg, mri):
     """map contact data to surrounding voxels and smooth
 
     Parameters
@@ -220,19 +209,19 @@ def map_seeg_data(seizure, mri):
     seiz_img : Nifti1Image
         Image with data mapped from seizure eeg
     """
-    base_img, seiz_img = create_volumes(seizure, mri)
+    base_img, seiz_img = create_volumes(eeg, mri)
     base_data = base_img.get_data()
     seiz_data = seiz_img.get_data()
     affine = seiz_img.affine
     inverse = npl.inv(affine)
-    electrodes = seizure['electrode_names']
-    eeg = seizure['baseline']['eeg']
-    bads = eeg.info['bads']
-    montage = eeg.get_montage()
+    electrodes = eeg['electrode_names']
+    base_eeg = eeg['baseline']['eeg']
+    bads = base_eeg.info['bads']
+    montage = base_eeg.get_montage()
     coord_list = dict()
     contact_num = 0
     for electrode in electrodes:
-        contacts = [i for i in eeg.ch_names if i.startswith(electrode)]
+        contacts = [i for i in base_eeg.ch_names if i.startswith(electrode)]
         num_contacts = utils.find_num_contacts(contacts, electrode)
         for i in range(1, num_contacts):
             anode = electrode + str(i)
@@ -246,28 +235,25 @@ def map_seeg_data(seizure, mri):
                     coord_list[contact_num] = (loc1 + loc2)/2
                     contact_num += 1
 
-    base_ex = seizure['baseline']['ex_power']
-    seiz_ex = seizure['seizure']['ex_power']
+    base_ave = eeg['baseline']['ex_power']
+    seiz_ave = eeg['seizure']['ex_power']
     for i in coord_list.keys():
         x, y, z = voxel_coords(coord_list[i], inverse)
-        base_data[x, y, z, :] = base_ex[i, :]
-        seiz_data[x, y, z, :] = seiz_ex[i, :]
+        base_data[x, y, z, :] = base_ave[i, :]
+        seiz_data[x, y, z, :] = seiz_ave[i, :]
 
     base_img = nilearn.image.smooth_img(base_img, 6)
     seiz_img = nilearn.image.smooth_img(seiz_img, 6)
     return base_img, seiz_img
 
 
-def calc_source_image_power_data(seizure, freqs, low_freq=120,
-                                 high_freq=200, delay=0):
+def calc_source_image_power_data(eeg, low_freq=120, high_freq=200, delay=0):
     """ calculate power data for SEEG source image as per David et. al. 2011
 
     Parameters
     ----------
     seizure : EEG | dict
         eeg data
-    freqs : ndarray
-        array of frequencies
     low_freq : int, optional
         low frequency cutoff, by default 120
     high_freq : int, optional
@@ -281,25 +267,25 @@ def calc_source_image_power_data(seizure, freqs, low_freq=120,
         eeg data including power data
     """
 
-    seizure['baseline']['bipolar'] = \
-        utils.create_bipolar(seizure['baseline']['eeg'],
-                             seizure['electrode_names'])
-    seizure['seizure']['bipolar'] = \
-        utils.create_bipolar(seizure['seizure']['eeg'],
-                             seizure['electrode_names'])
-    seizure['baseline']['power'] = \
-        utils.calc_power_multi(seizure['baseline']['bipolar'])
-    seizure['seizure']['power'] = \
-        utils.calc_power_multi(seizure['seizure']['bipolar'])
-    seizure['baseline']['ave_power'], seizure['seizure']['ave_power'] = \
-        ave_power_over_freq_band(seizure, low=low_freq, high=high_freq)
-    seizure['baseline']['ex_power'], seizure['seizure']['ex_power'] = \
-        extract_power(seizure, start=delay)
+    eeg['baseline']['bipolar'] = \
+        utils.create_bipolar(eeg['baseline']['eeg'],
+                             eeg['electrode_names'])
+    eeg['seizure']['bipolar'] = \
+        utils.create_bipolar(eeg['seizure']['eeg'],
+                             eeg['electrode_names'])
+    eeg['baseline']['power'] = \
+        utils.calc_power_multi(eeg['baseline']['bipolar'])
+    eeg['seizure']['power'] = \
+        utils.calc_power_multi(eeg['seizure']['bipolar'])
+    eeg['baseline']['ave_power'], eeg['seizure']['ave_power'] = \
+        ave_power_over_freq_band(eeg, low=low_freq, high=high_freq)
+    eeg['baseline']['ex_power'], eeg['seizure']['ex_power'] = \
+        extract_power(eeg, start=delay)
 
-    return seizure
+    return eeg
 
 
-def calc_sorce_image_from_power(seizure, mri):
+def calc_sorce_image_from_power(eeg, mri, D=3, dt=0.25):
     """Create source image from power data
 
     Parameters
@@ -314,17 +300,18 @@ def calc_sorce_image_from_power(seizure, mri):
     Nifti1Image
         Image where voxel values represent corresponding t-values
     """
-    seizure['baseline']['img'], seizure['seizure']['img'] = \
-        map_seeg_data(seizure, mri)
-    base_img = seizure['baseline']['img']
-    seiz_img = seizure['seizure']['img']
+    eeg['baseline']['img'], eeg['seizure']['img'] = \
+        map_seeg_data(eeg, mri)
+    base_img = eeg['baseline']['img']
+    seiz_img = eeg['seizure']['img']
 
     nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)
     base_masked = nifti_masker.fit_transform(base_img)
     seiz_masked = nifti_masker.fit_transform(seiz_img)
     data = np.concatenate((base_masked, seiz_masked))
-    labels = np.zeros(30, dtype=np.int)
-    labels[15:] = 1
+    steps = int(D/dt)
+    labels = np.zeros(2*steps, dtype=np.int)
+    labels[steps:] = 1
     __, t_scores, _ = permuted_ols(
         labels, data,
         # + intercept as a covariate by default
@@ -334,8 +321,7 @@ def calc_sorce_image_from_power(seizure, mri):
     return nifti_masker.inverse_transform(t_scores)
 
 
-def create_source_image_map(seizure, mri, freqs, low_freq=120,
-                            high_freq=200, delay=0):
+def create_source_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0):
     """ create the source image t-map as per David et. al. 2011'
 
     Parameters
@@ -344,8 +330,6 @@ def create_source_image_map(seizure, mri, freqs, low_freq=120,
         structure containing EEG data
     mri : string
         Path to location of MRI file
-    freqs : ndarray
-        array of frequencies
     low_freq : int, optional
         low frequency cut-off, by default 120
     high_freq : int, optional
@@ -354,9 +338,8 @@ def create_source_image_map(seizure, mri, freqs, low_freq=120,
         delay from the beginning of the seizure, by default 0
     """
 
-    seizure = calc_source_image_power_data(seizure, freqs, low_freq,
-                                           high_freq, delay)
-    return calc_sorce_image_from_power(seizure, mri)
+    eeg = calc_source_image_power_data(eeg, low_freq, high_freq, delay)
+    return calc_sorce_image_from_power(eeg, mri)
 
 
 def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
@@ -377,7 +360,7 @@ def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
     plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)
 
 
-def calc_depth_source_image_from_power(seizure):
+def calc_depth_source_image_from_power(eeg):
     """ Calculate t-map image analagous to Brainstorm demo
 
     Parameters
@@ -393,8 +376,8 @@ def calc_depth_source_image_from_power(seizure):
         t values
     """
 
-    base = seizure['baseline']['ex_power'].T
-    seiz = seizure['seizure']['ex_power'].T
+    base = eeg['baseline']['ave_power'].T
+    seiz = eeg['seizure']['ave_power'].T
     data = np.concatenate((base, seiz))
     labels = np.zeros(30, dtype=np.int)
     labels[15:] = 1
@@ -407,7 +390,7 @@ def calc_depth_source_image_from_power(seizure):
     return t_scores
 
 
-def create_depth_source_image_map(seizure, freqs, low_freq=120,
+def create_depth_source_image_map(eeg, low_freq=120,
                                   high_freq=200, delay=0):
     """ Calculate t-values for each individual (non-bad) depth contact
 
@@ -430,9 +413,9 @@ def create_depth_source_image_map(seizure, freqs, low_freq=120,
         t-values for depth contacts
     """
 
-    seizure = calc_source_image_power_data(seizure, freqs, low_freq,
-                                           high_freq, delay)
-    return calc_depth_source_image_from_power(seizure)
+    eeg = calc_source_image_power_data(eeg, low_freq,
+                                       high_freq, delay)
+    return calc_depth_source_image_from_power(eeg)
 
 
 def plot_3d_source_image_map(t_map, mri):
