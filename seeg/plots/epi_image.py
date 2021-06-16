@@ -95,17 +95,19 @@ def ave_power_over_freq_band(eeg, low=120, high=200):
     freqs = np.arange(sfreq//2)
     baseline_power = eeg['baseline']['power']
     shape = baseline_power.shape
-    baseline_ave_power = np.zeros((shape[0], shape[1]))
+    print(shape)
+    print(len(eeg['seizure']['bipolar'].ch_names))
+    baseline_ave_power = np.zeros((shape[0], shape[2]))
     seizure_power = eeg['seizure']['power']
     shape = seizure_power.shape
-    seizure_ave_power = np.zeros((shape[0], shape[1]))
+    seizure_ave_power = np.zeros((shape[0], shape[2]))
     freq_index = np.where(np.logical_and(freqs >= low, freqs <= high))
 
     for i in range(len(eeg['seizure']['bipolar'].ch_names)):
         baseline_ave_power[i, :] = \
-            np.mean(baseline_power[i, :, freq_index], 1)
+            np.mean(baseline_power[i, freq_index, :], 1)
         seizure_ave_power[i, :] = \
-            np.mean(seizure_power[i, :, freq_index], 1)
+            np.mean(seizure_power[i, freq_index, :], 1)
 
     return baseline_ave_power, seizure_ave_power
 
@@ -247,7 +249,8 @@ def map_seeg_data(eeg, mri):
     return base_img, seiz_img
 
 
-def calc_source_image_power_data(eeg, low_freq=120, high_freq=200, delay=0):
+def calc_source_image_power_data(eeg, low_freq=120, high_freq=200,
+                                 delay=0, method='welch'):
     """ calculate power data for SEEG source image as per David et. al. 2011
 
     Parameters
@@ -260,13 +263,23 @@ def calc_source_image_power_data(eeg, low_freq=120, high_freq=200, delay=0):
         high frequency cutoff, by default 200
     delay : float, optional
         time from beginning of seizure onset, by default 0
+    method : string, optional
+        method for calculating power ['welch', 'multi'], by default 'welch'
 
     Returns
     -------
     EEG | dict
         eeg data including power data
     """
+    if method.lower() not in ['welch', 'multi']:
+        raise ValueError(f'{method} is not a recognized method')
 
+    if method.lower() == 'welch':
+        calc_power = utils.calc_power_welch
+    else:
+        calc_power = utils.calc_power_multi
+
+    print(f'calc_power = {calc_power}')
     eeg['baseline']['bipolar'] = \
         utils.create_bipolar(eeg['baseline']['eeg'],
                              eeg['electrode_names'])
@@ -274,9 +287,9 @@ def calc_source_image_power_data(eeg, low_freq=120, high_freq=200, delay=0):
         utils.create_bipolar(eeg['seizure']['eeg'],
                              eeg['electrode_names'])
     eeg['baseline']['power'] = \
-        utils.calc_power_multi(eeg['baseline']['bipolar'])
+        calc_power(eeg['baseline']['bipolar'])
     eeg['seizure']['power'] = \
-        utils.calc_power_multi(eeg['seizure']['bipolar'])
+        calc_power(eeg['seizure']['bipolar'])
     eeg['baseline']['ave_power'], eeg['seizure']['ave_power'] = \
         ave_power_over_freq_band(eeg, low=low_freq, high=high_freq)
     eeg['baseline']['ex_power'], eeg['seizure']['ex_power'] = \
@@ -376,11 +389,14 @@ def calc_depth_source_image_from_power(eeg):
         t values
     """
 
-    base = eeg['baseline']['ave_power'].T
-    seiz = eeg['seizure']['ave_power'].T
+    base = eeg['baseline']['ex_power'].T
+    seiz = eeg['seizure']['ex_power'].T
+    print(base.shape, seiz.shape)
     data = np.concatenate((base, seiz))
-    labels = np.zeros(30, dtype=np.int)
-    labels[15:] = 1
+    size = base.shape[0]
+    print(data.shape)
+    labels = np.zeros(2*size, dtype=np.int)
+    labels[size:] = 1
     __, t_scores, _ = permuted_ols(
         labels, data,
         # + intercept as a covariate by default

@@ -50,13 +50,14 @@ def calc_ER(raw, low=(4, 12), high=(12, 127), window=1, step=0.25):
     ndarray
         Energy ratio for each channel
     """
-    n_per_seg = int(raw.info['sfreq']*window)
-    fmax = raw.info['sfreq']//2
-    overlap = int((1 - step)*raw.info['sfreq'])
-    psd, freqs = mne.time_frequency.psd_welch(raw, fmin=0, fmax=fmax,
-                                              n_fft=n_per_seg,
-                                              n_per_seg=n_per_seg,
-                                              n_overlap=overlap, average=None)
+    # n_per_seg = int(raw.info['sfreq']*window)
+    # fmax = raw.info['sfreq']//2
+    # overlap = int((1 - step)*raw.info['sfreq'])
+    # # psd, freqs = mne.time_frequency.psd_welch(raw, fmin=0, fmax=fmax,
+    #                                           n_fft=n_per_seg,
+    #                                           n_per_seg=n_per_seg,
+    #                                           n_overlap=overlap, average=None)
+    psd = utils.calc_power_welch(raw, window, step)
     numerator = np.sum(psd[:, high[0]:high[1], :], axis=1)
     denominator = np.sum(psd[:, low[0]:low[1], :], axis=1)
     print(f'psd shape = {psd.shape}')
@@ -132,7 +133,7 @@ def find_onsets(U_n, ch_names, window, step, H, threshold=1):
     """
     start = window/2
     idx_start = 0
-    EI_window = np.int(H/step)
+    EI_window = int(H/step)
     idx_end = EI_window
     seizure = False
     while (idx_end < U_n.shape[-1]) and not seizure:

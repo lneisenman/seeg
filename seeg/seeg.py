@@ -57,14 +57,14 @@ class Seeg():
         raw.set_annotations(mne.Annotations(self.seizure_time, 0, 'Seizure'))
         self.eeg.set_seizure(raw, file_name=self.seizure_eeg_file)
 
-    def create_source_image_map(self, freqs, low_freq, high_freq):
+    def create_source_image_map(self, low_freq, high_freq):
         """ calculate the source image map analagous to David et al 2011
             and the Brainstorm tutorial
 
         """
         self.t_map = create_source_image_map(self.eeg, self.mri_file,
-                                             freqs, self.eeg.montage, low_freq,
-                                             high_freq, self.eeg.seiz_delay)
+                                             low_freq, high_freq,
+                                             self.eeg.seiz_delay)
 
     def show_source_image_map(self, cut_coords=None, threshold=2):
         """ Use matplotlib to display the source image map

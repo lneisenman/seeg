@@ -449,7 +449,7 @@ def calc_power_multi(raw, n_per_seg=1, n_overlap=0.25):
     if raw.n_times/sfreq - int(raw.n_times/sfreq) >= 1/sfreq:
         num_segs += 1
 
-    density = np.zeros((len(raw.ch_names), num_segs, int(sfreq/2)))
+    density = np.zeros((len(raw.ch_names), int(sfreq/2), num_segs))
     i = 0
     data = raw.get_data()
     for i in range(num_segs-1):
@@ -459,13 +459,40 @@ def calc_power_multi(raw, n_per_seg=1, n_overlap=0.25):
         # print(f'i = {i} and start = {start}')
         # print(f'density.shape = {density.shape}')
         # print(f'psd.shape = {psd.shape}')
-        density[:, i, :] = psd[:, 1:]
+        density[:, :, i] = psd[:, 1:]
         start += step
         end += step
 
     i = num_segs - 1
     psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:], sfreq,
                                                        verbose=False)
-    density[:, i, :(psd.shape[-1]-1)] = psd[:, 1:]
+    density[:, :(psd.shape[-1]-1), i] = psd[:, 1:]
 
     return density
+
+
+def calc_power_welch(raw, window=1, step=0.25):
+    """ Calculate power in each channel using the Welch method
+
+        Parameters
+        ----------
+        raw : MNE Raw
+            EEG data
+        n_per_seg : int
+            number of points per segment
+        n_overlap : int
+            number of points of overlap
+
+        Returns
+        -------
+        density : ndarray
+            power data
+    """
+    n_per_seg = int(raw.info['sfreq']*window)
+    fmax = raw.info['sfreq']//2
+    overlap = int((1 - step)*raw.info['sfreq'])
+    psd, ___ = mne.time_frequency.psd_welch(raw, fmin=0, fmax=fmax,
+                                            n_fft=n_per_seg,
+                                            n_per_seg=n_per_seg,
+                                            n_overlap=overlap, average=None)
+    return psd
