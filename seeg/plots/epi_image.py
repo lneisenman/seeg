@@ -97,8 +97,6 @@ def ave_power_over_freq_band(eeg, low=120, high=200):
     freqs = np.arange(sfreq//2)
     baseline_power = eeg['baseline']['power']
     shape = baseline_power.shape
-    print(shape)
-    print(len(eeg['seizure']['bipolar'].ch_names))
     baseline_ave_power = np.zeros((shape[0], shape[2]))
     seizure_power = eeg['seizure']['power']
     shape = seizure_power.shape
@@ -282,7 +280,6 @@ def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200,
     else:
         calc_power = utils.calc_power_multi
 
-    print(f'calc_power = {calc_power}')
     eeg['baseline']['bipolar'] = \
         utils.create_bipolar(eeg['baseline']['eeg'],
                              eeg['electrode_names'])
@@ -395,10 +392,8 @@ def calc_depth_epi_image_from_power(eeg):
 
     base = eeg['baseline']['ex_power'].T
     seiz = eeg['seizure']['ex_power'].T
-    print(base.shape, seiz.shape)
     data = np.concatenate((base, seiz))
     size = base.shape[0]
-    print(data.shape)
     labels = np.zeros(2*size, dtype=np.int)
     labels[size:] = 1
     __, t_scores, _ = permuted_ols(
