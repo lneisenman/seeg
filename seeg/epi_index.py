@@ -198,7 +198,7 @@ def calculate_EI(raw, low=(4, 12), high=(12, 127), window=1, step=0.25,
     .. math:: EI_i=\frac{1}{N_{di} - N_0 + \tau}\sum_{n=N_{di}}^{N_{di}+H}ER[n],\quad \tau>0
 
     """
-    EI_window = np.int(H/step)
+    EI_window = int(H/step)
     ER = calc_ER(raw, low, high, window, step)
     U_n = cusum(ER, bias)
     onsets = find_onsets(U_n, raw.ch_names, window, step, H, threshold)

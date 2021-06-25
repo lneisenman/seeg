@@ -22,11 +22,30 @@ import seeg
 # HOME = r'C:\Users\leisenman\Documents\brainstorm_db'
 
 
-def test_create_source_image_map(eeg, mri):
-    t_map = seeg.create_source_image_map(eeg, mri,
-                                         low_freq=120, high_freq=200)
-    seeg.plot_source_image_map(t_map, mri)
-    seeg.plot_source_image_map(t_map, mri, cut_coords=(-38, -50, -12))
+def test_create_epi_image_map(eeg, mri):
+    t_map = seeg.create_epi_image_map(eeg, mri, low_freq=120, high_freq=200)
+    seeg.plot_epi_image_map(t_map, mri)
+    seeg.plot_epi_image_map(t_map, mri, cut_coords=(-38, -50, -12))
+    plt.show()
+
+
+def test_create_MT_epi_image_map(eeg, mri):
+    t_map = seeg.create_epi_image_map(eeg, mri, low_freq=120, high_freq=200,
+                                      method='multi')
+    seeg.plot_epi_image_map(t_map, mri)
+    seeg.plot_epi_image_map(t_map, mri, cut_coords=(-38, -50, -12))
+    plt.show()
+
+
+def test_EpiImage(eeg, mri):
+    image = seeg.EpiImage(eeg, mri)
+    image.plot(cut_coords=(-38, -50, -12))
+    plt.show()
+
+
+def test_EpiImage_MT(eeg, mri):
+    image = seeg.EpiImage(eeg, mri, method='multi')
+    image.plot(cut_coords=(-38, -50, -12))
     plt.show()
 
 

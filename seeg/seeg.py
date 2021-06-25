@@ -6,7 +6,7 @@ import mne
 import pandas as pd
 
 from .epi_index import calculate_EI
-from .plots.epi_image import create_source_image_map, plot_source_image_map
+from .plots.epi_image import create_epi_image_map, plot_epi_image_map
 from .utils import (EEG, read_electrode_file, create_montage, read_edf,
                     load_eeg_data)
 
@@ -57,20 +57,20 @@ class Seeg():
         raw.set_annotations(mne.Annotations(self.seizure_time, 0, 'Seizure'))
         self.eeg.set_seizure(raw, file_name=self.seizure_eeg_file)
 
-    def create_source_image_map(self, low_freq, high_freq):
+    def create_epi_image_map(self, low_freq, high_freq):
         """ calculate the source image map analagous to David et al 2011
             and the Brainstorm tutorial
 
         """
-        self.t_map = create_source_image_map(self.eeg, self.mri_file,
-                                             low_freq, high_freq,
-                                             self.eeg.seiz_delay)
+        self.t_map = create_epi_image_map(self.eeg, self.mri_file,
+                                          low_freq, high_freq,
+                                          self.eeg.seiz_delay)
 
-    def show_source_image_map(self, cut_coords=None, threshold=2):
+    def show_epi_image_map(self, cut_coords=None, threshold=2):
         """ Use matplotlib to display the source image map
 
         """
-        plot_source_image_map(self.t_map, self.mri_file, cut_coords, threshold)
+        plot_epi_image_map(self.t_map, self.mri_file, cut_coords, threshold)
 
     def calculate_EI(self, freqs, bias=1, threshold=1, tau=1, H=5):
         """ calculate the epileptogenicity index as per Bartolomi et al 2008

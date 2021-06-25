@@ -93,11 +93,11 @@ def test_show_bipolar_values_pv(electrode_names, electrodes, raw, T_x_inv):
     brain.show()
 
 
-def test_create_depth_source_image_map_mlab(eeg, electrode_names,
-                                            electrodes, raw, T_x_inv):
+def test_create_depth_epi_image_map_mlab(eeg, electrode_names,
+                                         electrodes, raw, T_x_inv):
     mne.viz.set_3d_backend('mayavi')
-    values = seeg.create_depth_source_image_map(eeg, low_freq=120,
-                                                high_freq=200)
+    values = seeg.create_depth_epi_image_map(eeg, low_freq=120,
+                                             high_freq=200)
     # print(type(values), values[0])
     # assert 1==0
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
@@ -108,11 +108,11 @@ def test_create_depth_source_image_map_mlab(eeg, electrode_names,
     mlab.show()
 
 
-def test_create_depth_source_image_map_pv(eeg, electrode_names,
-                                          electrodes, raw, T_x_inv):
+def test_create_depth_epi_image_map_pv(eeg, electrode_names,
+                                       electrodes, raw, T_x_inv):
     mne.viz.set_3d_backend('pyvista')
-    values = seeg.create_depth_source_image_map(eeg, low_freq=120,
-                                                high_freq=200)
+    values = seeg.create_depth_epi_image_map(eeg, low_freq=120,
+                                             high_freq=200)
     # print(type(values), values[0])
     # assert 1==0
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],

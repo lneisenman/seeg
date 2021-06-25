@@ -24,21 +24,23 @@ from .. import utils
 class EpiImage:
 
     def __init__(self, eeg, mri, low_freq=120, high_freq=200,
-                 seiz_delay=0, step=3, num_steps=1):
+                 seiz_delay=0, method='welch', step=3, num_steps=1):
         self.mri = mri
         self.low_freq = low_freq
         self.high_freq = high_freq
         self.seiz_delay = seiz_delay
+        self.method = method
         self.step = step
         self.t_maps = list()
         for i in range(num_steps):
-            self.t_maps.append(create_source_image_map(eeg, mri,
-                                                       low_freq, high_freq,
-                                                       seiz_delay+(i*step)))
+            self.t_maps.append(create_epi_image_map(eeg, mri,
+                                                    low_freq, high_freq,
+                                                    seiz_delay+(i*step),
+                                                    method))
 
     def plot(self, cut_coords=None, threshold=2):
-        image = plot_source_image_map(self.t_maps[0], self.mri, cut_coords,
-                                      threshold)
+        image = plot_epi_image_map(self.t_maps[0], self.mri, cut_coords,
+                                   threshold)
 
 
 def compress_data(data, old_freq, new_freq):
@@ -191,7 +193,7 @@ def voxel_coords(mri_coords, inverse):
         voxel coordinates (integer)
     """
     coords = apply_affine(inverse, mri_coords)
-    return coords.astype(np.int)
+    return coords.astype(int)
 
 
 def map_seeg_data(eeg, mri):
@@ -212,8 +214,8 @@ def map_seeg_data(eeg, mri):
         Image with data mapped from seizure eeg
     """
     base_img, seiz_img = create_volumes(eeg, mri)
-    base_data = base_img.get_data()
-    seiz_data = seiz_img.get_data()
+    base_data = base_img.get_fdata()
+    seiz_data = seiz_img.get_fdata()
     affine = seiz_img.affine
     inverse = npl.inv(affine)
     electrodes = eeg['electrode_names']
@@ -249,9 +251,10 @@ def map_seeg_data(eeg, mri):
     return base_img, seiz_img
 
 
-def calc_source_image_power_data(eeg, low_freq=120, high_freq=200,
-                                 delay=0, method='welch'):
-    """ calculate power data for SEEG source image as per David et. al. 2011
+def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200,
+                              delay=0, method='welch'):
+    """ calculate power data for SEEG epileptogenicity image as per
+        David et. al. 2011
 
     Parameters
     ----------
@@ -298,7 +301,7 @@ def calc_source_image_power_data(eeg, low_freq=120, high_freq=200,
     return eeg
 
 
-def calc_sorce_image_from_power(eeg, mri, D=3, dt=0.25):
+def calc_epi_image_from_power(eeg, mri, D=3, dt=0.25):
     """Create source image from power data
 
     Parameters
@@ -323,7 +326,7 @@ def calc_sorce_image_from_power(eeg, mri, D=3, dt=0.25):
     seiz_masked = nifti_masker.fit_transform(seiz_img)
     data = np.concatenate((base_masked, seiz_masked))
     steps = int(D/dt)
-    labels = np.zeros(2*steps, dtype=np.int)
+    labels = np.zeros(2*steps, dtype=(int))
     labels[steps:] = 1
     __, t_scores, _ = permuted_ols(
         labels, data,
@@ -334,7 +337,8 @@ def calc_sorce_image_from_power(eeg, mri, D=3, dt=0.25):
     return nifti_masker.inverse_transform(t_scores)
 
 
-def create_source_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0):
+def create_epi_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0,
+                         method='welch'):
     """ create the source image t-map as per David et. al. 2011'
 
     Parameters
@@ -351,11 +355,11 @@ def create_source_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0):
         delay from the beginning of the seizure, by default 0
     """
 
-    eeg = calc_source_image_power_data(eeg, low_freq, high_freq, delay)
-    return calc_sorce_image_from_power(eeg, mri)
+    eeg = calc_epi_image_power_data(eeg, low_freq, high_freq, delay, method)
+    return calc_epi_image_from_power(eeg, mri)
 
 
-def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
+def plot_epi_image_map(t_map, mri, cut_coords=None, threshold=2):
     """ Use Nilearn to create a Matplotlib plot of the t_map superimposed
         on the MRI
 
@@ -373,7 +377,7 @@ def plot_source_image_map(t_map, mri, cut_coords=None, threshold=2):
     plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)
 
 
-def calc_depth_source_image_from_power(eeg):
+def calc_depth_epi_image_from_power(eeg):
     """ Calculate t-map image analagous to Brainstorm demo
 
     Parameters
@@ -406,8 +410,8 @@ def calc_depth_source_image_from_power(eeg):
     return t_scores
 
 
-def create_depth_source_image_map(eeg, low_freq=120,
-                                  high_freq=200, delay=0):
+def create_depth_epi_image_map(eeg, low_freq=120,
+                               high_freq=200, delay=0):
     """ Calculate t-values for each individual (non-bad) depth contact
 
     Parameters
@@ -429,12 +433,12 @@ def create_depth_source_image_map(eeg, low_freq=120,
         t-values for depth contacts
     """
 
-    eeg = calc_source_image_power_data(eeg, low_freq,
-                                       high_freq, delay)
-    return calc_depth_source_image_from_power(eeg)
+    eeg = calc_epi_image_power_data(eeg, low_freq,
+                                    high_freq, delay)
+    return calc_depth_epi_image_from_power(eeg)
 
 
-def plot_3d_source_image_map(t_map, mri):
+def plot_3d_epi_image_map(t_map, mri):
     """ Use Napari to display a coronal 3D view of the t_map superimposed on
         the MRI
 
