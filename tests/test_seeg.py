@@ -49,6 +49,13 @@ def test_EpiImage_MT(eeg, mri):
     plt.show()
 
 
+def test_SEEG(subject_id, subjects_dir, electrode_names, bads, electrode_file):
+    study = seeg.Seeg(subject_id, subjects_dir, electrode_names, bads,
+                      electrode_file=electrode_file)
+    study.create_epi_image_map(120, 200)
+    study.show_epi_image_map(cut_coords=(-38, -50, -12))
+
+
 def test_setup_bipolar(raw, bads):
     anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw.ch_names, bads)
     print(anodes)

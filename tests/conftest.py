@@ -31,6 +31,21 @@ ELECTRODE_FILE = os.path.join(SUBJECTS_DIR, SUBJECT_ID,
 
 
 @pytest.fixture
+def subject_id():
+    return SUBJECT_ID
+
+
+@pytest.fixture
+def subjects_dir():
+    return SUBJECTS_DIR
+
+
+@pytest.fixture
+def electrode_file():
+    return ELECTRODE_FILE
+
+
+@pytest.fixture
 def electrode_names():
     return ELECTRODE_NAMES
 
