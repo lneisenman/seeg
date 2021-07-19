@@ -63,13 +63,14 @@ class Seeg():
     #     raw.set_annotations(mne.Annotations(self.seizure_time, 0, 'Seizure'))
     #     self.eeg.set_seizure(raw, file_name=self.seizure_eeg_file)
 
-    def create_epi_image_map(self, low_freq, high_freq):
+    def create_epi_image_map(self, low_freq, high_freq, D=3, dt=0.2,
+                             method='welch'):
         """ calculate the source image map analagous to David et al 2011
             and the Brainstorm tutorial
 
         """
         self.epi_image = EpiImage(self.eeg, self.mri_file, low_freq, high_freq,
-                                  self.seiz_delay)
+                                  self.seiz_delay, method, D, dt)
         # self.t_map = create_epi_image_map(self.eeg, self.mri_file,
         #                                   low_freq, high_freq,
         #                                   self.eeg.seiz_delay)
@@ -78,7 +79,7 @@ class Seeg():
         """ Use matplotlib to display the source image map
 
         """
-        self.epi_image.plot(cut_coords, threshold)
+        self.epi_image.plot(cut_coords=cut_coords, threshold=threshold)
 
     def calculate_EI(self, freqs, bias=1, threshold=1, tau=1, H=5):
         """ calculate the epileptogenicity index as per Bartolomi et al 2008

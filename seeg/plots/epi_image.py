@@ -24,23 +24,24 @@ from .. import utils
 class EpiImage:
 
     def __init__(self, eeg, mri, low_freq=120, high_freq=200,
-                 seiz_delay=0, method='welch', step=3, num_steps=1):
+                 seiz_delay=0, method='welch', D=3, dt=0.2, num_steps=1):
         self.mri = mri
         self.low_freq = low_freq
         self.high_freq = high_freq
         self.seiz_delay = seiz_delay
         self.method = method
-        self.step = step
+        self.D = D
+        self.dt = dt
         self.t_maps = list()
         for i in range(num_steps):
             self.t_maps.append(create_epi_image_map(eeg, mri,
                                                     low_freq, high_freq,
-                                                    seiz_delay+(i*step),
+                                                    seiz_delay+(i*D), D, dt,
                                                     method))
 
-    def plot(self, cut_coords=None, threshold=2):
-        image = plot_epi_image_map(self.t_maps[0], self.mri, cut_coords,
-                                   threshold)
+    def plot(self, image_num=0, cut_coords=None, threshold=2):
+        image = plot_epi_image_map(self.t_maps[image_num], self.mri,
+                                   cut_coords, threshold)
 
 
 def compress_data(data, old_freq, new_freq):
@@ -112,7 +113,7 @@ def ave_power_over_freq_band(eeg, low=120, high=200):
     return baseline_ave_power, seizure_ave_power
 
 
-def extract_power(eeg, D=3, dt=0.25, start=0):
+def extract_power(eeg, D=3, dt=0.2, start=0):
     """ extract power vaules for image
 
     Parameters
@@ -249,7 +250,7 @@ def map_seeg_data(eeg, mri):
     return base_img, seiz_img
 
 
-def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200,
+def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200, D=3, step=0.2,
                               delay=0, method='welch'):
     """ calculate power data for SEEG epileptogenicity image as per
         David et. al. 2011
@@ -287,18 +288,18 @@ def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200,
         utils.create_bipolar(eeg['seizure']['eeg'],
                              eeg['electrode_names'])
     eeg['baseline']['power'] = \
-        calc_power(eeg['baseline']['bipolar'])
+        calc_power(eeg['baseline']['bipolar'], step=step)
     eeg['seizure']['power'] = \
-        calc_power(eeg['seizure']['bipolar'])
+        calc_power(eeg['seizure']['bipolar'], step=step)
     eeg['baseline']['ave_power'], eeg['seizure']['ave_power'] = \
         ave_power_over_freq_band(eeg, low=low_freq, high=high_freq)
     eeg['baseline']['ex_power'], eeg['seizure']['ex_power'] = \
-        extract_power(eeg, start=delay)
+        extract_power(eeg, D=D, dt=step, start=delay)
 
     return eeg
 
 
-def calc_epi_image_from_power(eeg, mri, D=3, dt=0.25):
+def calc_epi_image_from_power(eeg, mri, D=3, dt=0.2):
     """Create source image from power data
 
     Parameters
@@ -321,8 +322,11 @@ def calc_epi_image_from_power(eeg, mri, D=3, dt=0.25):
     nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)
     base_masked = nifti_masker.fit_transform(base_img)
     seiz_masked = nifti_masker.fit_transform(seiz_img)
+    print(f'base_masked is size {base_masked.shape}')
+    print(f'seiz_masked is size {seiz_masked.shape}')
     data = np.concatenate((base_masked, seiz_masked))
     steps = int(D/dt)
+    print(D, dt, steps)
     labels = np.zeros(2*steps, dtype=(int))
     labels[steps:] = 1
     __, t_scores, _ = permuted_ols(
@@ -335,7 +339,7 @@ def calc_epi_image_from_power(eeg, mri, D=3, dt=0.25):
 
 
 def create_epi_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0,
-                         method='welch'):
+                         D=3, dt=0.2, method='welch'):
     """ create the source image t-map as per David et. al. 2011'
 
     Parameters
@@ -352,8 +356,9 @@ def create_epi_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0,
         delay from the beginning of the seizure, by default 0
     """
 
-    eeg = calc_epi_image_power_data(eeg, low_freq, high_freq, delay, method)
-    return calc_epi_image_from_power(eeg, mri)
+    eeg = calc_epi_image_power_data(eeg, low_freq, high_freq, D, dt, delay,
+                                    method)
+    return calc_epi_image_from_power(eeg, mri, D, dt)
 
 
 def plot_epi_image_map(t_map, mri, cut_coords=None, threshold=2):
@@ -429,7 +434,7 @@ def create_depth_epi_image_map(eeg, low_freq=120,
     """
 
     eeg = calc_epi_image_power_data(eeg, low_freq,
-                                    high_freq, delay)
+                                    high_freq, delay=delay)
     return calc_depth_epi_image_from_power(eeg)
 
 
