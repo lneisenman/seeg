@@ -4,7 +4,7 @@
 """
 import os
 
-from mayavi import mlab
+# from mayavi import mlab
 import mne
 import neo
 import numpy as np

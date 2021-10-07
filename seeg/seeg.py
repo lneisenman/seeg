@@ -2,13 +2,13 @@
 
 import os
 
-import mne
-import pandas as pd
+# import mne
+# import pandas as pd
 
 from .epi_index import calculate_EI
-from .plots.epi_image import EpiImage, create_epi_image_map, plot_epi_image_map
-from .utils import (EEG, read_electrode_file, create_montage, read_edf,
-                    load_eeg_data)
+from .plots.epi_image import EpiImage #, create_epi_image_map, plot_epi_image_map
+from .utils import load_eeg_data#(EEG, read_electrode_file, create_montage, read_edf,
+                    # load_eeg_data)
 
 
 class Seeg():
