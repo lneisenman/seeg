@@ -8,18 +8,9 @@ Tests for `seeg` module.
 """
 
 import matplotlib.pyplot as plt
-from nilearn.input_data import NiftiMasker
-from nilearn.mass_univariate import permuted_ols
-from nilearn.plotting import plot_stat_map
-import numpy as np
-import pandas as pd
 import pytest
 
 import seeg
-
-
-# HOME = r'C:\Users\eisenmanl\Documents\brainstorm_data_files'
-# HOME = r'C:\Users\leisenman\Documents\brainstorm_db'
 
 
 def test_create_epi_image_map(eeg, mri):

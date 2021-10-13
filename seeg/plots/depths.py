@@ -6,7 +6,6 @@
 import os
 
 import matplotlib as mpl
-from mayavi import mlab
 import mne
 import nibabel as nib
 from nibabel.affines import apply_affine
@@ -15,14 +14,9 @@ from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.linalg as npl
 from scipy.optimize import minimize
-from surfer import Brain
-# from tvtk.api import tvtk
-# from tvtk.common import configure_input_data
 
 from . import draw
 from .. import utils
-
-# mne.viz.set_3d_backend('mayavi')
 
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]

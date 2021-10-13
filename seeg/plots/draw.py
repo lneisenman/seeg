@@ -3,7 +3,6 @@
 
 """
 
-import pyvista
 import vtk
 
 
@@ -75,8 +74,6 @@ def draw_text(scene, text, location, size, color):
     textActor.SetPosition(*location)
     textActor.GetTextProperty().SetFontSize(size)
     textActor.GetTextProperty().SetColor(*color)
+
+    scene.AddActor(textActor)
     
-    if isinstance(scene, pyvista.Renderer):
-        scene.AddActor(textActor)
-    else:
-        scene.add_actor(textActor)

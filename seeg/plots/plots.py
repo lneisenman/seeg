@@ -4,7 +4,6 @@
 """
 
 import matplotlib.pyplot as plt
-from mayavi import mlab
 import mne
 import neo
 import nibabel as nib

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from _pytest.config import filename_arg
+# from _pytest.config import filename_arg
 
 import mne
 import numpy as np
