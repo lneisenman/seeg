@@ -10,7 +10,6 @@ import mne
 import nibabel as nib
 from nibabel.affines import apply_affine
 from nibabel.freesurfer import io as fio
-from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.linalg as npl
 from scipy.optimize import minimize
@@ -303,10 +302,7 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
                   cortex='classic', alpha=0.5)
-    if mne.viz.get_3d_backend() == 'pyvista':
-        scene = brain.plotter.renderer
-    else:
-        scene = mlab.gcf().scene
+    scene = brain.plotter.renderer
 
     if type(contact_colors[0]) is not float:
         c_list = True
