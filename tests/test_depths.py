@@ -37,6 +37,7 @@ def test_create_depths_plot(electrode_names, electrodes, raw):
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
+    brain.show()
     brain.plotter.app.exec_()
 
 
@@ -47,6 +48,7 @@ def test_show_bipolar_values(electrode_names, electrodes, raw, T_x_inv):
     values = 10*np.random.normal(size=len(raw.info['ch_names']))
     seeg.show_bipolar_values(depth_list, brain.plotter.renderer, values,
                              affine=T_x_inv)
+    brain.show()
     brain.plotter.app.exec_()
 
 
@@ -59,4 +61,5 @@ def test_create_depth_epi_image_map(eeg, electrode_names,
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     seeg.show_bipolar_values(depth_list, brain.plotter.renderer, values[0],
                              radius=3, affine=T_x_inv)
+    brain.show()
     brain.plotter.app.exec_()

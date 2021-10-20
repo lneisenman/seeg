@@ -21,5 +21,6 @@ def test_cube(eeg, electrode_names, t_map, affine):
                                     eeg.electrodes)
     brain = seeg.create_depths_plot(depth_list, SUBJECT_ID, SUBJECTS_DIR)
     seeg.draw_volume(brain.plotter.renderer, t_map, affine)
+    brain.show()
     brain.plotter.app.exec_()
     

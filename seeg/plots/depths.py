@@ -301,7 +301,7 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     affine = Torig@mri_inv
     Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
-                  cortex='classic', alpha=0.5)
+                  cortex='classic', alpha=0.5, show=False)
     scene = brain.plotter.renderer
 
     if type(contact_colors[0]) is not float:
