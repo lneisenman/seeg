@@ -260,7 +260,7 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
     raw = mne.io.read_raw_edf(eeg_file, preload=True)
     mapping = dict()
     LABELS = ['POL {}', 'EEG {}-Ref', 'EEG {}-Ref-0',
-              'EEG {}-Org', 'EEG {}-Org-0']
+              'EEG {}-Org', 'EEG {}-Org-0', '{}']
     for contact in electrodes['contact']:
         for label in LABELS:
             if label.format(contact) in raw.ch_names:
