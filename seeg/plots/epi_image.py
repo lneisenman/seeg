@@ -221,6 +221,15 @@ def map_seeg_data(eeg, mri):
     base_eeg = eeg['baseline']['eeg']
     bads = base_eeg.info['bads']
     montage = base_eeg.get_montage()
+    if montage is None:
+        try:
+            montage = eeg.montage
+        except:
+            raise ValueError('unable to get montage')
+
+    if montage is None:
+        raise ValueError('unable to get montage')
+
     coord_list = dict()
     contact_num = 0
     for electrode in electrodes:
