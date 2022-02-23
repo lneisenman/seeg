@@ -328,14 +328,11 @@ def calc_epi_image_from_power(eeg, mri, D=3, dt=0.2):
     base_img = eeg['baseline']['img']
     seiz_img = eeg['seizure']['img']
 
-    nifti_masker = NiftiMasker(memory='nilearn_cache', memory_level=1)
+    nifti_masker = NiftiMasker()
     base_masked = nifti_masker.fit_transform(base_img)
-    seiz_masked = nifti_masker.fit_transform(seiz_img)
-    print(f'base_masked is size {base_masked.shape}')
-    print(f'seiz_masked is size {seiz_masked.shape}')
+    seiz_masked = nifti_masker.transform(seiz_img)
     data = np.concatenate((base_masked, seiz_masked))
     steps = int(D/dt)
-    print(D, dt, steps)
     labels = np.zeros(2*steps, dtype=(int))
     labels[steps:] = 1
     __, t_scores, _ = permuted_ols(
