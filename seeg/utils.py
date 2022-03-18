@@ -3,6 +3,7 @@
 
 """
 import os
+from re import L
 
 # from mayavi import mlab
 import mne
@@ -380,9 +381,22 @@ def setup_bipolar(electrode, ch_names, bads):
     cathodes = list()
     ch_names = list()
     num_contacts = find_num_contacts(contacts, electrode)
+    if contacts[0][-2] == '0':
+        zero = True
+    else:
+        zero = False
+
     for i in range(num_contacts):
-        anode = electrode + str(i)
-        cathode = electrode + str(i+1)
+        if (i < 10) and zero:
+            anode = electrode + '0' + str(i)
+        else:
+            anode = electrode + str(i)
+
+        if (i < 9) and zero:
+            cathode = electrode + '0' + str(i+1)
+        else:
+            cathode = electrode + str(i+1)
+
         if (anode in contacts) and (cathode in contacts):
             if not ((anode in bads) or (cathodes in bads)):
                 anodes.append(anode)
