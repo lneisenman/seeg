@@ -481,11 +481,13 @@ def plot_3d_epi_image_map(t_map, mri):
     limits = (min_, -min_)
     if abs(min_) < max_:
         limits = (-max_, max_)
-    with napari.gui_qt():
-        viewer = napari.Viewer()
-        viewer.add_image(coronal_img_data, name='image')
-        viewer.add_image(coronal_map_data, name='t-map', opacity=0.5,
-                         contrast_limits=limits, colormap=cmap)
+
+    viewer = napari.Viewer()
+    viewer.add_image(coronal_img_data, name='image')
+    viewer.add_image(coronal_map_data, name='t-map', opacity=0.5,
+                        contrast_limits=limits, colormap=cmap)
+
+    napari.run()
 
 
 def _set_coronal(img):
