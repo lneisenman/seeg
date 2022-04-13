@@ -51,7 +51,7 @@ def calc_ER(raw, low=(4, 12), high=(12, 127), window=1, step=0.25):
     psd = utils.calc_power_welch(raw, window, step)
     numerator = np.sum(psd[:, high[0]:high[1], :], axis=1)
     denominator = np.sum(psd[:, low[0]:low[1], :], axis=1)
-    print(f'psd shape = {psd.shape}')
+    # print(f'psd shape = {psd.shape}')
     return numerator/denominator
 
 

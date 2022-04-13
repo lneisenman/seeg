@@ -28,5 +28,5 @@ cdict = {'red':   ((0.0, 1.0, 1.0),
                    (1.0, 1.0, 1.0))
          }
 
-gin = LinearSegmentedColormap('gin', cdict, mpl.cm.LUTSIZE)
+gin = LinearSegmentedColormap('gin', cdict, mpl.rcParams['image.lut'])
 plt.register_cmap(name='gin', cmap=gin)

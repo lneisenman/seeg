@@ -11,23 +11,18 @@ import pytest
 
 import seeg
 
-BASE_DIR = r'R:\Active\SEEG'
-if not os.path.exists(BASE_DIR):
-    BASE_DIR = r'C:\Users\leisenman\Box\SEEG'
-    if not os.path.exists(BASE_DIR):
-        BASE_DIR = r'C:\Users\eisenmanl\Box\SEEG'
+BASE_DIR = mne.datasets.misc.data_path()
 
-SUBJECT_ID = 'seeg_brainstorm'
-SUBJECTS_DIR = os.path.join(BASE_DIR, 'subjects')
+
+ELECTRODE_NAMES = ['PL', 'QL', 'RL', 'SL', 'TL', 'UL', 'VL', 'WL',
+                   'XL', 'YL', 'ZL', 'PHL', 'AHL', 'FEL']
+BADS = []
+
+SUBJECT_ID = 'seeg_demo'
+SUBJECTS_DIR = BASE_DIR
 EEG_DIR = os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'eeg')
-
-ELECTRODE_NAMES = [r"y'", r"t'", r"u'", r"v'", r"x'", r"et'", r"b'", r"c'",
-                   r"d'", r"e'", r"f'", r"l'", r"g'", r"s'", r"o'"]
-BADS = ["v'1", "f'1"]
-
-EEG_FILE = os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'eeg\sz1.trc')
-ELECTRODE_FILE = os.path.join(SUBJECTS_DIR, SUBJECT_ID,
-                              r'eeg\elec_pos_patient.txt')
+EEG_FILE = os.path.join(EEG_DIR, 'baseline.edf')
+ELECTRODE_FILE = os.path.join(EEG_DIR, 'electrodes.dat')
 
 
 @pytest.fixture
@@ -73,25 +68,25 @@ def montage(electrodes):
 
 @pytest.fixture
 def raw(electrodes):
-    raw, __ = seeg.read_micromed_eeg(EEG_FILE, electrodes, BADS)
+    raw, __ = seeg.read_edf(EEG_FILE, electrodes, BADS)
     return raw
 
 
 @pytest.fixture
 def mri():
-    return os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'mri\T1.mgz')
+    return os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'mri', 'T1.mgz')
 
 
 @pytest.fixture
 def eeg():
     eeg = seeg.load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
-                             electrode_file='elec_pos_patient.txt')[0]
+                             electrode_file='electrodes.dat')[0]
     return eeg
 
 
 @pytest.fixture
 def t_map():
-    t_map = nib.load('tests/t_map.nii.gz')
+    t_map = nib.load(os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'mri', 't_map.nii.gz'))
     return t_map
 
 

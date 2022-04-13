@@ -460,7 +460,7 @@ def calc_power_multi(raw, window=1, step=0.25):
     end = int(sfreq*window)
     pnts_per_step = int(sfreq*window*step)
     last_seg = (raw.n_times/sfreq) - (window/2)
-    num_segs = len(np.arange(window/2, last_seg, step*window))
+    num_segs = len(np.arange(window/2, last_seg+(step*window/2), step*window))
     if sfreq % (1/step) > 0:
         num_segs += 1
     # if raw.n_times/sfreq - int(raw.n_times/sfreq) >= 1/sfreq:
@@ -483,10 +483,10 @@ def calc_power_multi(raw, window=1, step=0.25):
     i = num_segs - 1
     psd, ___ = mne.time_frequency.psd_array_multitaper(data[:, start:], sfreq,
                                                        verbose=False)
-    print(f'i = {i} and start = {start}')
-    print(f'density.shape = {density.shape}')
-    print(f'psd.shape = {psd.shape}')
-    print(f'pnts_per_step = {pnts_per_step} and time = {raw.n_times}')
+    # print(f'i = {i} and start = {start}')
+    # print(f'density.shape = {density.shape}')
+    # print(f'psd.shape = {psd.shape}')
+    # print(f'pnts_per_step = {pnts_per_step} and time = {raw.n_times}')
     density[:, :(psd.shape[-1]-1), i] = psd[:, 1:]
 
     return density
@@ -512,9 +512,9 @@ def calc_power_welch(raw, window=1, step=0.25):
     n_per_seg = int(raw.info['sfreq']*window)
     fmax = raw.info['sfreq']//2
     overlap = int((1 - step)*raw.info['sfreq'] + 0.5)
-    print(raw.info['sfreq'], step, 1-step)
-    print((1 - step)*raw.info['sfreq'])
-    print(n_per_seg, overlap)
+    # print(raw.info['sfreq'], step, 1-step)
+    # print((1 - step)*raw.info['sfreq'])
+    # print(n_per_seg, overlap)
     # assert 1 == 0
     psd, ___ = mne.time_frequency.psd_welch(raw, fmin=0, fmax=fmax,
                                             n_fft=n_per_seg,

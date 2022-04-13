@@ -48,13 +48,12 @@ def test_SEEG(subject_id, subjects_dir, electrode_names, bads, electrode_file):
 
 
 def test_setup_bipolar(raw, bads):
-    anodes, cathodes, ch_names = seeg.setup_bipolar("v'", raw.ch_names, bads)
+    anodes, cathodes, ch_names = seeg.setup_bipolar("PL", raw.ch_names, bads)
     print(anodes)
     print(cathodes)
-    assert anodes == ["v'2", "v'3", "v'12", "v'13", "v'14"]  # v'1 is bad!
-    assert cathodes == ["v'3", "v'4", "v'13", "v'14", "v'15"]
-    assert ch_names == ["v'2-v'3", "v'3-v'4", "v'12-v'13", "v'13-v'14",
-                        "v'14-v'15"]
+    assert anodes[:3] == ['PL01', 'PL02', 'PL03']
+    assert cathodes[:3] == ['PL02', 'PL03', 'PL04']
+    assert ch_names[:3] == ['PL01-PL02', 'PL02-PL03', 'PL03-PL04']
 
 
 def test_EEG(raw):
