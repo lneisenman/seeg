@@ -7,26 +7,38 @@ name = "seeg"
 description = "seeg utilities"
 version = "0.1.0-dev0"
 authors = [
-    { name = "Larry Eisenman", email = "leisenman@wustl.edu" }
+    {name = "Larry Eisenman", email = "leisenman@wustl.edu"}
 ]
+license = {file = "LICENSE"}
+readme = "README.rst"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD3 License",
+    "Operating System :: OS Independent",
+    "Development Status :: 2 - Pre-Alpha"
+]
+requires-python = ">=3.8"
 dependencies = [
     "mne",
     "nilearn",
-    "python-neo",
+    "neo",
     "pyvistaqt"
 ]
 
 [project.optional-dependencies]
-dev = [
-    "napari",
+misc = [
+    "napari"
+]
+test = [
     "pytest",
     "pytest-cov"
 ]
+
+[project.urls]
+homepage = "https://github.com/lneisenman/seeg"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-rsxXf --cov-report term-missing --cov=seeg"
 norecursedirs = [".cache", ".git", ".tox", "build", "*.egg-info"]
 testpaths = ["tests"]
-
-]
