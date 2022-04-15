@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=48", "wheel >= 0.29.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seeg"
+description = "seeg utilities"
+version = "0.1.0-dev0"
+authors = [
+    { name = "Larry Eisenman", email = "leisenman@wustl.edu" }
+]
+dependencies = [
+    "mne",
+    "nilearn",
+    "python-neo",
+    "pyvistaqt"
+]
+
+[project.optional-dependencies]
+dev = [
+    "napari",
+    "pytest",
+    "pytest-cov"
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-rsxXf --cov-report term-missing --cov=seeg"
+norecursedirs = [".cache", ".git", ".tox", "build", "*.egg-info"]
+testpaths = ["tests"]
+
+]
