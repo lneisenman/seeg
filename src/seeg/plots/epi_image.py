@@ -405,7 +405,7 @@ def calc_depth_epi_image_from_power(eeg):
     seiz = eeg['seizure']['ex_power'].T
     data = np.concatenate((base, seiz))
     size = base.shape[0]
-    labels = np.zeros(2*size, dtype=np.int)
+    labels = np.zeros(2*size, dtype=int)
     labels[size:] = 1
     __, t_scores, _ = permuted_ols(
         labels, data,
