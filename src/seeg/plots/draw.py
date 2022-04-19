@@ -7,9 +7,9 @@ import pyvista as pv
 import vtk
 
 
-def draw_sphere(scene, center, radius, color, opacity):
+def draw_sphere(plotter, center, radius, color, opacity):
     sphere = pv.Sphere(radius=radius, center=center)
-    scene.add_mesh(sphere, opacity=opacity, color=color)
+    plotter.add_mesh(sphere, opacity=opacity, color=color)
     # sphereSource = vtk.vtkSphereSource()
     # sphereSource.SetCenter(*center)
     # sphereSource.SetRadius(radius)

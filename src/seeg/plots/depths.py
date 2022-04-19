@@ -329,8 +329,9 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     return brain
 
 
-def show_bipolar_values(depth_list, scene, values, bads=[], radius=None,
-                        cmap='cold_hot', affine=np.diag(np.ones(4))):
+def show_depth_bipolar_values(depth_list, plotter, values, bads=[],
+                              radius=None, cmap='cold_hot',
+                              affine=np.diag(np.ones(4))):
     """Plot contact values as color coded spheres on each Depth contact
 
     Plot contact values on the translucent pial surface in `fig` from
@@ -340,7 +341,7 @@ def show_bipolar_values(depth_list, scene, values, bads=[], radius=None,
     ----------
     depth_list : list
         list of Depths
-    scene : VTK scene
+    plotter : PyVista Plotter
         figure of translucent pial surface on which to plot Depth's
     values : array-like
         values of each contact.
@@ -387,5 +388,59 @@ def show_bipolar_values(depth_list, scene, values, bads=[], radius=None,
             midpoint = apply_affine(affine, (an + ca)/2)
             color = (mapped_values[i+val_idx, 0], mapped_values[i+val_idx, 1],
                      mapped_values[i+val_idx, 2])
-            draw.draw_sphere(scene, midpoint, radius, color, opacity)
+            draw.draw_sphere(plotter, midpoint, radius, color, opacity)
             val_idx += len(anode)
+
+
+def show_depth_values(depth_list, plotter, values, bads=[], radius=None,
+                      cmap='cold_hot', affine=np.diag(np.ones(4))):
+    """Plot contact values as color coded spheres on each Depth contact
+
+    Plot contact values on the translucent pial surface in `fig` from
+    the parameter `values` as sphere of radius `radius` on each contact
+
+    Parameters
+    ----------
+    depth_list : list
+        list of Depths
+    plotter : PyVista Plotter
+        figure of translucent pial surface on which to plot Depth's
+    values : array-like
+        values of each contact.
+    bads : list, optional
+        list of bad contacts
+    radius : float, optional
+        radius of spheres
+    cmap : matplotlib colormap
+        colormap for color coding spheres
+    affine : numpy ndarray (4x4)
+        affine to convert coords to Freesurfer surface coordinates
+
+    """
+
+    vmin = np.min(values)
+    vmax = np.max(values)
+    if vmin < 0:
+        if abs(vmin) > vmax:
+            vmax = abs(vmin)
+        else:
+            vmin = -vmax
+
+    vmin *= 1.1
+    vmax *= 1.1
+    norm = mpl.colors.Normalize(vmin, vmax)
+    color_map = mpl.cm.get_cmap(cmap)
+    mapped_values = color_map(norm(values))
+    idx = 0
+    opacity = 0.3
+    for depth in depth_list:
+        if radius is None:
+            radius = depth.contact_len/1.5
+
+        for i in range(depth.num_contacts):
+            if depth.active[i]:
+                start, end = depth.contacts[i]
+                af_center = apply_affine(affine, (start+end)/2)
+                color = mapped_values[idx, :3]
+                draw.draw_sphere(plotter, af_center, radius, color, opacity)
+                idx += 1
