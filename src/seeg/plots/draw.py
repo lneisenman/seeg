@@ -3,23 +3,26 @@
 
 """
 
+import pyvista as pv
 import vtk
 
 
 def draw_sphere(scene, center, radius, color, opacity):
-    sphereSource = vtk.vtkSphereSource()
-    sphereSource.SetCenter(*center)
-    sphereSource.SetRadius(radius)
+    sphere = pv.Sphere(radius=radius, center=center)
+    scene.add_mesh(sphere, opacity=opacity, color=color)
+    # sphereSource = vtk.vtkSphereSource()
+    # sphereSource.SetCenter(*center)
+    # sphereSource.SetRadius(radius)
 
-    sphereMapper = vtk.vtkPolyDataMapper()
-    sphereMapper.SetInputConnection(sphereSource.GetOutputPort())
+    # sphereMapper = vtk.vtkPolyDataMapper()
+    # sphereMapper.SetInputConnection(sphereSource.GetOutputPort())
 
-    sphereActor = vtk.vtkActor()
-    sphereActor.SetMapper(sphereMapper)
-    sphereActor.GetProperty().SetColor(*color)
-    sphereActor.GetProperty().SetOpacity(opacity)
+    # sphereActor = vtk.vtkActor()
+    # sphereActor.SetMapper(sphereMapper)
+    # sphereActor.GetProperty().SetColor(*color)
+    # sphereActor.GetProperty().SetOpacity(opacity)
 
-    scene.add_actor(sphereActor)
+    # scene.add_actor(sphereActor)
 
 
 def draw_cyl(scene, tip, base, diam, color, opacity):
