@@ -53,22 +53,24 @@ def draw_cyl(scene, tip, base, diam, color, opacity):
     scene.add_actor(tubeActor)
 
 
-def draw_cube(scene, center, x_len, y_len, z_len, color, opacity):
-    cubeSource = vtk.vtkCubeSource()
-    cubeSource.SetCenter(center)
-    cubeSource.SetXLength(x_len)
-    cubeSource.SetYLength(y_len)
-    cubeSource.SetZLength(z_len)
+def draw_cube(plotter, center, x_len, y_len, z_len, color, opacity):
+    cube = pv.Cube(center, x_len, y_len, z_len)
+    plotter.add_mesh(cube, opacity=opacity, color=color)
+    # cubeSource = vtk.vtkCubeSource()
+    # cubeSource.SetCenter(center)
+    # cubeSource.SetXLength(x_len)
+    # cubeSource.SetYLength(y_len)
+    # cubeSource.SetZLength(z_len)
 
-    cubeMapper = vtk.vtkPolyDataMapper()
-    cubeMapper.SetInputConnection(cubeSource.GetOutputPort())
+    # cubeMapper = vtk.vtkPolyDataMapper()
+    # cubeMapper.SetInputConnection(cubeSource.GetOutputPort())
 
-    cubeActor = vtk.vtkActor()
-    cubeActor.SetMapper(cubeMapper)
-    cubeActor.GetProperty().SetColor(*color)
-    cubeActor.GetProperty().SetOpacity(opacity)
+    # cubeActor = vtk.vtkActor()
+    # cubeActor.SetMapper(cubeMapper)
+    # cubeActor.GetProperty().SetColor(*color)
+    # cubeActor.GetProperty().SetOpacity(opacity)
 
-    scene.add_actor(cubeActor)
+    # scene.add_actor(cubeActor)
 
 
 def draw_text(scene, text, location, size, color):

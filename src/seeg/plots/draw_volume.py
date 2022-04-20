@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Code to draw volume in Mayavi figures
+""" Code to draw volume in PyVista figures
 
 """
 
@@ -10,7 +10,7 @@ import numpy as np
 from . import draw
 
 
-def draw_volume(scene, t_map, affine):
+def draw_volume(plotter, t_map, affine):
 
     data = t_map.get_fdata()[:, :, :, 0]
     data -= np.min(data)
@@ -23,4 +23,4 @@ def draw_volume(scene, t_map, affine):
     for coord in coords:
         cube = apply_affine(affine, coord)
         color = cold_hot(data[tuple(coord)])[:3]
-        draw.draw_cube(scene, cube, xL, yL, zL, color, 0.5)
+        draw.draw_cube(plotter, cube, xL, yL, zL, color, 0.5)
