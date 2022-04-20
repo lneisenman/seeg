@@ -5,7 +5,7 @@
 import os
 from re import L
 
-# from mayavi import mlab
+import matplotlib as mpl
 import mne
 import neo
 import numpy as np
@@ -521,3 +521,19 @@ def calc_power_welch(raw, window=1, step=0.25):
                                             n_per_seg=n_per_seg,
                                             n_overlap=overlap, average=None)
     return psd
+
+
+def map_colors(values, cmap='cold_hot'):
+    vmin = np.min(values)
+    vmax = np.max(values)
+    if vmin < 0:
+        if abs(vmin) > vmax:
+            vmax = abs(vmin)
+        else:
+            vmin = -vmax
+
+    vmin *= 1.1
+    vmax *= 1.1
+    norm = mpl.colors.Normalize(vmin, vmax)
+    color_map = mpl.cm.get_cmap(cmap)
+    return color_map(norm(values))

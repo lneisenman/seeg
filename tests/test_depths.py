@@ -6,6 +6,7 @@ import mne
 import numpy as np
 
 import seeg
+from seeg.utils import map_colors
 
 
 def test1(subject_id, subjects_dir):
@@ -27,7 +28,14 @@ def test_create_depths_plot(subject_id, subjects_dir, electrode_names,
                             electrodes, raw):
     depth_list = seeg.create_depths(electrode_names, raw.info['ch_names'],
                                     electrodes)
-    brain = seeg.create_depths_plot(depth_list, subject_id, subjects_dir)
+    num_contacts = 0
+    for depth in depth_list:
+        num_contacts += depth.num_contacts
+
+    values = 10*np.random.normal(size=num_contacts)
+    colors = seeg.map_colors(values)[:, :3]
+    brain = seeg.create_depths_plot(depth_list, subject_id, subjects_dir,
+                                    contact_colors=colors)
     brain.show()
     brain.plotter.app.exec_()
 
@@ -42,7 +50,8 @@ def test_show_depth_values(subject_id, subjects_dir, electrode_names,
         num_contacts += depth.num_contacts
 
     values = 10*np.random.normal(size=num_contacts)
-    seeg.show_depth_values(depth_list, brain.plotter, values,
+    radius = 1 + (values - np.min(values))/12
+    seeg.show_depth_values(depth_list, brain.plotter, values, radius,
                            affine=T_x_inv)
     brain.show()
     brain.plotter.app.exec_()
@@ -54,7 +63,8 @@ def test_show_depth_bipolar_values(subject_id, subjects_dir, electrode_names,
                                     electrodes)
     brain = seeg.create_depths_plot(depth_list, subject_id, subjects_dir)
     values = 10*np.random.normal(size=len(raw.info['ch_names']))
-    seeg.show_depth_bipolar_values(depth_list, brain.plotter, values,
+    radius = 1 + (values - np.min(values))/12
+    seeg.show_depth_bipolar_values(depth_list, brain.plotter, values, radius,
                                    affine=T_x_inv)
     brain.show()
     brain.plotter.app.exec_()

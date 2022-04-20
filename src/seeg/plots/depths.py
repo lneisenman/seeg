@@ -3,6 +3,7 @@
 
 """
 
+from numbers import Number
 import os
 
 import matplotlib as mpl
@@ -323,14 +324,14 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
             depth.draw(plotter, contact_colors=c_colors, depth_color=color,
                        affine=affine)
         else:
-            depth.draw(plotter, contact_colors=contact_colors, depth_color=color,
-                       affine=affine)
+            depth.draw(plotter, contact_colors=contact_colors,
+                       depth_color=color, affine=affine)
 
     return brain
 
 
-def show_depth_bipolar_values(depth_list, plotter, values, bads=[],
-                              radius=None, cmap='cold_hot',
+def show_depth_bipolar_values(depth_list, plotter, values, radius=None,
+                              bads=[], cmap='cold_hot',
                               affine=np.diag(np.ones(4))):
     """Plot contact values as color coded spheres on each Depth contact
 
@@ -347,7 +348,7 @@ def show_depth_bipolar_values(depth_list, plotter, values, bads=[],
         values of each contact.
     bads : list, optional
         list of bad contacts
-    radius : float, optional
+    radius : float or array-like, optional
         radius of spheres
     cmap : matplotlib colormap
         colormap for color coding spheres
@@ -356,22 +357,16 @@ def show_depth_bipolar_values(depth_list, plotter, values, bads=[],
 
     """
 
-    vmin = np.min(values)
-    vmax = np.max(values)
-    if vmin < 0:
-        if abs(vmin) > vmax:
-            vmax = abs(vmin)
-        else:
-            vmin = -vmax
-
-    vmin *= 1.1
-    vmax *= 1.1
-    norm = mpl.colors.Normalize(vmin, vmax)
-    color_map = mpl.cm.get_cmap(cmap)
-    mapped_values = color_map(norm(values))
+    mapped_values = utils.map_colors(values, cmap)
     for depth in depth_list:
         if radius is None:
             radius = depth.contact_len/1.5
+
+        if isinstance(radius, Number):
+            radius = [radius]*len(values)
+
+        if len(radius) != len(values):
+            raise ValueError('number of radii must equal number of values')
 
         contacts = [depth.name + str(i+1) for i in range(depth.num_contacts)
                     if depth.active[i]]
@@ -386,13 +381,14 @@ def show_depth_bipolar_values(depth_list, plotter, values, bads=[],
             an = (depth.contacts[a_idx][0] + depth.contacts[a_idx][1])/2
             ca = (depth.contacts[c_idx][0] + depth.contacts[c_idx][1])/2
             midpoint = apply_affine(affine, (an + ca)/2)
-            color = (mapped_values[i+val_idx, 0], mapped_values[i+val_idx, 1],
-                     mapped_values[i+val_idx, 2])
-            draw.draw_sphere(plotter, midpoint, radius, color, opacity)
-            val_idx += len(anode)
+            color = mapped_values[i+val_idx, :3]
+            draw.draw_sphere(plotter, midpoint, radius[i+val_idx], color,
+                             opacity)
+
+        val_idx += len(anode)
 
 
-def show_depth_values(depth_list, plotter, values, bads=[], radius=None,
+def show_depth_values(depth_list, plotter, values, radius=None, bads=[],
                       cmap='cold_hot', affine=np.diag(np.ones(4))):
     """Plot contact values as color coded spheres on each Depth contact
 
@@ -418,29 +414,24 @@ def show_depth_values(depth_list, plotter, values, bads=[], radius=None,
 
     """
 
-    vmin = np.min(values)
-    vmax = np.max(values)
-    if vmin < 0:
-        if abs(vmin) > vmax:
-            vmax = abs(vmin)
-        else:
-            vmin = -vmax
-
-    vmin *= 1.1
-    vmax *= 1.1
-    norm = mpl.colors.Normalize(vmin, vmax)
-    color_map = mpl.cm.get_cmap(cmap)
-    mapped_values = color_map(norm(values))
+    mapped_values = utils.map_colors(values, cmap)
     idx = 0
     opacity = 0.3
-    for depth in depth_list:
-        if radius is None:
-            radius = depth.contact_len/1.5
+    if radius is None:
+        radius = depth_list[0].contact_len/1.5
 
+    if isinstance(radius, Number):
+        radius = [radius]*len(values)
+
+    if len(radius) != len(values):
+        raise ValueError('number of radii must equal number of values')
+
+    for depth in depth_list:
         for i in range(depth.num_contacts):
             if depth.active[i]:
                 start, end = depth.contacts[i]
                 af_center = apply_affine(affine, (start+end)/2)
                 color = mapped_values[idx, :3]
-                draw.draw_sphere(plotter, af_center, radius, color, opacity)
+                draw.draw_sphere(plotter, af_center, radius[idx], color,
+                                 opacity)
                 idx += 1
