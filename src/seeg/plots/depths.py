@@ -163,7 +163,7 @@ class Depth():
         self.base = G + self.vector*(20 + self.num_contacts*dist)
         self.tip = a    # Make sure tip extends to end of distal contact
 
-    def draw(self, scene, contact_colors=SILVER, depth_color=(1, 0, 0),
+    def draw(self, plotter, contact_colors=SILVER, depth_color=(1, 0, 0),
              affine=np.diag(np.ones(4))):
         """Draw fit of locations as a cylindrical depth on the provided scene
 
@@ -191,18 +191,18 @@ class Depth():
 
         tip = apply_affine(affine, self.tip)
         base = apply_affine(affine, self.base)
-        draw.draw_cyl(scene, tip, base, self.diam, depth_color, 0.3)
+        draw.draw_cyl(plotter, tip, base, self.diam, depth_color, 0.3)
         x, y, z = base
-        draw.draw_text(scene, self.name, base, 36, color=depth_color)
+        draw.draw_text(plotter, self.name, base, 36, color=depth_color)
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:
                 tip = apply_affine(affine, contact[0])
                 base = apply_affine(affine, contact[1])
-                draw.draw_cyl(scene, tip, base, self.diam+0.25,
+                draw.draw_cyl(plotter, tip, base, self.diam+0.25,
                               c_colors[i], 1)
 
-    def show_locations(self, scene, colors=YELLOW,
+    def show_locations(self, plotter, colors=YELLOW,
                        affine=np.diag(np.ones(4))):
         """Draw actual contact locations as spheres on the provided scene
 
@@ -230,7 +230,7 @@ class Depth():
         for i, location in enumerate(self.locations):
             if self.active[i]:
                 loc = apply_affine(affine, location)
-                draw.draw_sphere(scene, loc, radius, c_colors[i], opacity)
+                draw.draw_sphere(plotter, loc, radius, c_colors[i], opacity)
 
 
 def create_depths(electrode_names, ch_names, electrodes):
@@ -302,7 +302,7 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
                   cortex='classic', alpha=0.5, show=False)
-    scene = brain.plotter.renderer
+    plotter = brain.plotter
 
     if type(contact_colors[0]) is not float:
         c_list = True
@@ -320,10 +320,10 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
                 else:
                     c_colors.append(GRAY)
 
-            depth.draw(scene, contact_colors=c_colors, depth_color=color,
+            depth.draw(plotter, contact_colors=c_colors, depth_color=color,
                        affine=affine)
         else:
-            depth.draw(scene, contact_colors=contact_colors, depth_color=color,
+            depth.draw(plotter, contact_colors=contact_colors, depth_color=color,
                        affine=affine)
 
     return brain

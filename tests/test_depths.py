@@ -18,7 +18,7 @@ def test1(subject_id, subjects_dir):
     Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, "rh", "pial", subjects_dir=subjects_dir,
                   cortex='classic', alpha=0.5)
-    depth.draw(brain.plotter.renderer)
+    depth.draw(brain.plotter)
     depth.show_locations(brain.plotter)
     brain.plotter.app.exec_()
 

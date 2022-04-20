@@ -25,32 +25,35 @@ def draw_sphere(plotter, center, radius, color, opacity):
     # scene.add_actor(sphereActor)
 
 
-def draw_cyl(scene, tip, base, diam, color, opacity):
-    lineSource = vtk.vtkLineSource()
-    lineSource.SetPoint1(*tip)
-    lineSource.SetPoint2(*base)
-    lineMapper = vtk.vtkPolyDataMapper()
-    lineMapper.SetInputConnection(lineSource.GetOutputPort())
+def draw_cyl(plotter, tip, base, diam, color, opacity):
+    line = pv.Line(tip, base)
+    tube = line.tube(radius=diam/2)
+    plotter.add_mesh(tube, opacity=opacity, color=color)
+    # lineSource = vtk.vtkLineSource()
+    # lineSource.SetPoint1(*tip)
+    # lineSource.SetPoint2(*base)
+    # lineMapper = vtk.vtkPolyDataMapper()
+    # lineMapper.SetInputConnection(lineSource.GetOutputPort())
 
-    lineActor = vtk.vtkActor()
-    lineActor.SetMapper(lineMapper)
-    lineActor.GetProperty().SetOpacity(0)
+    # lineActor = vtk.vtkActor()
+    # lineActor.SetMapper(lineMapper)
+    # lineActor.GetProperty().SetOpacity(0)
 
-    tubeFilter = vtk.vtkTubeFilter()
-    tubeFilter.SetInputConnection(lineSource.GetOutputPort())
-    tubeFilter.SetRadius(diam/2)
-    tubeFilter.SetNumberOfSides(50)
-    tubeFilter.Update()
+    # tubeFilter = vtk.vtkTubeFilter()
+    # tubeFilter.SetInputConnection(lineSource.GetOutputPort())
+    # tubeFilter.SetRadius(diam/2)
+    # tubeFilter.SetNumberOfSides(50)
+    # tubeFilter.Update()
 
-    tubeMapper = vtk.vtkPolyDataMapper()
-    tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
+    # tubeMapper = vtk.vtkPolyDataMapper()
+    # tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
 
-    tubeActor = vtk.vtkActor()
-    tubeActor.SetMapper(tubeMapper)
-    tubeActor.GetProperty().SetColor(*color)
-    tubeActor.GetProperty().SetOpacity(opacity)
+    # tubeActor = vtk.vtkActor()
+    # tubeActor.SetMapper(tubeMapper)
+    # tubeActor.GetProperty().SetColor(*color)
+    # tubeActor.GetProperty().SetOpacity(opacity)
 
-    scene.add_actor(tubeActor)
+    # scene.add_actor(tubeActor)
 
 
 def draw_cube(plotter, center, x_len, y_len, z_len, color, opacity):
@@ -73,12 +76,11 @@ def draw_cube(plotter, center, x_len, y_len, z_len, color, opacity):
     # scene.add_actor(cubeActor)
 
 
-def draw_text(scene, text, location, size, color):
+def draw_text(plotter, text, location, size, color):
     textActor = vtk.vtkBillboardTextActor3D()
     textActor.SetInput(text)
     textActor.SetPosition(*location)
     textActor.GetTextProperty().SetFontSize(size)
     textActor.GetTextProperty().SetColor(*color)
 
-    scene.AddActor(textActor)
-    
+    plotter.renderer.AddActor(textActor)

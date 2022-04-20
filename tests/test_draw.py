@@ -21,3 +21,10 @@ def test_cube():
     seeg.draw_cube(p, center=(0, 0, 0), x_len=1, y_len=1, z_len=1,
                    color=(1, 1, 0), opacity=0.25)
     p.show()
+
+
+def test_cyl():
+    p = pv.Plotter()
+    seeg.draw_cyl(p, tip=(0, 0, 0), base=(10, 10, 10), diam=3,
+                  color=(1, 1, 0), opacity=0.25)
+    p.show()
