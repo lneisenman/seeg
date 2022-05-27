@@ -28,6 +28,8 @@ Parameters
         self.bads = bads
         self.baseline = dict()
         self.seizure = dict()
+        self.montage = None
+        self.electrodes = None
 
     def __getitem__(self, key):
         if key == 'baseline':
@@ -378,7 +380,7 @@ def setup_bipolar(electrode, ch_names, bads):
 
     contacts = [i for i in ch_names if i.startswith(electrode)]
     anodes = list()
-    cathodes = list()
+    cathodes = list()   # type: ignore
     ch_names = list()
     num_contacts = find_num_contacts(contacts, electrode)
     if contacts[0][-2] == '0':

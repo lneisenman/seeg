@@ -112,7 +112,7 @@ class Depth():
         distance = 0
         for loc, cont in zip(self.locations, contacts):
             diff = loc - cont
-            distance += np.linalg.norm(diff)
+            distance += np.linalg.norm(diff)    # type: ignore
 
         return distance
 

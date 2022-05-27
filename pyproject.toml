@@ -42,3 +42,11 @@ minversion = "6.0"
 addopts = "-rsxXf --cov-report term-missing --cov=seeg"
 norecursedirs = [".cache", ".git", ".tox", "build", "*.egg-info"]
 testpaths = ["tests"]
+
+[tool.mypy]
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+check_untyped_defs = true
+ignore_missing_imports = true
+plugins = "numpy.typing.mypy_plugin"
