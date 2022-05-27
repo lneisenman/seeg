@@ -222,10 +222,7 @@ def map_seeg_data(eeg, mri):
     bads = base_eeg.info['bads']
     montage = base_eeg.get_montage()
     if montage is None:
-        try:
-            montage = eeg.montage
-        except:
-            raise ValueError('unable to get montage')
+        montage = eeg.montage
 
     if montage is None:
         raise ValueError('unable to get montage')
@@ -485,7 +482,7 @@ def plot_3d_epi_image_map(t_map, mri):
     viewer = napari.Viewer()
     viewer.add_image(coronal_img_data, name='image')
     viewer.add_image(coronal_map_data, name='t-map', opacity=0.5,
-                        contrast_limits=limits, colormap=cmap)
+                     contrast_limits=limits, colormap=cmap)
 
     napari.run()
 

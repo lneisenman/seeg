@@ -3,7 +3,7 @@
 import os
 
 from .epi_index import calculate_EI
-from .plots.epi_image import EpiImage 
+from .plots.epi_image import EpiImage
 from .utils import load_eeg_data
 
 
@@ -40,24 +40,6 @@ class Seeg():
                                  electrode_file=electrode_file)[seizure-1]
         self.seiz_delay = seiz_delay
         # self.contacts = read_electrode_file(self.electrode_file)
-
-    # def read_electrode_locations(self):
-    #     """ read and process the file containing electrode
-    #         locations
-
-    #     """
-    #     self.contacts = read_electrode_file(self.electrode_file)
-
-    # def load_eeg(self):
-    #     """ read baseline and seizure EEG data
-
-    #     """
-    #     raw = read_edf(self.baseline_eeg_file, self.contacts, self.bads)
-    #     raw.set_annotations(mne.Annotations(self.baseline_time, 0, 'Seizure'))
-    #     self.eeg.set_baseline(raw, file_name=self.baseline_eeg_file)
-    #     raw = read_edf(self.seizure_eeg_file, self.contacts, self.bads)
-    #     raw.set_annotations(mne.Annotations(self.seizure_time, 0, 'Seizure'))
-    #     self.eeg.set_seizure(raw, file_name=self.seizure_eeg_file)
 
     def create_epi_image_map(self, low_freq, high_freq, D=3, dt=0.2,
                              method='welch'):
