@@ -13,6 +13,7 @@ from nibabel.affines import apply_affine
 from nibabel.freesurfer import io as fio
 import numpy as np
 import numpy.linalg as npl
+import pyvista as pv
 from scipy.optimize import minimize
 
 from . import draw
@@ -91,6 +92,8 @@ class Depth():
             active = [active]*num_contacts
 
         self.active = active
+        self.blocks = pv.MultiBlock()
+        self.actors = list()
         self.fit_locations()
 
     def _calc_contacts(self, shift):
@@ -170,7 +173,7 @@ class Depth():
 
         Parameters
         ----------
-        scene : VTK scene from mayavi or pyvista
+        plotter : pyvista plotter
             scene on which to draw the Depth
         contact_colors : RGB or list of RBG colors, optional
             If a single color is given, draw all contacts in that color.
@@ -192,16 +195,22 @@ class Depth():
 
         tip = apply_affine(affine, self.tip)
         base = apply_affine(affine, self.base)
-        draw.draw_cyl(plotter, tip, base, self.diam, depth_color, 0.3)
+        depth, actor = draw.draw_cyl(plotter, tip, base, self.diam,
+                                     depth_color, 0.3)
+        self.blocks['depth'] = depth
+        self.actors.append(actor)
         x, y, z = base
         draw.draw_text(plotter, self.name, base, 36, color=depth_color)
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:
+                name = 'C' + str(i)
                 tip = apply_affine(affine, contact[0])
                 base = apply_affine(affine, contact[1])
-                draw.draw_cyl(plotter, tip, base, self.diam+0.25,
-                              c_colors[i], 1)
+                cyl, actor = draw.draw_cyl(plotter, tip, base, self.diam+0.25,
+                                           c_colors[i], 1)
+                self.blocks[name] = cyl
+                self.actors.append(actor)
 
     def show_locations(self, plotter, colors=YELLOW,
                        affine=np.diag(np.ones(4))):
