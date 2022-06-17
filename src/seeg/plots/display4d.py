@@ -4,18 +4,42 @@
 
 """
 
+from matplotlib.colors import Colormap
+from mne.viz import Brain
 from nilearn.plotting.cm import cold_hot
 import numpy as np
-import pyvista as pv
+import numpy.typing as npt
 
-from .depths import SILVER
+from .depths import Depth, SILVER
 from ..utils import map_colors
 
 
 class Display4D:
+    """Class to display time data on MNE Brain with SEEG electrodes.
 
-    def __init__(self, brain, depth_list, data, cmap=cold_hot,
-                 threshold: int = 75) -> None:
+    Data for each contact at each time point is displayed via color coding
+    using the provided cmap. Hitting the 'l' key advances one time step.
+    Hitting the 'j' key goes back one time step. Hitting the 'k' key returns
+    to time 0 where all electrodes are silver.
+
+    Parameters
+    ----------
+    brain : MNE Brain
+        Brain object from MNE with depth electrodes
+    depth_list : list
+        list of depth electrodes included in the Brain object
+    data : Numpy NDArray
+        2-d array with time data. Rows correspond to electrodes
+        and columns to time steps
+    cmap : Matplotlib Colormap, optional
+        diameter of the depth electrode (default = cold_hot from nilearn)
+    threshold : int, optional
+        percentage above which color codes are displayed (default = 75)
+    """
+
+    def __init__(self, brain: Brain, depth_list: list[Depth],
+                 data: npt.NDArray, cmap: Colormap = cold_hot,
+                 threshold: int = 75):
         self.brain = brain
         self.depth_list = depth_list
         temp = np.zeros(data.shape[0]).reshape((data.shape[0], 1))
