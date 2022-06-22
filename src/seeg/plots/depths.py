@@ -5,6 +5,7 @@
 
 from numbers import Number
 import os
+from typing import Iterator, Sequence
 
 import matplotlib as mpl
 import mne
@@ -13,6 +14,8 @@ from nibabel.affines import apply_affine
 from nibabel.freesurfer import io as fio
 import numpy as np
 import numpy.linalg as npl
+import numpy.typing as npt
+import pandas as pd
 import pyvista as pv
 from scipy.optimize import minimize
 
@@ -38,7 +41,7 @@ ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
                    ]
 
 
-def rosa_colors():
+def rosa_colors() -> Iterator[tuple]:
     """Generate a repeating list of colors used by ROSA software for electrodes
 
     Yields
@@ -80,8 +83,9 @@ class Depth():
         (default = True)
     """
 
-    def __init__(self, name, num_contacts, locations, diam=0.8, contact_len=2,
-                 spacing=1.5, active=True):
+    def __init__(self, name: str, num_contacts: int, locations: npt.NDArray,
+                 diam: float = 0.8, contact_len: float = 2,
+                 spacing: float = 1.5, active: bool | list[bool] = True):
         self.name = name
         self.num_contacts = num_contacts
         self.locations = locations
@@ -93,10 +97,10 @@ class Depth():
 
         self.active = active
         self.blocks = pv.MultiBlock()
-        self.actors = list()
+        self.actors = list()    # type: ignore
         self.fit_locations()
 
-    def _calc_contacts(self, shift):
+    def _calc_contacts(self, shift: float) -> list:
         """ calculate idealized contact locations based on fit of
         actual locations"""
 
@@ -107,7 +111,7 @@ class Depth():
 
         return contacts
 
-    def _distance(self, x):
+    def _distance(self, x: npt.NDArray) -> float:
         """ cost function for fitting line to contact locations"""
 
         shift = x[0]
@@ -119,7 +123,7 @@ class Depth():
 
         return distance
 
-    def fit_locations(self):
+    def fit_locations(self) -> None:
         """Fit actual contact locations to a line.
 
         Notes
@@ -167,8 +171,10 @@ class Depth():
         self.base = G + self.vector*(20 + self.num_contacts*dist)
         self.tip = a    # Make sure tip extends to end of distal contact
 
-    def draw(self, plotter, contact_colors=SILVER, depth_color=(1, 0, 0),
-             affine=np.diag(np.ones(4))):
+    def draw(self, plotter: pv.Plotter,
+             contact_colors: Sequence = SILVER,
+             depth_color: tuple = (1, 0, 0),
+             affine: npt.NDArray = np.diag(np.ones(4))) -> None:
         """Draw fit of locations as a cylindrical depth on the provided scene
 
         Parameters
@@ -212,9 +218,11 @@ class Depth():
                 self.blocks[name] = cyl
                 self.actors.append(actor)
 
-    def show_bipolar(self, plotter, contact_colors=SILVER, radii=None,
-                     opacity=0.75, bads=None,
-                     affine=np.diag(np.ones(4))) -> None:
+    def show_bipolar(self, plotter: pv.Plotter,
+                     contact_colors: Sequence = SILVER,
+                     radii: float | Sequence | None = None,
+                     opacity: float = 0.75, bads: list = None,
+                     affine: npt.NDArray = np.diag(np.ones(4))) -> None:
         """Draw spheres between contacts on the depth in the provided scene
 
         Parameters
@@ -250,7 +258,7 @@ class Depth():
         if isinstance(radii, Number):
             radii = [radii]*len(anodes)
 
-        if len(radii) < len(anodes):
+        if len(radii) < len(anodes):        # type: ignore
             raise ValueError('number of radii must at least equal the number'
                              ' of bipolar contacts')
 
@@ -261,14 +269,16 @@ class Depth():
             an = (self.contacts[a_idx][0] + self.contacts[a_idx][1])/2
             ca = (self.contacts[c_idx][0] + self.contacts[c_idx][1])/2
             midpoint = apply_affine(affine, (an + ca)/2)
-            sph, actor = draw.draw_sphere(plotter, midpoint, radii[i],
+            sph, actor = draw.draw_sphere(plotter, midpoint,
+                                          radii[i],      # type: ignore
                                           contact_colors[i], opacity)
             name = 'C' + str(i) + '-C' + str(i+1)
             self.blocks[name] = sph
             self.actors_BP.append(actor)
 
-    def show_locations(self, plotter, colors=YELLOW,
-                       affine=np.diag(np.ones(4))):
+    def show_locations(self, plotter: pv.Plotter,
+                       colors: Sequence = YELLOW,
+                       affine: npt.NDArray = np.diag(np.ones(4))) -> None:
         """Draw actual contact locations as spheres on the provided scene
 
         Parameters
@@ -298,7 +308,8 @@ class Depth():
                 draw.draw_sphere(plotter, loc, radius, c_colors[i], opacity)
 
 
-def create_depths(electrode_names, ch_names, electrodes):
+def create_depths(electrode_names: list, ch_names: list,
+                  electrodes: pd.DataFrame) -> list[Depth]:
     """Create a list of Depths
 
     For each electrode in `electrode_names` create a Depth and add to a list
@@ -335,8 +346,10 @@ def create_depths(electrode_names, ch_names, electrodes):
     return depth_list
 
 
-def create_depths_plot(depth_list, subject_id, subjects_dir,
-                       depth_colors=rosa_colors(), contact_colors=SILVER):
+def create_depths_plot(depth_list: list[Depth], subject_id: str,
+                       subjects_dir: str,
+                       depth_colors: Iterator = rosa_colors(),
+                       contact_colors: Sequence = SILVER) -> mne.viz.Brain:
     """Create a MNE Brain and plot Depths. Returns the Brain
 
     Parameters
@@ -394,9 +407,13 @@ def create_depths_plot(depth_list, subject_id, subjects_dir,
     return brain
 
 
-def show_depth_bipolar_values(depth_list, plotter, values, radius=None,
-                              bads=[], cmap='cold_hot',
-                              affine=np.diag(np.ones(4))):
+def show_depth_bipolar_values(depth_list: list[Depth], plotter: pv.Plotter,
+                              values: Sequence,
+                              radius: float | Sequence | None = None,
+                              bads: list = [],
+                              cmap: mpl.colors.Colormap = 'cold_hot',
+                              affine: npt.NDArray =
+                              np.diag(np.ones(4))) -> None:
     """Plot contact values as color coded spheres on each Depth contact
 
     Plot contact values on the translucent pial surface in `fig` from
@@ -410,10 +427,10 @@ def show_depth_bipolar_values(depth_list, plotter, values, radius=None,
         figure of translucent pial surface on which to plot Depth's
     values : array-like
         values of each contact.
-    bads : list, optional
-        list of bad contacts
     radius : float or array-like, optional
         radius of spheres
+    bads : list, optional
+        list of bad contacts
     cmap : matplotlib colormap
         colormap for color coding spheres
     affine : numpy ndarray (4x4)
@@ -422,8 +439,8 @@ def show_depth_bipolar_values(depth_list, plotter, values, radius=None,
     """
 
     if radius is not None and not isinstance(radius, Number):
-        assert len(radius) == len(values), ('number of radii must equal'
-                                            ' number of values')
+        assert len(radius) == len(values), ('number of radii'  # type: ignore
+                                            ' must equal number of values')
 
     mapped_values = utils.map_colors(values, cmap)[:, :3]
     idx = 0
@@ -431,17 +448,21 @@ def show_depth_bipolar_values(depth_list, plotter, values, radius=None,
         if radius is None:
             radii = [depth.contact_len/1.5]*len(values)
         elif isinstance(radius, Number):
-            radii = [radius]*len(values)
+            radii = [radius]*len(values)        # type: ignore
         else:
-            radii = radius[idx:]
+            radii = radius[idx:]                # type: ignore
 
         depth.show_bipolar(plotter, mapped_values[idx:],
                            radii=radii, bads=bads, affine=affine)
         idx += len(depth.actors_BP)
 
 
-def show_depth_values(depth_list, plotter, values, radius=None, bads=[],
-                      cmap='cold_hot', affine=np.diag(np.ones(4))):
+def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
+                      values: Sequence,
+                      radius: float | Sequence | None = None,
+                      bads: list = [],
+                      cmap: mpl.colors.Colormap = 'cold_hot',
+                      affine: npt.NDArray = np.diag(np.ones(4))) -> None:
     """Plot contact values as color coded spheres on each Depth contact
 
     Plot contact values on the translucent pial surface in `fig` from
@@ -475,7 +496,7 @@ def show_depth_values(depth_list, plotter, values, radius=None, bads=[],
     if isinstance(radius, Number):
         radius = [radius]*len(values)
 
-    if len(radius) != len(values):
+    if len(radius) != len(values):  # type: ignore
         raise ValueError('number of radii must equal number of values')
 
     for depth in depth_list:
@@ -484,6 +505,7 @@ def show_depth_values(depth_list, plotter, values, radius=None, bads=[],
                 start, end = depth.contacts[i]
                 af_center = apply_affine(affine, (start+end)/2)
                 color = mapped_values[idx, :3]
-                draw.draw_sphere(plotter, af_center, radius[idx], color,
-                                 opacity)
+                draw.draw_sphere(plotter, af_center,
+                                 radius[idx],   # type: ignore
+                                 color, opacity)
                 idx += 1
