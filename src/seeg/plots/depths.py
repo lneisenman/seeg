@@ -347,7 +347,7 @@ def create_depths(electrode_names: list, ch_names: list,
 
 
 def create_depths_plot(depth_list: list[Depth], subject_id: str,
-                       subjects_dir: str,
+                       subjects_dir: str, alpha: float = 0.3,
                        depth_colors: Iterator = rosa_colors(),
                        contact_colors: Sequence = SILVER) -> mne.viz.Brain:
     """Create a MNE Brain and plot Depths. Returns the Brain
@@ -360,6 +360,8 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
         name of subject folder in Freesurfer subjects directory
     subjects_dir : string
         location of Freesurfer subjects directory
+    alpha: float
+        opacity of brain (default = 0.3)
     depth_colors: list
         list of RGB tuples for the colors of the Depth's
     contact_colors: RGB tuple or list of tuples
@@ -379,7 +381,7 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
     affine = Torig@mri_inv
     Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
-                  cortex='classic', alpha=0.5, show=False)
+                  cortex='classic', alpha=alpha, show=False)
     plotter = brain.plotter
 
     if type(contact_colors[0]) is not float:
