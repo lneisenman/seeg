@@ -212,6 +212,61 @@ class Depth():
                 self.blocks[name] = cyl
                 self.actors.append(actor)
 
+    def show_bipolar(self, plotter, contact_colors=SILVER, radii=None,
+                     opacity=0.75, bads=None,
+                     affine=np.diag(np.ones(4))) -> None:
+        """Draw spheres between contacts on the depth in the provided scene
+
+        Parameters
+        ----------
+        plotter : pyvista plotter
+            scene on which to draw the Depth
+        contact_colors : RGB or list of RBG colors, optional
+            If a single color is given, draw all spheres in that color.
+            Otherwise list of colors for corresponding spheres
+        radii : float or numpy ndarray, optional
+            radius of the sphere (default None)
+        affine : numpy ndarray (4x4)
+            affine to convert coords to Freesurfer surface coordinates
+
+        """
+        self.actors_BP = list()
+        contacts = [self.name + str(i+1) for i in range(self.num_contacts)
+                    if self.active[i]]
+        anodes, cathodes, __ = utils.setup_bipolar(self.name, contacts,
+                                                   bads)
+        if (len(contact_colors) >= len(anodes)
+                and len(contact_colors[0]) == 3):
+            c_colors = contact_colors  # list of RGB colors for each sphere
+        elif len(contact_colors) == 3:
+            c_colors = [contact_colors]*len(anodes)
+        else:
+            raise ValueError('contact_colors needs to be an RGB',
+                             'value or a list of RGBs')
+
+        if radii is None:
+            radii = self.contact_len/1.5
+
+        if isinstance(radii, Number):
+            radii = [radii]*len(anodes)
+
+        if len(radii) < len(anodes):
+            raise ValueError('number of radii must at least equal the number'
+                             ' of bipolar contacts')
+
+        start = len(self.name)
+        for i, (anode, cathode) in enumerate(zip(anodes, cathodes)):
+            a_idx = int(anode[start:]) - 1
+            c_idx = int(cathode[start:]) - 1
+            an = (self.contacts[a_idx][0] + self.contacts[a_idx][1])/2
+            ca = (self.contacts[c_idx][0] + self.contacts[c_idx][1])/2
+            midpoint = apply_affine(affine, (an + ca)/2)
+            sph, actor = draw.draw_sphere(plotter, midpoint, radii[i],
+                                          contact_colors[i], opacity)
+            name = 'C' + str(i) + '-C' + str(i+1)
+            self.blocks[name] = sph
+            self.actors_BP.append(actor)
+
     def show_locations(self, plotter, colors=YELLOW,
                        affine=np.diag(np.ones(4))):
         """Draw actual contact locations as spheres on the provided scene
@@ -366,35 +421,23 @@ def show_depth_bipolar_values(depth_list, plotter, values, radius=None,
 
     """
 
-    mapped_values = utils.map_colors(values, cmap)
+    if radius is not None and not isinstance(radius, Number):
+        assert len(radius) == len(values), ('number of radii must equal'
+                                            ' number of values')
+
+    mapped_values = utils.map_colors(values, cmap)[:, :3]
+    idx = 0
     for depth in depth_list:
         if radius is None:
-            radius = depth.contact_len/1.5
+            radii = [depth.contact_len/1.5]*len(values)
+        elif isinstance(radius, Number):
+            radii = [radius]*len(values)
+        else:
+            radii = radius[idx:]
 
-        if isinstance(radius, Number):
-            radius = [radius]*len(values)
-
-        if len(radius) != len(values):
-            raise ValueError('number of radii must equal number of values')
-
-        contacts = [depth.name + str(i+1) for i in range(depth.num_contacts)
-                    if depth.active[i]]
-        anodes, cathodes, __ = utils.setup_bipolar(depth.name, contacts,
-                                                   bads)
-        start = len(depth.name)
-        val_idx = 0
-        opacity = 0.3
-        for i, (anode, cathode) in enumerate(zip(anodes, cathodes)):
-            a_idx = int(anode[start:]) - 1
-            c_idx = int(cathode[start:]) - 1
-            an = (depth.contacts[a_idx][0] + depth.contacts[a_idx][1])/2
-            ca = (depth.contacts[c_idx][0] + depth.contacts[c_idx][1])/2
-            midpoint = apply_affine(affine, (an + ca)/2)
-            color = mapped_values[i+val_idx, :3]
-            draw.draw_sphere(plotter, midpoint, radius[i+val_idx], color,
-                             opacity)
-
-        val_idx += len(anode)
+        depth.show_bipolar(plotter, mapped_values[idx:],
+                           radii=radii, bads=bads, affine=affine)
+        idx += len(depth.actors_BP)
 
 
 def show_depth_values(depth_list, plotter, values, radius=None, bads=[],
