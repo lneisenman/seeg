@@ -44,9 +44,18 @@ norecursedirs = [".cache", ".git", ".tox", "build", "*.egg-info"]
 testpaths = ["tests"]
 
 [tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 show_error_codes = true
 check_untyped_defs = true
 ignore_missing_imports = true
 plugins = "numpy.typing.mypy_plugin"
+
+[[tool.mypy.overrides]]
+module = [
+    "seeg.plots.depths",
+    "seeg.plots.display4d"
+]
+disallow_untyped_defs = true
