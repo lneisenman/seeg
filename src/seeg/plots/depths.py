@@ -503,7 +503,8 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
 
     for depth in depth_list:
         for i in range(depth.num_contacts):
-            if depth.active[i]:
+            name = depth.name + str(i+1)
+            if depth.active[i] and name not in bads:
                 start, end = depth.contacts[i]
                 af_center = apply_affine(affine, (start+end)/2)
                 color = mapped_values[idx, :3]
