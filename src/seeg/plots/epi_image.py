@@ -4,9 +4,13 @@
 
 """
 
+from ctypes import util
+from typing import Sequence, Tuple
+
 import matplotlib.pyplot as plt
 import nibabel as nib
 from nibabel.affines import apply_affine
+from nibabel.nifti1 import Nifti1Image
 from nibabel import processing as nbp
 import nilearn
 from nilearn.input_data import NiftiMasker
@@ -15,6 +19,7 @@ from nilearn.plotting import plot_stat_map
 from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.linalg as npl
+import numpy.typing as npt
 from vispy.color import Colormap
 
 from . import gin
@@ -23,8 +28,10 @@ from .. import utils
 
 class EpiImage:
 
-    def __init__(self, eeg, mri, low_freq=120, high_freq=200,
-                 seiz_delay=0, method='welch', D=3, dt=0.2, num_steps=1):
+    def __init__(self, eeg: utils.EEG, mri: str, low_freq: float = 120,
+                 high_freq: float = 200, seiz_delay: float = 0,
+                 method: str = 'welch', D: float = 3, dt: float = 0.2,
+                 num_steps: int = 1):
         self.mri = mri
         self.low_freq = low_freq
         self.high_freq = high_freq
@@ -39,12 +46,14 @@ class EpiImage:
                                                     seiz_delay+(i*D), D, dt,
                                                     method))
 
-    def plot(self, image_num=0, cut_coords=None, threshold=2):
-        image = plot_epi_image_map(self.t_maps[image_num], self.mri,
-                                   cut_coords, threshold)
+    def plot(self, image_num: int = 0, cut_coords: Sequence = None,
+             threshold: float = 2) -> None:
+        plot_epi_image_map(self.t_maps[image_num], self.mri,
+                           cut_coords, threshold)
 
 
-def compress_data(data, old_freq, new_freq):
+def compress_data(data: npt.NDArray, old_freq: float,
+                  new_freq: float) -> npt.NDArray:
     """ compress data from old frequency to new frequency
 
     Parameters
@@ -73,7 +82,9 @@ def compress_data(data, old_freq, new_freq):
     return new
 
 
-def ave_power_over_freq_band(eeg, low=120, high=200):
+def ave_power_over_freq_band(eeg: utils.EEG, low: float = 120,
+                             high: float = 200
+                             ) -> Tuple[npt.NDArray, npt.NDArray]:
     """ returns the average power between the specified low and high
         frequencies
 
@@ -113,7 +124,8 @@ def ave_power_over_freq_band(eeg, low=120, high=200):
     return baseline_ave_power, seizure_ave_power
 
 
-def extract_power(eeg, D=3, dt=0.2, start=0):
+def extract_power(eeg: utils.EEG, D: float = 3, dt: float = 0.2,
+                  start: float = 0) -> Tuple[npt.NDArray, npt.NDArray]:
     """ extract power vaules for image
 
     Parameters
@@ -145,7 +157,8 @@ def extract_power(eeg, D=3, dt=0.2, start=0):
     return baseline_ex_power, seizure_ex_power
 
 
-def create_volumes(eeg, mri):
+def create_volumes(eeg: utils.EEG,
+                   mri: str) -> Tuple[Nifti1Image, Nifti1Image]:
     """ create Nifti1Images for the baseline and seizure data
 
     Parameters
@@ -175,7 +188,7 @@ def create_volumes(eeg, mri):
     return baseline_img, seizure_img
 
 
-def voxel_coords(mri_coords, inverse):
+def voxel_coords(mri_coords: npt.NDArray, inverse: npt.NDArray) -> npt.NDArray:
     """ convert mri coordiantes to voxel coordinates in integers using the
         inverse affine
 
@@ -192,10 +205,10 @@ def voxel_coords(mri_coords, inverse):
         voxel coordinates (integer)
     """
     coords = apply_affine(inverse, mri_coords)
-    return coords.astype(int)
+    return coords.astype(int)   # type: ignore
 
 
-def map_seeg_data(eeg, mri):
+def map_seeg_data(eeg: utils.EEG, mri: str) -> Tuple[Nifti1Image, Nifti1Image]:
     """map contact data to surrounding voxels and smooth
 
     Parameters
@@ -256,8 +269,10 @@ def map_seeg_data(eeg, mri):
     return base_img, seiz_img
 
 
-def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200, D=3, step=0.2,
-                              delay=0, method='welch'):
+def calc_epi_image_power_data(eeg: utils.EEG, low_freq: float = 120,
+                              high_freq: float = 200, D: float = 3,
+                              step: float = 0.2, delay: float = 0,
+                              method: str = 'welch') -> utils.EEG:
     """ calculate power data for SEEG epileptogenicity image as per
         David et. al. 2011
 
@@ -305,7 +320,8 @@ def calc_epi_image_power_data(eeg, low_freq=120, high_freq=200, D=3, step=0.2,
     return eeg
 
 
-def calc_epi_image_from_power(eeg, mri, D=3, dt=0.2):
+def calc_epi_image_from_power(eeg: utils.EEG, mri: str, D: float = 3,
+                              dt: float = 0.2) -> Nifti1Image:
     """Create source image from power data
 
     Parameters
@@ -341,8 +357,10 @@ def calc_epi_image_from_power(eeg, mri, D=3, dt=0.2):
     return nifti_masker.inverse_transform(t_scores)
 
 
-def create_epi_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0,
-                         D=3, dt=0.2, method='welch'):
+def create_epi_image_map(eeg: utils.EEG, mri: str, low_freq: float = 120,
+                         high_freq: float = 200, delay: float = 0,
+                         D: float = 3, dt: float = 0.2,
+                         method: str = 'welch') -> Nifti1Image:
     """ create the source image t-map as per David et. al. 2011'
 
     Parameters
@@ -364,7 +382,9 @@ def create_epi_image_map(eeg, mri, low_freq=120, high_freq=200, delay=0,
     return calc_epi_image_from_power(eeg, mri, D, dt)
 
 
-def plot_epi_image_map(t_map, mri, cut_coords=None, threshold=2):
+def plot_epi_image_map(t_map: Nifti1Image, mri: str,
+                       cut_coords: Sequence = None,
+                       threshold: float = 2) -> None:
     """ Use Nilearn to create a Matplotlib plot of the t_map superimposed
         on the MRI
 
@@ -382,7 +402,7 @@ def plot_epi_image_map(t_map, mri, cut_coords=None, threshold=2):
     plot_stat_map(t_map, mri, cut_coords=cut_coords, threshold=threshold)
 
 
-def calc_depth_epi_image_from_power(eeg):
+def calc_depth_epi_image_from_power(eeg: utils.EEG) -> npt.NDArray:
     """ Calculate t-map image analagous to Brainstorm demo
 
     Parameters
@@ -410,11 +430,12 @@ def calc_depth_epi_image_from_power(eeg):
         n_perm=10000, two_sided_test=True,
         n_jobs=2)  # can be changed to use more CPUs
 
-    return t_scores
+    return t_scores     # type: ignore
 
 
-def create_depth_epi_image_map(eeg, low_freq=120,
-                               high_freq=200, delay=0):
+def create_depth_epi_image_map(eeg: utils.EEG, low_freq: float = 120,
+                               high_freq: float = 200,
+                               delay: float = 0) -> npt.NDArray:
     """ Calculate t-values for each individual (non-bad) depth contact
 
     Parameters
@@ -441,7 +462,7 @@ def create_depth_epi_image_map(eeg, low_freq=120,
     return calc_depth_epi_image_from_power(eeg)
 
 
-def plot_3d_epi_image_map(t_map, mri):
+def plot_3d_epi_image_map(t_map: Nifti1Image, mri: str) -> None:
     """ Use Napari to display a coronal 3D view of the t_map superimposed on
         the MRI
 
@@ -487,7 +508,7 @@ def plot_3d_epi_image_map(t_map, mri):
     napari.run()
 
 
-def _set_coronal(img):
+def _set_coronal(img: Nifti1Image) -> npt.NDArray:
     ''' reorient image to display in napari as coronal slices '''
     canon = nib.funcs.as_closest_canonical(img)
     return np.fliplr(np.moveaxis(canon.get_fdata(), [1, 2], [0, 1]))
