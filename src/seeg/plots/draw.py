@@ -3,7 +3,6 @@
 
 """
 
-from ast import Str
 from typing import Sequence, Tuple
 import pyvista as pv
 import vtk
@@ -34,7 +33,7 @@ def draw_cube(plotter: pv.Plotter, center: Sequence, x_len: float,
     return cube, actor
 
 
-def draw_text(plotter: pv.Plotter, text: Str, location: Sequence,
+def draw_text(plotter: pv.Plotter, text: str, location: Sequence,
               size: int, color: Sequence) -> None:
     textActor = vtk.vtkBillboardTextActor3D()
     textActor.SetInput(text)
