@@ -57,6 +57,7 @@ plugins = "numpy.typing.mypy_plugin"
 module = [
     "seeg.plots.depths",
     "seeg.plots.display4d",
-    "seeg.plots.draw_volume"
+    "seeg.plots.draw_volume",
+    "seeg.plots.draw"
 ]
 disallow_untyped_defs = true
