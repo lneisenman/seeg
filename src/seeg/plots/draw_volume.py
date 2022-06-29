@@ -4,13 +4,17 @@
 """
 
 from nibabel.affines import apply_affine
+from nibabel.nifti1 import Nifti1Image
 from nilearn.plotting.cm import cold_hot
 import numpy as np
+import numpy.typing as npt
+import pyvista as pv
 
 from . import draw
 
 
-def draw_volume(plotter, t_map, affine):
+def draw_volume(plotter: pv.Plotter, t_map: Nifti1Image,
+                affine: npt.NDArray) -> None:
 
     data = t_map.get_fdata()[:, :, :, 0]
     data -= np.min(data)
