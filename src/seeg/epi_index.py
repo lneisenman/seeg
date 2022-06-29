@@ -3,17 +3,21 @@
 
 """
 
+from typing import Sequence, Tuple
 import warnings
 
 import matplotlib.pyplot as plt
+from mne.io import Raw
 from nibabel.affines import apply_affine
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from . import utils
 
 
-def calc_ER(raw, low=(4, 12), high=(12, 127), window=1, step=0.25):
+def calc_ER(raw: Raw, low: Sequence = (4, 12), high: Sequence = (12, 127),
+            window: float = 1, step: float = 0.25) -> npt.NDArray:
     """ Calculate the ratio of beta+gamma energy to theta+alpha energy
 
     This calculation is done using the Welch PSD in `window` second intervals
@@ -45,10 +49,10 @@ def calc_ER(raw, low=(4, 12), high=(12, 127), window=1, step=0.25):
     numerator = np.sum(psd[:, high[0]:high[1], :], axis=1)
     denominator = np.sum(psd[:, low[0]:low[1], :], axis=1)
     # print(f'psd shape = {psd.shape}')
-    return numerator/denominator
+    return numerator/denominator    # type: ignore
 
 
-def cusum(data, bias=0.1):
+def cusum(data: npt.NDArray, bias: float = 0.1) -> npt.NDArray:
     """ calculate the Page-Hinkley Cusum
 
     Parameters
@@ -70,7 +74,8 @@ def cusum(data, bias=0.1):
     return U_n
 
 
-def _scan(U_n, ch_names, threshold):
+def _scan(U_n: npt.NDArray, ch_names: list,
+          threshold: float) -> Tuple[bool, pd.DataFrame]:
     columns = ['channel', 'min', 'detection_idx', 'detection_time',
                'alarm_idx', 'alarm_time']
     onsets = onsets = pd.DataFrame(dtype=np.double, columns=columns)
@@ -90,7 +95,8 @@ def _scan(U_n, ch_names, threshold):
     return seizure, onsets
 
 
-def find_onsets(U_n, ch_names, window, step, H, threshold=1):
+def find_onsets(U_n: npt.NDArray, ch_names: list, window: float, step: float,
+                H: float, threshold: float = 1) -> pd.DataFrame:
     """ Calculate onset based on the Page-Hinkley CUSUM algorithm
 
     Parameters
@@ -144,8 +150,9 @@ def find_onsets(U_n, ch_names, window, step, H, threshold=1):
     return onsets
 
 
-def calculate_EI(raw, low=(4, 12), high=(12, 127), window=1, step=0.25,
-                 bias=0.1, threshold=1, tau=1, H=5):
+def calculate_EI(raw: Raw, low: Sequence = (4, 12), high: Sequence = (12, 127),
+                 window: float = 1, step: float = 0.25,
+                 bias=0.1, threshold=1, tau=1, H=5) -> pd.DataFrame:
     """ Calculate EI for all channels
 
     Parameters
