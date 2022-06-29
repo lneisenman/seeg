@@ -5,12 +5,18 @@
 
 """
 
+from typing import Tuple
+
+from mne.io import Raw
 import numpy as np
+import numpy.typing as npt
+import pandas as pd
 
 from .epi_index import cusum, find_onsets
 
 
-def line_length(raw, window=1, step=0.25):
+def line_length(raw: Raw, window: float = 1,
+                step: float = 0.25) -> Tuple[npt.NDArray, npt.NDArray]:
     '''
     calculate line length is segments of width window with time steps
     of time step
@@ -50,7 +56,9 @@ def line_length(raw, window=1, step=0.25):
     return line_len, sd1
 
 
-def ll_detect_seizure(raw, window=1, step=0.25, threshold=1):
+def ll_detect_seizure(raw: Raw, window: float = 1, step: float = 0.25,
+                      threshold: float = 1
+                      ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
     '''
     Find the seizure onset in each channel defined as the first time that
     line length is threshold standard deviations above the sd of the first
@@ -90,7 +98,8 @@ def ll_detect_seizure(raw, window=1, step=0.25, threshold=1):
     return sz + raw.times[0], ll, sd
 
 
-def line_length_EI(raw, window=1, step=0.25, tau=1, H=5):
+def line_length_EI(raw: Raw, window: float = 1, step: float = 0.25,
+                   tau: float = 1, H: float = 5) -> pd.DataFrame:
     '''
     Find the seizure onset in each channel defined as the first time that
     line length is threshold standard deviations above the sd of the first
@@ -111,12 +120,8 @@ def line_length_EI(raw, window=1, step=0.25, tau=1, H=5):
 
     Returns
     -------
-    ndarray
-        seizure onset time for each channel of raw
-    ndarray
-        line length values for each channel
-    ndarray
-        standard deviation of the line length in the first interval
+    pd.DataFrame
+        includes columns `LLEI_raw` and `LLEI`
     '''
     ___, ll, sd = ll_detect_seizure(raw, window, step)
     threshold = np.max(sd)
