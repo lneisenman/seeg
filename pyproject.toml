@@ -62,6 +62,7 @@ module = [
     "seeg.plots.epi_image",
     "seeg.plots.plots",
     "seeg.epi_index",
-    "seeg.line_length"
+    "seeg.line_length",
+    "seeg.seeg"
 ]
 disallow_untyped_defs = true

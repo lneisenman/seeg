@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from typing import Sequence, Tuple
 
 from .epi_index import calculate_EI
 from .plots.epi_image import EpiImage
@@ -25,8 +26,9 @@ class Seeg():
 
     """
 
-    def __init__(self, subject, subjects_dir, electrode_names, bads,
-                 seizure=1, electrode_file='recon.fcsv', seiz_delay=0):
+    def __init__(self, subject: str, subjects_dir: str, electrode_names: list,
+                 bads: list, seizure: int = 1,
+                 electrode_file: str = 'recon.fcsv', seiz_delay: float = 0):
         self.subject = subject
         self.subjects_dir = subjects_dir
         self.electrode_names = electrode_names
@@ -41,8 +43,9 @@ class Seeg():
         self.seiz_delay = seiz_delay
         # self.contacts = read_electrode_file(self.electrode_file)
 
-    def create_epi_image_map(self, low_freq, high_freq, D=3, dt=0.2,
-                             method='welch'):
+    def create_epi_image_map(self, low_freq: float, high_freq: float,
+                             D: float = 3, dt: float = 0.2,
+                             method: str = 'welch') -> None:
         """ calculate the source image map analagous to David et al 2011
             and the Brainstorm tutorial
 
@@ -53,13 +56,16 @@ class Seeg():
         #                                   low_freq, high_freq,
         #                                   self.eeg.seiz_delay)
 
-    def show_epi_image_map(self, cut_coords=None, threshold=2):
+    def show_epi_image_map(self, cut_coords: Sequence = None,
+                           threshold: float = 2) -> None:
         """ Use matplotlib to display the source image map
 
         """
         self.epi_image.plot(cut_coords=cut_coords, threshold=threshold)
 
-    def calculate_EI(self, freqs, bias=1, threshold=1, tau=1, H=5):
+    def calculate_EI(self, freqs: Sequence, bias: float = 1,
+                     threshold: float = 1, tau: float = 1,
+                     H: float = 5) -> None:
         """ calculate the epileptogenicity index as per Bartolomi et al 2008
 
         """
