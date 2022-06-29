@@ -59,6 +59,7 @@ module = [
     "seeg.plots.display4d",
     "seeg.plots.draw_volume",
     "seeg.plots.draw",
-    "seeg.plots.epi_image"
+    "seeg.plots.epi_image",
+    "seeg.plots.plots"
 ]
 disallow_untyped_defs = true

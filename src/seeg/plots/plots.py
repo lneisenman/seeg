@@ -14,13 +14,17 @@ from nilearn.mass_univariate import permuted_ols
 from nilearn.plotting import plot_stat_map
 import numpy as np
 import numpy.linalg as npl
+import numpy.typing as npt
 import pandas as pd
 from scipy import stats as sps
 
 from . import gin
+from .depths import Depth
+from ..utils import EEG
 
 
-def plot_eeg(eeg, depth, label_color='black'):
+def plot_eeg(eeg: mne.io.Raw, depth: Depth,
+             label_color: str = 'black') -> plt.figure:
     """ Plots eeg data for a given depth electrode
 
     Arguments:
@@ -58,7 +62,7 @@ def plot_eeg(eeg, depth, label_color='black'):
     return fig
 
 
-def plot_channel_ave_power(seizure, channel='g7-g8'):
+def plot_channel_ave_power(seizure: EEG, channel: str = 'g7-g8') -> None:
     """ plot average power for both baseline and seizure eeg data
         for a single channel
 
@@ -77,7 +81,8 @@ def plot_channel_ave_power(seizure, channel='g7-g8'):
              s_times, seizure['seizure']['ave_power'][index, :])
 
 
-def plot_power(power, ch_names, depth, label_color='black'):
+def plot_power(power: npt.NDArray, ch_names: list, depth: str,
+               label_color: str = 'black') -> plt.figure:
     """ plot EEG power
 
     Parameters
@@ -112,7 +117,7 @@ def plot_power(power, ch_names, depth, label_color='black'):
     return fig
 
 
-def calc_z_scores(baseline, seizure):
+def calc_z_scores(baseline: npt.NDArray, seizure: npt.NDArray) -> npt.NDArray:
     """ This function is meant to generate the figures shown in the  Brainstorm
     demo used to select the 120-200 Hz frequency band. It should also
     be similar to panel 2 in figure 1 in David et al 2011.
@@ -139,12 +144,13 @@ def calc_z_scores(baseline, seizure):
 
     mean = np.mean(baseline, 1)
     sd = np.std(baseline, 1)
-    z_scores = (seizure - mean)/sd
+    z_scores: npt.NDArray = (seizure - mean)/sd
     return z_scores
 
 
-def plot_z_scores(times, freqs, z_scores, ch_names, depth,
-                  label_color='black'):
+def plot_z_scores(times: npt.NDArray, freqs: npt.NDArray,
+                  z_scores: npt.NDArray, ch_names: list, depth: str,
+                  label_color: str = 'black') -> plt.figure:
     """ Plots Z-scores
 
     Parameters
