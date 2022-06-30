@@ -49,20 +49,20 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 show_error_codes = true
-check_untyped_defs = true
+disallow_untyped_defs = true
 ignore_missing_imports = true
 plugins = "numpy.typing.mypy_plugin"
 
-[[tool.mypy.overrides]]
-module = [
-    "seeg.plots.depths",
-    "seeg.plots.display4d",
-    "seeg.plots.draw_volume",
-    "seeg.plots.draw",
-    "seeg.plots.epi_image",
-    "seeg.plots.plots",
-    "seeg.epi_index",
-    "seeg.line_length",
-    "seeg.seeg"
-]
-disallow_untyped_defs = true
+#[[tool.mypy.overrides]]
+#module = [
+#    "seeg.plots.depths",
+#    "seeg.plots.display4d",
+#    "seeg.plots.draw_volume",
+#    "seeg.plots.draw",
+#    "seeg.plots.epi_image",
+#    "seeg.plots.plots",
+#    "seeg.epi_index",
+#    "seeg.line_length",
+#    "seeg.seeg"
+#]
+#disallow_untyped_defs = true

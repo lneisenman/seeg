@@ -4,11 +4,15 @@
 """
 import os
 from re import L
+from typing import Callable, MutableMapping, Sequence, Tuple
 
 import matplotlib as mpl
 import mne
+from mne.channels import DigMontage as Montage
+from mne.io import Raw
 import neo
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 
@@ -23,15 +27,15 @@ Parameters
         list of bad electrode names
 
    """
-    def __init__(self, electrode_names, bads=None):
+    def __init__(self, electrode_names: list, bads: list = []):
         self.electrode_names = electrode_names
         self.bads = bads
-        self.baseline = dict()
-        self.seizure = dict()
+        self.baseline: dict = dict()
+        self.seizure: dict = dict()
         self.montage = None
         self.electrodes = None
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> MutableMapping | Sequence:
         if key == 'baseline':
             return self.baseline
         elif key == 'seizure':
@@ -43,14 +47,16 @@ Parameters
         else:
             raise KeyError(f'{key} is not a valid key')
 
-    def set_baseline(self, raw, pre=0, post=5, file_name=None):
+    def set_baseline(self, raw: Raw, pre: float = 0, post: float = 5,
+                     file_name: str = None) -> None:
         """ set parameters for baseline EEG
 
         """
         self.baseline['eeg'] = clip_eeg(raw, pre, post)
         self.baseline['file_name'] = file_name
 
-    def set_seizure(self, raw, pre=5, post=20, file_name=None):
+    def set_seizure(self, raw: Raw, pre: float = 5, post: float = 20,
+                    file_name: str = None) -> None:
         """ set parameters for seizure EEG
 
         """
@@ -59,7 +65,7 @@ Parameters
         self.seizure['file_name'] = file_name
 
 
-def read_electrode_file(file_name):
+def read_electrode_file(file_name: str) -> pd.DataFrame:
     """ Read electrode names and coordinates (in meters)
 
     Parameters
@@ -93,8 +99,9 @@ def read_electrode_file(file_name):
     return electrodes
 
 
-def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
-                  electrode_file='recon.fcsv', onset_file='onset_times.tsv'):
+def load_eeg_data(EEG_DIR: str, ELECTRODE_NAMES: list, BADS: list,
+                  seizure: int = 1, electrode_file: str = 'recon.fcsv',
+                  onset_file: str = 'onset_times.tsv') -> list:
 
     electrode_file = os.path.join(EEG_DIR, electrode_file)
     electrodes = read_electrode_file(electrode_file)
@@ -122,7 +129,7 @@ def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
         seizure_eeg_file = os.path.join(EEG_DIR, fn)
         seizure_onset_time = seizure_onsets.onset_time[i]
 
-        read_eeg = read_micromed_eeg
+        read_eeg: Callable = read_micromed_eeg
         if fn[-3:] == 'edf':
             read_eeg = read_edf
 
@@ -143,7 +150,8 @@ def load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
     return eeg_list
 
 
-def create_montage(electrodes, sfreq=1000):
+def create_montage(electrodes: pd.DataFrame,
+                   sfreq: int = 1000) -> Tuple[Montage, mne.Info]:
     """ Create a montage from a pandas dataframe containing contact names
     and locations in meters
 
@@ -176,7 +184,7 @@ def create_montage(electrodes, sfreq=1000):
     return montage, contact_info
 
 
-def match_ch_type(name):
+def match_ch_type(name: str) -> str:
     """ return channel type based on channel name
 
     Parameters
@@ -197,15 +205,16 @@ def match_ch_type(name):
     return out
 
 
-def read_micromed_eeg(file_name, electrodes, bads):
+def read_micromed_eeg(file_name: str, electrodes: pd.DataFrame,
+                      bads: list) -> Tuple[Raw, Montage]:
     """ read micromed eeg file
 
     Parameters
     ----------
     file_name : string
         path to EEG file
-    electrodes : list of strings
-        names of electrodes
+    electrodes : pd.DataFrame
+        electrode info
     bads : list of strings
         names of bad electrodes
 
@@ -241,15 +250,16 @@ def read_micromed_eeg(file_name, electrodes, bads):
     return raw, montage
 
 
-def read_edf(eeg_file, electrodes, bads=None, notch=False):
+def read_edf(eeg_file: str, electrodes: pd.DataFrame, bads: list = [],
+             notch: bool = False) -> Raw:
     """ read data from edf file
 
     Parameters
     ----------
     eeg_file : string
         path to EEG file
-    electrodes : list of strings
-        names of electrodes
+    electrodes : pd.DataFrame
+        electrode info
     bads : list of strings, optional
         names of bad channels, by default None
     notch : bool, optional
@@ -281,7 +291,7 @@ def read_edf(eeg_file, electrodes, bads=None, notch=False):
     return eeg, montage
 
 
-def clip_eeg(raw, pre=5, post=20):
+def clip_eeg(raw: Raw, pre: float = 5, post: float = 20) -> Raw:
     """ Clip EEG file
 
     Parameters
@@ -312,7 +322,8 @@ def clip_eeg(raw, pre=5, post=20):
     return clipped
 
 
-def read_onsets(file_name='onset_times.tsv'):
+def read_onsets(file_name: str = 'onset_times.tsv'
+                ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """ read `onset_times.tsv` file and return baseline and seizure data
         in separate dataframes
 
@@ -336,7 +347,7 @@ def read_onsets(file_name='onset_times.tsv'):
     return baseline_onsets, seizure_onsets
 
 
-def find_num_contacts(contacts, electrode):
+def find_num_contacts(contacts: list, electrode: str) -> int:
     """ find the number of contacts on a given depth electrode
 
     Parameters
@@ -353,10 +364,11 @@ def find_num_contacts(contacts, electrode):
     """
     start = len(electrode)
     numbers = [int(contact[start:]) for contact in contacts]
-    return np.max(numbers)
+    return np.max(numbers)  # type: ignore
 
 
-def setup_bipolar(electrode, ch_names, bads):
+def setup_bipolar(electrode: str, ch_names: list,
+                  bads: list) -> Tuple[list, list, list]:
     """ create lists of names for resetting and EEG to a bipolar montage
 
     Parameters
@@ -408,7 +420,7 @@ def setup_bipolar(electrode, ch_names, bads):
     return anodes, cathodes, ch_names
 
 
-def create_bipolar(raw, electrodes):
+def create_bipolar(raw: Raw, electrodes: list) -> Raw:
     """ create EEG data in a bipolar montage
 
     Parameters
@@ -439,7 +451,8 @@ def create_bipolar(raw, electrodes):
     return bipolar
 
 
-def calc_power_multi(raw, window=1, step=0.25):
+def calc_power_multi(raw: Raw, window: float = 1,
+                     step: float = 0.25) -> npt.NDArray:
     """ Calculate power in each channel using multitapers in sections,
         analagous to the Welch PSD method
 
@@ -494,7 +507,8 @@ def calc_power_multi(raw, window=1, step=0.25):
     return density
 
 
-def calc_power_welch(raw, window=1, step=0.25):
+def calc_power_welch(raw: Raw, window: float = 1,
+                     step: float = 0.25) -> npt.NDArray:
     """ Calculate power in each channel using the Welch method
 
         Parameters
@@ -522,10 +536,11 @@ def calc_power_welch(raw, window=1, step=0.25):
                                             n_fft=n_per_seg,
                                             n_per_seg=n_per_seg,
                                             n_overlap=overlap, average=None)
-    return psd
+    return psd  # type: ignore
 
 
-def map_colors(values, cmap='cold_hot'):
+def map_colors(values: Sequence,
+               cmap: mpl.colors.Colormap = 'cold_hot') -> Sequence:
     vmin = np.min(values)
     vmax = np.max(values)
     if vmin < 0:
@@ -538,4 +553,4 @@ def map_colors(values, cmap='cold_hot'):
     vmax *= 1.1
     norm = mpl.colors.Normalize(vmin, vmax)
     color_map = mpl.cm.get_cmap(cmap)
-    return color_map(norm(values))
+    return color_map(norm(values))  # type: ignore
