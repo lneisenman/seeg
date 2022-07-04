@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from .eeg import *
 from .epi_index import *
 from .line_length import *
 from .plots import *
