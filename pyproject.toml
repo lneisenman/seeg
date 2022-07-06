@@ -17,11 +17,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Development Status :: 2 - Pre-Alpha"
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "mne",
     "nilearn",
-    "neo",
+    "python-neo",
     "pyvistaqt"
 ]
 
@@ -53,16 +53,8 @@ disallow_untyped_defs = true
 ignore_missing_imports = true
 plugins = "numpy.typing.mypy_plugin"
 
-#[[tool.mypy.overrides]]
-#module = [
-#    "seeg.plots.depths",
-#    "seeg.plots.display4d",
-#    "seeg.plots.draw_volume",
-#    "seeg.plots.draw",
-#    "seeg.plots.epi_image",
-#    "seeg.plots.plots",
-#    "seeg.epi_index",
-#    "seeg.line_length",
-#    "seeg.seeg"
-#]
-#disallow_untyped_defs = true
+[[tool.mypy.overrides]]
+module = [
+    "tests.*.*",
+]
+disallow_untyped_defs = false

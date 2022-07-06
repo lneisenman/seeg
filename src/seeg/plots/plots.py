@@ -20,7 +20,7 @@ from scipy import stats as sps
 
 from . import gin
 from .depths import Depth
-from ..utils import EEG
+from ..eeg import EEG
 
 
 def plot_eeg(eeg: mne.io.Raw, depth: Depth,
@@ -68,17 +68,17 @@ def plot_channel_ave_power(seizure: EEG, channel: str = 'g7-g8') -> None:
 
     Parameters
     ----------
-    seizure : EEG | dict
+    seizure : EEG
         eeg data
     channel : str, optional
         bipolar eeg channel name, by default 'g7-g8'
     """
     plt.figure()
-    b_times = seizure['baseline']['bipolar'].times
-    s_times = seizure['seizure']['bipolar'].times
-    index = seizure['baseline']['bipolar'].ch_names.index(channel)
-    plt.plot(b_times, seizure['baseline']['ave_power'][index, :],
-             s_times, seizure['seizure']['ave_power'][index, :])
+    b_times = seizure.baseline['bipolar'].times
+    s_times = seizure.seizure['bipolar'].times
+    index = seizure.baseline['bipolar'].ch_names.index(channel)
+    plt.plot(b_times, seizure.baseline['ave_power'][index, :],
+             s_times, seizure.seizure['ave_power'][index, :])
 
 
 def plot_power(power: npt.NDArray, ch_names: list, depth: str,

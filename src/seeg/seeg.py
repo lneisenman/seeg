@@ -5,7 +5,7 @@ from typing import Sequence, Tuple
 
 from .epi_index import calculate_EI
 from .plots.epi_image import EpiImage
-from .utils import load_eeg_data
+from .eeg import load_eeg_data
 
 
 class Seeg():

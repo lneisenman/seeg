@@ -20,6 +20,7 @@ import pyvista as pv
 from scipy.optimize import minimize
 
 from . import draw
+from ..eeg import setup_bipolar
 from .. import utils
 
 
@@ -221,7 +222,7 @@ class Depth():
     def show_bipolar(self, plotter: pv.Plotter,
                      contact_colors: Sequence = SILVER,
                      radii: float | Sequence | None = None,
-                     opacity: float = 0.75, bads: list = None,
+                     opacity: float = 0.75, bads: list = [],
                      affine: npt.NDArray = np.diag(np.ones(4))) -> None:
         """Draw spheres between contacts on the depth in the provided scene
 
@@ -241,8 +242,7 @@ class Depth():
         self.actors_BP = list()
         contacts = [self.name + str(i+1) for i in range(self.num_contacts)
                     if self.active[i]]
-        anodes, cathodes, __ = utils.setup_bipolar(self.name, contacts,
-                                                   bads)
+        anodes, cathodes, __ = setup_bipolar(self.name, contacts, bads)
         if (len(contact_colors) >= len(anodes)
                 and len(contact_colors[0]) == 3):
             c_colors = contact_colors  # list of RGB colors for each sphere
@@ -444,7 +444,7 @@ def show_depth_bipolar_values(depth_list: list[Depth], plotter: pv.Plotter,
         assert len(radius) == len(values), ('number of radii'  # type: ignore
                                             ' must equal number of values')
 
-    mapped_values = utils.map_colors(values, cmap)[:, :3]
+    mapped_values = utils.map_colors(values, cmap)[:, :3]   # type: ignore
     idx = 0
     for depth in depth_list:
         if radius is None:
@@ -507,7 +507,7 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
             if depth.active[i] and name not in bads:
                 start, end = depth.contacts[i]
                 af_center = apply_affine(affine, (start+end)/2)
-                color = mapped_values[idx, :3]
+                color = mapped_values[idx, :3]  # type: ignore
                 draw.draw_sphere(plotter, af_center,
                                  radius[idx],   # type: ignore
                                  color, opacity)

@@ -66,7 +66,7 @@ class Display4D:
         self.plotter.app.exec_()
 
     def assign_colors(self) -> None:
-        self.colors = [map_colors(column, self.cmap)[:, :3]
+        self.colors = [map_colors(column, self.cmap)[:, :3]     # type: ignore
                        for column in self.data.T]
         for i, column in enumerate(self.data.T):
             threshold = (np.min(column) +

@@ -71,7 +71,7 @@ def cusum(data: npt.NDArray, bias: float = 0.1) -> npt.NDArray:
     ER_n = np.cumsum(data, axis=1)/np.arange(1, 1+data.shape[-1])
     U = data - ER_n - bias
     U_n = np.cumsum(U, axis=1)
-    return U_n
+    return U_n  # type: ignore
 
 
 def _scan(U_n: npt.NDArray, ch_names: list,
@@ -152,7 +152,8 @@ def find_onsets(U_n: npt.NDArray, ch_names: list, window: float, step: float,
 
 def calculate_EI(raw: Raw, low: Sequence = (4, 12), high: Sequence = (12, 127),
                  window: float = 1, step: float = 0.25,
-                 bias=0.1, threshold=1, tau=1, H=5) -> pd.DataFrame:
+                 bias: float = 0.1, threshold: float = 1,
+                 tau: float = 1, H: float = 5) -> pd.DataFrame:
     """ Calculate EI for all channels
 
     Parameters

@@ -2,6 +2,7 @@
 """ Utility classes and functions
 
 """
+from dataclasses import dataclass, field
 import os
 from typing import Callable, MutableMapping, Sequence, Tuple
 
@@ -14,36 +15,15 @@ import numpy.typing as npt
 import pandas as pd
 
 
+@dataclass
 class EEG:
-    """ Dict like class to contain EEG data
-
-Parameters
-    ----------
-    electrode_names : list of string
-        list of all electrode names
-    bads : list of string
-        list of bad electrode names
-
-   """
-    def __init__(self, electrode_names: list, bads: list = []):
-        self.electrode_names = electrode_names
-        self.bads = bads
-        self.baseline: dict = dict()
-        self.seizure: dict = dict()
-        self.montage = None
-        self.electrodes = None
-
-    def __getitem__(self, key: str) -> MutableMapping | Sequence:
-        if key == 'baseline':
-            return self.baseline
-        elif key == 'seizure':
-            return self.seizure
-        elif key == 'electrode_names':
-            return self.electrode_names
-        elif key == 'bads':
-            return self.bads
-        else:
-            raise KeyError(f'{key} is not a valid key')
+    """ Class to contain EEG data  """
+    electrode_names: list
+    bads: list = field(default_factory=list)
+    baseline: dict = field(default_factory=dict)
+    seizure: dict = field(default_factory=dict)
+    electrodes: pd.DataFrame | None = None
+    montage: mne.channels.DigMontage | None = None
 
     def set_baseline(self, raw: Raw, pre: float = 0, post: float = 5,
                      file_name: str = None) -> None:

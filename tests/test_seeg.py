@@ -54,11 +54,3 @@ def test_setup_bipolar(raw, bads):
     assert anodes[:3] == ['PL01', 'PL02', 'PL03']
     assert cathodes[:3] == ['PL02', 'PL03', 'PL04']
     assert ch_names[:3] == ['PL01-PL02', 'PL02-PL03', 'PL03-PL04']
-
-
-def test_EEG(raw):
-    test = seeg.EEG(['A'])
-    test['baseline']['raw'] = raw
-    print(test['baseline'])
-    with pytest.raises(KeyError):
-        print(test['bad key'])
