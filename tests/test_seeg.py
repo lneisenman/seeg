@@ -47,6 +47,13 @@ def test_SEEG(subject_id, subjects_dir, electrode_names, bads, electrode_file):
     study.show_epi_image_map(cut_coords=(-38, -50, -12))
 
 
+def test_SEEG_EI(subject_id, subjects_dir, electrode_names, bads,
+                 electrode_file):
+    study = seeg.Seeg(subject_id, subjects_dir, electrode_names, bads,
+                      electrode_file=electrode_file)
+    study.calculate_EI()
+
+
 def test_setup_bipolar(raw, bads):
     anodes, cathodes, ch_names = seeg.setup_bipolar("PL", raw.ch_names, bads)
     print(anodes)

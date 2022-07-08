@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 import os
+from subprocess import HIGH_PRIORITY_CLASS
 from typing import Sequence, Tuple
 
 from .epi_index import calculate_EI
@@ -26,6 +27,8 @@ class Seeg():
         self.eeg_list = load_eeg_data(self.eeg_path, self.electrode_names,
                                       self.bads, seizure=0,
                                       electrode_file=self.electrode_file)
+        self.epi_image = [None]*len(self.eeg_list)
+        self.EI = [None]*len(self.eeg_list)
 
     def create_epi_image_map(self, low_freq: float, high_freq: float,
                              seizure: int = 1, D: float = 3, dt: float = 0.2,
@@ -35,25 +38,31 @@ class Seeg():
 
         """
         idx = seizure-1
-        self.epi_image = EpiImage(self.eeg_list[idx], self.mri_file, low_freq,
-                                  high_freq, self.seiz_delay, method, D, dt)
+        self.epi_image[idx] = EpiImage(self.eeg_list[idx],  # type: ignore
+                                       self.mri_file, low_freq, high_freq,
+                                       self.seiz_delay, method, D, dt)
         # self.t_map = create_epi_image_map(self.eeg, self.mri_file,
         #                                   low_freq, high_freq,
         #                                   self.eeg.seiz_delay)
 
-    def show_epi_image_map(self, cut_coords: Sequence = None,
+    def show_epi_image_map(self, seizure: int = 1, cut_coords: Sequence = None,
                            threshold: float = 2) -> None:
         """ Use matplotlib to display the source image map
 
         """
-        self.epi_image.plot(cut_coords=cut_coords, threshold=threshold)
+        idx = seizure - 1
+        self.epi_image[idx].plot(cut_coords=cut_coords,     # type: ignore
+                                 threshold=threshold)
 
-    def calculate_EI(self, freqs: Sequence, bias: float = 1,
+    def calculate_EI(self, seizure: int = 1, low: Sequence = (4, 12),
+                     high: Sequence = (12, 127), bias: float = 1,
                      threshold: float = 1, tau: float = 1,
                      H: float = 5) -> None:
         """ calculate the epileptogenicity index as per Bartolomi et al 2008
 
         """
-        self.EI = calculate_EI(self.eeg_list[0]['seizure']['raw'], freqs,
-                               bias=bias, threshold=threshold,
-                               tau=tau, H=H)
+        idx = seizure - 1
+        self.EI[idx] = calculate_EI(self.eeg_list[idx].seizure['raw'],
+                                    low=low, high=high,
+                                    bias=bias, threshold=threshold,
+                                    tau=tau, H=H)
