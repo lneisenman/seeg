@@ -3,6 +3,7 @@
 
 """
 
+from dataclasses import dataclass, field
 from numbers import Number
 import os
 from typing import Iterator, Sequence
@@ -57,46 +58,26 @@ def rosa_colors() -> Iterator[tuple]:
         i += 1
 
 
+@dataclass
 class Depth():
     """Class to encapsulate data for individual SEEG electrodes.
 
     Data for each depth is stored and the contact locations are fit to
     a line. Idealized locations are calcuated from the fit and used for
     drawing the depth.
-
-    Parameters
-    ----------
-    name : string
-        name of Depth
-    num_contacts : int
-        number of contacts in the depth
-    locations : array-like
-        list of coordinates of each contact
-    diam : float, optional
-        diameter of the depth electrode (default = 0.8 mm)
-    contact_len : float, optional
-        length of each contact (default = 2 mm)
-    spacing : float, optional
-        distance between contacts (default = 1.5 mm)
-    active : boolean or list of boolean, optional
-        if a single value, all contacts have that value. Otherwise,
-        list of each whether or not each contact is active
-        (default = True)
     """
+    name: str
+    num_contacts: int
+    locations: npt.NDArray
+    diam: float = 0.8
+    contact_len: float = 2
+    spacing: float = 1.5
+    active: bool | list[bool] = True
 
-    def __init__(self, name: str, num_contacts: int, locations: npt.NDArray,
-                 diam: float = 0.8, contact_len: float = 2,
-                 spacing: float = 1.5, active: bool | list[bool] = True):
-        self.name = name
-        self.num_contacts = num_contacts
-        self.locations = locations
-        self.diam = diam
-        self.contact_len = contact_len
-        self.spacing = spacing
-        if isinstance(active, bool):
-            active = [active]*num_contacts
+    def __post_init__(self,) -> None:
+        if isinstance(self.active, bool):
+            self.active = [self.active]*self.num_contacts
 
-        self.active = active
         self.blocks = pv.MultiBlock()
         self.actors = list()    # type: ignore
         self.fit_locations()
@@ -210,7 +191,7 @@ class Depth():
         draw.draw_text(plotter, self.name, base, 36, color=depth_color)
 
         for i, contact in enumerate(self.contacts):
-            if self.active[i]:
+            if self.active[i]:  # type: ignore
                 name = 'C' + str(i)
                 tip = apply_affine(affine, contact[0])
                 base = apply_affine(affine, contact[1])
@@ -241,7 +222,7 @@ class Depth():
         """
         self.actors_BP = list()
         contacts = [self.name + str(i+1) for i in range(self.num_contacts)
-                    if self.active[i]]
+                    if self.active[i]]  # type: ignore
         anodes, cathodes, __ = setup_bipolar(self.name, contacts, bads)
         if (len(contact_colors) >= len(anodes)
                 and len(contact_colors[0]) == 3):
@@ -303,7 +284,7 @@ class Depth():
         radius = self.contact_len/1.5
         opacity = 0.3
         for i, location in enumerate(self.locations):
-            if self.active[i]:
+            if self.active[i]:  # type: ignore
                 loc = apply_affine(affine, location)
                 draw.draw_sphere(plotter, loc, radius, c_colors[i], opacity)
 
@@ -394,7 +375,7 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
         if c_list:
             c_colors = list()
             for i in range(depth.num_contacts):
-                if depth.active[i]:
+                if depth.active[i]:     # type: ignore
                     c_colors.append(contact_colors[idx])
                     idx += 1
                 else:
@@ -504,7 +485,7 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
     for depth in depth_list:
         for i in range(depth.num_contacts):
             name = depth.name + str(i+1)
-            if depth.active[i] and name not in bads:
+            if depth.active[i] and name not in bads:    # type: ignore
                 start, end = depth.contacts[i]
                 af_center = apply_affine(affine, (start+end)/2)
                 color = mapped_values[idx, :3]  # type: ignore
