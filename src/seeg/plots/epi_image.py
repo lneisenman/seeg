@@ -5,7 +5,7 @@
 """
 
 import copy
-from ctypes import util
+from dataclasses import dataclass, field
 from typing import Sequence, Tuple
 
 import matplotlib.pyplot as plt
@@ -28,26 +28,28 @@ from ..eeg import create_bipolar, EEG, find_num_contacts
 from .. import utils
 
 
+@dataclass
 class EpiImage:
+    """ calculate and store epi-image"""
+    eeg: EEG
+    mri: str
+    low_freq: float = 120
+    high_freq: float = 200
+    seiz_delay: float = 0
+    method: str = 'welch'
+    D: float = 3
+    dt: float = 0.2
+    num_steps: int = 1
 
-    def __init__(self, eeg: EEG, mri: str, low_freq: float = 120,
-                 high_freq: float = 200, seiz_delay: float = 0,
-                 method: str = 'welch', D: float = 3, dt: float = 0.2,
-                 num_steps: int = 1):
-        self.eeg = eeg
-        self.mri = mri
-        self.low_freq = low_freq
-        self.high_freq = high_freq
-        self.seiz_delay = seiz_delay
-        self.method = method
-        self.D = D
-        self.dt = dt
+    def __post_init__(self) -> None:
         self.t_maps = list()
-        for i in range(num_steps):
-            self.t_maps.append(create_epi_image_map(eeg, mri,
-                                                    low_freq, high_freq,
-                                                    seiz_delay+(i*D), D, dt,
-                                                    method))
+        for i in range(self.num_steps):
+            self.t_maps.append(create_epi_image_map(self.eeg, self.mri,
+                                                    self.low_freq,
+                                                    self.high_freq,
+                                                    self.seiz_delay+(i*self.D),
+                                                    self.D, self.dt,
+                                                    self.method))
 
     def plot(self, image_num: int = 0, cut_coords: Sequence = None,
              threshold: float = 2) -> None:
