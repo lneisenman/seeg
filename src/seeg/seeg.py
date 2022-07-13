@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass, field
 import os
-from subprocess import HIGH_PRIORITY_CLASS
-from typing import Sequence, Tuple
+from typing import Sequence
 
 from .epi_index import calculate_EI
 from .plots.epi_image import EpiImage

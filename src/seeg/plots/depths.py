@@ -3,7 +3,7 @@
 
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from numbers import Number
 import os
 from typing import Iterator, Sequence
@@ -12,7 +12,6 @@ import matplotlib as mpl
 import mne
 import nibabel as nib
 from nibabel.affines import apply_affine
-from nibabel.freesurfer import io as fio
 import numpy as np
 import numpy.linalg as npl
 import numpy.typing as npt

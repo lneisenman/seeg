@@ -4,14 +4,13 @@
 """
 from dataclasses import dataclass, field
 import os
-from typing import Callable, MutableMapping, Sequence, Tuple
+from typing import Callable, Tuple
 
 import mne
 from mne.channels import DigMontage as Montage
 from mne.io import Raw
 import neo
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 
 

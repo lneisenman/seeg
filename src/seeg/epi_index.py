@@ -6,9 +6,7 @@
 from typing import Sequence, Tuple
 import warnings
 
-import matplotlib.pyplot as plt
 from mne.io import Raw
-from nibabel.affines import apply_affine
 import numpy as np
 import numpy.typing as npt
 import pandas as pd

@@ -5,10 +5,9 @@
 """
 
 import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Sequence, Tuple
 
-import matplotlib.pyplot as plt
 import nibabel as nib
 from nibabel.affines import apply_affine
 from nibabel.nifti1 import Nifti1Image
@@ -23,7 +22,6 @@ import numpy.linalg as npl
 import numpy.typing as npt
 from vispy.color import Colormap
 
-from . import gin
 from ..eeg import create_bipolar, EEG, find_num_contacts
 from .. import utils
 
