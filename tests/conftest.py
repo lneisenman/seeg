@@ -16,7 +16,7 @@ BASE_DIR = mne.datasets.misc.data_path()
 
 ELECTRODE_NAMES = ['PL', 'QL', 'RL', 'SL', 'TL', 'UL', 'VL', 'WL',
                    'XL', 'YL', 'ZL', 'PHL', 'AHL', 'FEL']
-BADS = []
+BADS = ['TL01']
 
 SUBJECT_ID = 'seeg_demo'
 SUBJECTS_DIR = BASE_DIR
@@ -86,7 +86,8 @@ def eeg():
 
 @pytest.fixture
 def t_map():
-    t_map = nib.load(os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'mri', 't_map.nii.gz'))
+    t_map = nib.load(os.path.join(SUBJECTS_DIR, SUBJECT_ID,
+                                  'mri', 't_map.nii.gz'))
     return t_map
 
 

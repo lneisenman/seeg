@@ -72,6 +72,7 @@ class Depth():
     contact_len: float = 2
     spacing: float = 1.5
     active: bool | list[bool] = True
+    zero: bool = False
 
     def __post_init__(self,) -> None:
         if isinstance(self.active, bool):
@@ -220,9 +221,21 @@ class Depth():
 
         """
         self.actors_BP = list()
-        contacts = [self.name + str(i+1) for i in range(self.num_contacts)
-                    if self.active[i]]  # type: ignore
+        if not self.zero:
+            contacts = [self.name + str(i+1) for i in range(self.num_contacts)
+                        if self.active[i]]  # type: ignore
+        else:
+            contacts = [self.name + '0' + str(i+1)
+                        for i in range(self.num_contacts)
+                        if self.active[i]]  # type: ignore
+            if self.num_contacts > 9:
+                for i in range(9, self.num_contacts):
+                    if self.active[i]:  # type: ignore
+                        contacts[i] = self.name + str(i+1)
+
         anodes, cathodes, __ = setup_bipolar(self.name, contacts, bads)
+        self.anodes = anodes
+        self.cathodes = cathodes
         if (len(contact_colors) >= len(anodes)
                 and len(contact_colors[0]) == 3):
             c_colors = contact_colors  # list of RGB colors for each sphere
@@ -314,13 +327,19 @@ def create_depths(electrode_names: list, ch_names: list,
     for name in electrode_names:
         contacts = electrodes.loc[electrodes.contact.str.startswith(name), :]
         active = [contact in ch_names for contact in contacts.contact]
-        # contacts = df.loc[df.include.values, :]
+        zero = False
+        for i, contact in enumerate(contacts.contact):
+            if active[i]:
+                if contact[-2] is '0':
+                    zero = True
+
         locations = np.zeros((len(contacts), 3))
         locations[:, 0] = contacts.x.values
         locations[:, 1] = contacts.y.values
         locations[:, 2] = contacts.z.values
         locations *= 1000
-        depth = Depth(name, locations.shape[0], locations, active=active)
+        depth = Depth(name, locations.shape[0], locations, active=active,
+                      zero=zero)
         depth_list.append(depth)
 
     return depth_list
@@ -436,7 +455,7 @@ def show_depth_bipolar_values(depth_list: list[Depth], plotter: pv.Plotter,
 
         depth.show_bipolar(plotter, mapped_values[idx:],
                            radii=radii, bads=bads, affine=affine)
-        idx += len(depth.actors_BP)
+        idx += len(depth.anodes)
 
 
 def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
