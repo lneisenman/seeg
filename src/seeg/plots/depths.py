@@ -330,7 +330,7 @@ def create_depths(electrode_names: list, ch_names: list,
         zero = False
         for i, contact in enumerate(contacts.contact):
             if active[i]:
-                if contact[-2] is '0':
+                if contact[-2] == '0':
                     zero = True
 
         locations = np.zeros((len(contacts), 3))
