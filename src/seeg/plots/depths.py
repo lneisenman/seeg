@@ -225,13 +225,13 @@ class Depth():
             contacts = [self.name + str(i+1) for i in range(self.num_contacts)
                         if self.active[i]]  # type: ignore
         else:
-            contacts = [self.name + '0' + str(i+1)
-                        for i in range(self.num_contacts)
-                        if self.active[i]]  # type: ignore
-            if self.num_contacts > 9:
-                for i in range(9, self.num_contacts):
-                    if self.active[i]:  # type: ignore
-                        contacts[i] = self.name + str(i+1)
+            contacts = []
+            for i in range(self.num_contacts):
+                if self.active[i]:  # type: ignore
+                    if i < 9:
+                        contacts.append(self.name + '0' + str(i+1))
+                    else:
+                        contacts.append(self.name + str(i+1))
 
         anodes, cathodes, __ = setup_bipolar(self.name, contacts, bads)
         self.anodes = anodes
