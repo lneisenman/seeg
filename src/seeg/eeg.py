@@ -62,7 +62,7 @@ def read_electrode_file(file_name: str) -> pd.DataFrame:
         header = 'infer'
     else:
         skiprows = None
-        sep = '\s+'  # noqa
+        sep = "[,|\s+]"  # noqa
         header = None
         names = ['label', 'x', 'y', 'z']
 
