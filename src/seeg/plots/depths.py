@@ -26,7 +26,7 @@ from .. import utils
 
 SILVER = mpl.colors.to_rgba('#C0C0C0')[:3]
 GRAY = (0.5, 0.5, 0.5)
-YELLOW = (1, 1, 0)
+YELLOW = (1-1e-12, 1-1e-12, 0)
 ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
                    (0.0, 0.4392, 0.7529),       # (0, 112, 192),
                    (0.0, 0.6902, 0.3137),       # (0, 176, 80),
@@ -66,15 +66,15 @@ class Depth():
     drawing the depth.
     """
     name: str
-    num_contacts: int
+    contact_names: list[str]
     locations: npt.NDArray
     diam: float = 0.8
     contact_len: float = 2
     spacing: float = 1.5
     active: bool | list[bool] = True
-    zero: bool = False
 
     def __post_init__(self,) -> None:
+        self.num_contacts = len(self.contact_names)
         if isinstance(self.active, bool):
             self.active = [self.active]*self.num_contacts
 
@@ -192,12 +192,11 @@ class Depth():
 
         for i, contact in enumerate(self.contacts):
             if self.active[i]:  # type: ignore
-                name = 'C' + str(i)
                 tip = apply_affine(affine, contact[0])
                 base = apply_affine(affine, contact[1])
                 cyl, actor = draw.draw_cyl(plotter, tip, base, self.diam+0.25,
                                            c_colors[i], 1)
-                self.blocks[name] = cyl
+                self.blocks[self.contact_names[i]] = cyl
                 self.actors.append(actor)
 
     def show_bipolar(self, plotter: pv.Plotter,
@@ -221,18 +220,8 @@ class Depth():
 
         """
         self.actors_BP = list()
-        if not self.zero:
-            contacts = [self.name + str(i+1) for i in range(self.num_contacts)
-                        if self.active[i]]  # type: ignore
-        else:
-            contacts = []
-            for i in range(self.num_contacts):
-                if self.active[i]:  # type: ignore
-                    if i < 9:
-                        contacts.append(self.name + '0' + str(i+1))
-                    else:
-                        contacts.append(self.name + str(i+1))
-
+        contacts = [self.contact_names[i] for i in range(self.num_contacts)
+                    if self.active[i]]  # type: ignore
         anodes, cathodes, __ = setup_bipolar(self.name, contacts, bads)
         self.anodes = anodes
         self.cathodes = cathodes
@@ -327,19 +316,13 @@ def create_depths(electrode_names: list, ch_names: list,
     for name in electrode_names:
         contacts = electrodes.loc[electrodes.contact.str.startswith(name), :]
         active = [contact in ch_names for contact in contacts.contact]
-        zero = False
-        for i, contact in enumerate(contacts.contact):
-            if active[i]:
-                if contact[-2] == '0':
-                    zero = True
-
         locations = np.zeros((len(contacts), 3))
         locations[:, 0] = contacts.x.values
         locations[:, 1] = contacts.y.values
         locations[:, 2] = contacts.z.values
         locations *= 1000
-        depth = Depth(name, locations.shape[0], locations, active=active,
-                      zero=zero)
+        depth = Depth(name, contacts.contact.tolist(), locations,
+                      active=active)
         depth_list.append(depth)
 
     return depth_list

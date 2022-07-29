@@ -9,18 +9,17 @@ import seeg
 from seeg.utils import map_colors
 
 
-def test1(subject_id, subjects_dir):
+def test1(subject_id, subjects_dir, T_x_inv):
     locations = np.asarray([[25.8315, -9.93608, 8.57813],
                             [29.30372216, -9.53925532, 8.76840202],
                             [32.77594432, -9.14243064, 8.95867404],
                             [36.24816648, -8.74560596, 9.14894606],
                             [39.72038864, -8.34878128, 9.33921808]])
-    depth = seeg.Depth('A', 5, locations, contact_len=2, spacing=1.5)
-    Brain = mne.viz.get_brain_class()
-    brain = Brain(subject_id, "rh", "pial", subjects_dir=subjects_dir,
-                  cortex='classic', alpha=0.5)
-    depth.draw(brain.plotter)
-    depth.show_locations(brain.plotter)
+    names = ['A1', 'A2', 'A3', 'A4', 'A5']
+    depth = seeg.Depth('A', names, locations, contact_len=2, spacing=1.5)
+    brain = seeg.create_depths_plot([depth], subject_id, subjects_dir)
+    depth.show_locations(brain.plotter, affine=T_x_inv)
+    brain.show()
     brain.plotter.app.exec_()
 
 

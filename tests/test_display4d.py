@@ -31,7 +31,8 @@ def test_threshold(subject_id, subjects_dir):
                             [32.77594432, -9.14243064, 8.95867404],
                             [36.24816648, -8.74560596, 9.14894606],
                             [39.72038864, -8.34878128, 9.33921808]])
-    depth = seeg.Depth('A', 5, locations, contact_len=2, spacing=1.5)
+    names = ['A1', 'A2', 'A3', 'A4', 'A5']
+    depth = seeg.Depth('A', names, locations, contact_len=2, spacing=1.5)
     brain = seeg.create_depths_plot([depth], subject_id, subjects_dir)
     data = np.ones(15).reshape((5, 3))
 
