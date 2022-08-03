@@ -22,7 +22,7 @@ import numpy.linalg as npl
 import numpy.typing as npt
 from vispy.color import Colormap
 
-from ..eeg import create_bipolar, EEG, find_num_contacts
+from ..eeg import setup_bipolar, create_bipolar, EEG, find_num_contacts
 from .. import utils
 
 
@@ -244,26 +244,21 @@ def map_seeg_data(eeg: EEG, mri: str) -> Tuple[Nifti1Image, Nifti1Image]:
         raise ValueError('unable to get montage')
 
     coord_list = dict()
-    contact_num = 0
     for electrode in electrodes:
         contacts = [i for i in base_eeg.ch_names if i.startswith(electrode)]
-        num_contacts = find_num_contacts(contacts, electrode)
-        for i in range(1, num_contacts):
-            anode = electrode + str(i)
-            cathode = electrode + str(i+1)
-            if (anode in contacts) and (cathode in contacts):
-                if not ((anode in bads) or (cathode in bads)):
-                    anode_idx = montage.ch_names.index(anode)
-                    cathode_idx = montage.ch_names.index(cathode)
-                    loc1 = montage.dig[anode_idx]['r']*1000
-                    loc2 = montage.dig[cathode_idx]['r']*1000
-                    coord_list[contact_num] = (loc1 + loc2)/2
-                    contact_num += 1
+        anodes, cathodes, names = setup_bipolar(electrode, contacts, bads)
+        for anode, cathode, name in zip(anodes, cathodes, names):
+            if not ((anode in bads) or (cathode in bads)):
+                anode_idx = montage.ch_names.index(anode)
+                cathode_idx = montage.ch_names.index(cathode)
+                loc1 = montage.dig[anode_idx]['r']*1000
+                loc2 = montage.dig[cathode_idx]['r']*1000
+                coord_list[name] = (loc1 + loc2)/2
 
     base_ave = eeg.baseline['ex_power']
     seiz_ave = eeg.seizure['ex_power']
-    for i in coord_list.keys():
-        x, y, z = voxel_coords(coord_list[i], inverse)
+    for i, coord in enumerate(coord_list.keys()):
+        x, y, z = voxel_coords(coord_list[coord], inverse)
         base_data[x, y, z, :] = base_ave[i, :]
         seiz_data[x, y, z, :] = seiz_ave[i, :]
 
