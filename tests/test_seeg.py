@@ -55,9 +55,9 @@ def test_SEEG_EI(subject_id, subjects_dir, electrode_names, bads,
 
 
 def test_setup_bipolar(raw, bads):
-    anodes, cathodes, ch_names = seeg.setup_bipolar("PL", raw.ch_names, bads)
+    anodes, cathodes, ch_names = seeg.setup_bipolar("LA", raw.ch_names, bads)
     print(anodes)
     print(cathodes)
-    assert anodes[:3] == ['PL01', 'PL02', 'PL03']
-    assert cathodes[:3] == ['PL02', 'PL03', 'PL04']
-    assert ch_names[:3] == ['PL01-PL02', 'PL02-PL03', 'PL03-PL04']
+    assert anodes[:3] == ['LA01', 'LA02', 'LA03']
+    assert cathodes[:3] == ['LA02', 'LA03', 'LA04']
+    assert ch_names[:3] == ['LA01-LA02', 'LA02-LA03', 'LA03-LA04']

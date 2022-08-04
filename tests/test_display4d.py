@@ -52,14 +52,14 @@ def test_show_depth_values(subject_id, subjects_dir, electrode_names,
         num_contacts += depth.num_contacts
 
     data = np.ones(5*num_contacts).reshape((num_contacts, 5))
-    data[10, 0] = 2
-    data[11, 1] = 2
-    data[12, 2] = 2
-    data[13, 3] = 2
-    data[14, 4] = 2
-    data[16, 2] = 2
-    data[17, 3] = 2
-    data[18, 4] = 2
+    data[12, 0] = 2
+    data[13, 1] = 2
+    data[14, 2] = 2
+    data[15, 3] = 2
+    data[16, 4] = 2
+    data[0, 2] = 2
+    data[1, 3] = 2
+    data[2, 4] = 2
     display = seeg.Display4D(brain, depth_list, data)
     display.show()
 
@@ -94,14 +94,14 @@ def test_show_depth_values_BP(subject_id, subjects_dir, electrode_names,
         num_contacts -= 1
 
     data = np.ones(5*num_contacts).reshape((num_contacts, 5))
-    data[9, 0] = 2
-    data[10, 1] = 2
-    data[11, 2] = 2
-    data[12, 3] = 2
-    data[13, 4] = 2
-    data[14, 2] = 2
-    data[15, 3] = 2
-    data[16, 4] = 2
+    data[11, 0] = 2
+    data[12, 1] = 2
+    data[13, 2] = 2
+    data[14, 3] = 2
+    data[15, 4] = 2
+    data[0, 2] = 2
+    data[1, 3] = 2
+    data[2, 4] = 2
 
     seeg.show_depth_bipolar_values(depth_list, brain.plotter, data[:, 0],
                                    affine=T_x_inv)

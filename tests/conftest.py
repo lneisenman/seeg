@@ -14,9 +14,11 @@ import seeg
 BASE_DIR = mne.datasets.misc.data_path()
 
 
-ELECTRODE_NAMES = ['PL', 'QL', 'RL', 'SL', 'TL', 'UL', 'VL', 'WL',
-                   'XL', 'YL', 'ZL', 'PHL', 'AHL', 'FEL']
-BADS = ['TL01']
+ELECTRODE_NAMES = ['LA', 'LB', 'LC', 'LD', 'LE', 'LF',
+                   'LG', 'LH', 'RA', 'RB']
+BADS = ['LA09', 'LA10', 'LA11', 'LA12', 'LB09', 'LB10', 'LB11', 'LB12',
+        'LD07', 'LD08', 'LE09', 'LE11', 'LE12', 'LG08', 'RB01', 'RB10',
+        'RB11', 'RB12']
 
 SUBJECT_ID = 'seeg_demo'
 SUBJECTS_DIR = BASE_DIR
