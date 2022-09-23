@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+import pytest
 
 import seeg
+
+
+pytest.skip('Skipping draw cube', allow_module_level=True)
 
 
 def test_cube(subject_id, subjects_dir, eeg, electrode_names, t_map, affine):

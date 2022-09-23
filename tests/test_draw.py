@@ -4,10 +4,14 @@ import os
 
 import mne
 import numpy as np
+import pytest
 import pyvista as pv
 
 import seeg
 from seeg.plots.depths import YELLOW
+
+
+pytest.skip('Skipping draw', allow_module_level=True)
 
 
 def test_sphere():
