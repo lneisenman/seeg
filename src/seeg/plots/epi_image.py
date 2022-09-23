@@ -344,13 +344,13 @@ def calc_epi_image_from_power(eeg: EEG, mri: str, D: float = 3,
     steps = int(D/dt)
     labels = np.zeros(2*steps, dtype=(int))
     labels[steps:] = 1
-    __, t_scores, _ = permuted_ols(
+    ols = permuted_ols(
         labels, data,
         # + intercept as a covariate by default
-        n_perm=10000, two_sided_test=True,
+        n_perm=10000, two_sided_test=True, output_type='dict',
         n_jobs=2)  # can be changed to use more CPUs
 
-    return nifti_masker.inverse_transform(t_scores)
+    return nifti_masker.inverse_transform(ols['t'])
 
 
 def create_epi_image_map(eeg: EEG, mri: str, low_freq: float = 120,
@@ -421,13 +421,13 @@ def calc_depth_epi_image_from_power(eeg: EEG) -> npt.NDArray:
     size = base.shape[0]
     labels = np.zeros(2*size, dtype=int)
     labels[size:] = 1
-    __, t_scores, _ = permuted_ols(
+    ols = permuted_ols(
         labels, data,
         # + intercept as a covariate by default
-        n_perm=10000, two_sided_test=True,
+        n_perm=10000, two_sided_test=True, output_type='dict',
         n_jobs=2)  # can be changed to use more CPUs
 
-    return t_scores     # type: ignore
+    return ols['t']     # type: ignore
 
 
 def create_depth_epi_image_map(eeg: EEG, low_freq: float = 120,

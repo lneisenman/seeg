@@ -12,6 +12,7 @@ import matplotlib as mpl
 import mne
 import nibabel as nib
 from nibabel.affines import apply_affine
+from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.linalg as npl
 import numpy.typing as npt
@@ -395,7 +396,7 @@ def show_depth_bipolar_values(depth_list: list[Depth], plotter: pv.Plotter,
                               values: Sequence,
                               radius: float | Sequence | None = None,
                               bads: list = [],
-                              cmap: mpl.colors.Colormap = 'cold_hot',
+                              cmap: mpl.colors.Colormap = cold_hot,
                               affine: npt.NDArray =
                               np.diag(np.ones(4))) -> None:
     """Plot contact values as color coded spheres on each Depth contact
@@ -445,7 +446,7 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
                       values: Sequence,
                       radius: float | Sequence | None = None,
                       bads: list = [],
-                      cmap: mpl.colors.Colormap = 'cold_hot',
+                      cmap: mpl.colors.Colormap = cold_hot,
                       affine: npt.NDArray = np.diag(np.ones(4))) -> None:
     """Plot contact values as color coded spheres on each Depth contact
 

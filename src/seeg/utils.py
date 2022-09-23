@@ -8,6 +8,7 @@ from typing import Sequence
 import matplotlib as mpl
 import mne
 from mne.io import Raw
+from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.typing as npt
 
@@ -101,7 +102,7 @@ def calc_power_welch(raw: Raw, window: float = 1,
 
 
 def map_colors(values: Sequence,
-               cmap: mpl.colors.Colormap = 'cold_hot') -> Sequence:
+               color_map: mpl.colors.Colormap = cold_hot) -> Sequence:
     vmin = np.min(values)
     vmax = np.max(values)
     if vmin < 0:
@@ -113,5 +114,4 @@ def map_colors(values: Sequence,
     vmin *= 1.1
     vmax *= 1.1
     norm = mpl.colors.Normalize(vmin, vmax)
-    color_map = mpl.cm.get_cmap(cmap)
     return color_map(norm(values))  # type: ignore

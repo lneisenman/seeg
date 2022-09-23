@@ -4,7 +4,6 @@
 """
 import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap
-import matplotlib.pyplot as plt
 
 
 cdict = {'red':   ((0.0, 1.0, 1.0),
@@ -29,4 +28,4 @@ cdict = {'red':   ((0.0, 1.0, 1.0),
          }
 
 gin = LinearSegmentedColormap('gin', cdict, mpl.rcParams['image.lut'])
-plt.register_cmap(name='gin', cmap=gin)
+mpl.colormaps.register(name='gin', cmap=gin)
