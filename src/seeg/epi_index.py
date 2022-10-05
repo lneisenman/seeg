@@ -44,18 +44,18 @@ def calc_ER(raw: Raw, low: Sequence = (4, 12), high: Sequence = (12, 127),
         Energy ratio for each channel
     """
     psd = utils.calc_power_welch(raw, window, step)
-    numerator = np.sum(psd[:, high[0]:high[1], :], axis=1)
-    denominator = np.sum(psd[:, low[0]:low[1], :], axis=1)
+    numerator = np.sum(psd[:, high[0]:high[1]+1, :], axis=1)
+    denominator = np.sum(psd[:, low[0]:low[1]+1, :], axis=1)
     # print(f'psd shape = {psd.shape}')
     return numerator/denominator    # type: ignore
 
 
-def cusum(data: npt.NDArray, bias: float = 0.1) -> npt.NDArray:
+def cusum(ER: npt.NDArray, bias: float = 0.1) -> npt.NDArray:
     """ calculate the Page-Hinkley Cusum
 
     Parameters
     ----------
-    data : ndarray
+    ER : ndarray
         Energy ratio for each channel
     bias : float, optional
         a positive value contributing to the rate of decrease of U_n,
@@ -66,8 +66,9 @@ def cusum(data: npt.NDArray, bias: float = 0.1) -> npt.NDArray:
     U_n : ndarray
         Page-Hinkley value for each channel
     """
-    ER_n = np.cumsum(data, axis=1)/np.arange(1, 1+data.shape[-1])
-    U = data - ER_n - bias
+    ER_n = np.cumsum(ER, axis=1)/np.arange(1, 1+ER.shape[-1])
+    nu = np.ones_like(ER) * bias
+    U = ER - ER_n - nu
     U_n = np.cumsum(U, axis=1)
     return U_n  # type: ignore
 
@@ -200,7 +201,7 @@ def calculate_EI(raw: Raw, low: Sequence = (4, 12), high: Sequence = (12, 127),
         if not np.isnan(N_di):
             denom = N_di - N0 + tau
             N_di_idx = int(onsets.detection_idx[i])
-            end = N_di_idx + EI_window
+            end = N_di_idx + EI_window + 1
             if end > ER.shape[-1]:
                 onsets.loc[i, 'EI_raw'] = np.sum(ER[i, N_di_idx:])/denom
             else:

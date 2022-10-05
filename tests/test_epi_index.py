@@ -17,5 +17,5 @@ def test_find_onsets(synthetic):
 
 def test_calculate_EI(synthetic):
     onsets = seeg.calculate_EI(synthetic)
-    np.testing.assert_allclose(onsets['EI'], [0, 1., 0.666],
+    np.testing.assert_allclose(onsets['EI'], [0, 1., 0.665],
                                rtol=1e-3)
