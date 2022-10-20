@@ -11,6 +11,7 @@ from mne.io import Raw
 from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.typing as npt
+import scipy.signal as spp
 
 
 def calc_power_multi(raw: Raw, window: float = 1,
@@ -88,17 +89,11 @@ def calc_power_welch(raw: Raw, window: float = 1,
             power data
     """
     n_per_seg = int(raw.info['sfreq']*window)
-    fmax = raw.info['sfreq']//2
     overlap = int((1 - step)*raw.info['sfreq'] + 0.5)
-    # print(raw.info['sfreq'], step, 1-step)
-    # print((1 - step)*raw.info['sfreq'])
-    # print(n_per_seg, overlap)
-    # assert 1 == 0
-    psd, ___ = mne.time_frequency.psd_welch(raw, fmin=0, fmax=fmax,
-                                            n_fft=n_per_seg,
-                                            n_per_seg=n_per_seg,
-                                            n_overlap=overlap, average=None)
-    return psd  # type: ignore
+    spectrum = raw.compute_psd(method='welch', n_fft=n_per_seg,
+                               n_per_seg=n_per_seg, n_overlap=overlap,
+                               average=None)
+    return spectrum.get_data()  # type: ignore
 
 
 def map_colors(values: Sequence,
