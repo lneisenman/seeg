@@ -77,7 +77,7 @@ def _scan(U_n: npt.NDArray, ch_names: list,
           threshold: float) -> Tuple[bool, pd.DataFrame]:
     columns = ['channel', 'min', 'detection_idx', 'detection_time',
                'alarm_idx', 'alarm_time']
-    onsets = onsets = pd.DataFrame(dtype=np.double, columns=columns)
+    onsets = pd.DataFrame(dtype=np.double, columns=columns)
     onsets['channel'] = ch_names
     seizure = False
     min_val = np.min(U_n, axis=1)
