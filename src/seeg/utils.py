@@ -15,6 +15,27 @@ import scipy as sp
 import scipy.signal as sps
 
 
+def strip_bad_channels(raw: Raw) -> Raw:
+    """ Remove any channels in raw.info['bads']
+
+    Parameters
+    ----------
+    raw : MNE Raw
+        EEG data
+
+    Returns
+    -------
+    stripped : Raw
+        EEG data with bad channels removed
+    """
+    bads = raw.info['bads']
+    if len(bads) == 0:
+        return raw
+
+    stripped = raw.copy().drop_channels(bads)
+    return stripped
+
+
 def calc_power_multi(raw: Raw, window: float = 1,
                      step: float = 0.25) -> npt.NDArray:
     """ Calculate power in each channel using multitapers in sections,

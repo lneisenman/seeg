@@ -145,6 +145,7 @@ def find_onsets(U_n: npt.NDArray, ch_names: list, window: float, step: float,
 
     if not seizure:
         warnings.warn('No seizures identified')
+        return None
 
     return onsets
 
@@ -190,13 +191,14 @@ def calculate_EI(raw: Raw, low: Sequence = (4, 12), high: Sequence = (12, 127),
 
     """
     EI_window = int(H/step)
-    ER = calc_ER(raw, low, high, window, step)
+    stripped = utils.strip_bad_channels(raw)
+    ER = calc_ER(stripped, low, high, window, step)
     U_n = cusum(ER, bias)
-    onsets = find_onsets(U_n, raw.ch_names, window, step, H, threshold)
+    onsets = find_onsets(U_n, stripped.ch_names, window, step, H, threshold)
     onsets['EI_raw'] = 0
     N0 = onsets.detection_time.min(skipna=True)
 
-    for i in range(len(raw.ch_names)):
+    for i in range(len(stripped.ch_names)):
         N_di = onsets.detection_time[i]
         if not np.isnan(N_di):
             denom = N_di - N0 + tau
