@@ -5,6 +5,7 @@ __pycache__/
 nilearn_cache/
 .pytest_cache/
 .vscode/
+.mypy_cache/
 
 # C extensions
 *.so
