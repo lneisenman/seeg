@@ -49,7 +49,7 @@ class EpiImage:
                                                     self.D, self.dt,
                                                     self.method))
 
-    def plot(self, image_num: int = 0, cut_coords: Sequence = None,
+    def plot(self, image_num: int = 0, cut_coords: Sequence | None = None,
              threshold: float = 2) -> None:
         plot_epi_image_map(self.t_maps[image_num], self.mri,
                            cut_coords, threshold)
@@ -350,7 +350,7 @@ def calc_epi_image_from_power(eeg: EEG, mri: str, D: float = 3,
         n_perm=10000, two_sided_test=True, output_type='dict',
         n_jobs=2)  # can be changed to use more CPUs
 
-    return nifti_masker.inverse_transform(ols['t'])
+    return nifti_masker.inverse_transform(ols['t'])  # type: ignore
 
 
 def create_epi_image_map(eeg: EEG, mri: str, low_freq: float = 120,
@@ -380,7 +380,7 @@ def create_epi_image_map(eeg: EEG, mri: str, low_freq: float = 120,
 
 
 def plot_epi_image_map(t_map: Nifti1Image, mri: str,
-                       cut_coords: Sequence = None,
+                       cut_coords: Sequence | None = None,
                        threshold: float = 2) -> None:
     """ Use Nilearn to create a Matplotlib plot of the t_map superimposed
         on the MRI

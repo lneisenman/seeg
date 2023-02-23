@@ -25,7 +25,7 @@ class EEG:
     montage: mne.channels.DigMontage | None = None
 
     def set_baseline(self, raw: Raw, pre: float = 0, post: float = 5,
-                     file_name: str = None) -> None:
+                     file_name: str | None = None) -> None:
         """ set parameters for baseline EEG
 
         """
@@ -33,7 +33,7 @@ class EEG:
         self.baseline['file_name'] = file_name
 
     def set_seizure(self, raw: Raw, pre: float = 5, post: float = 20,
-                    file_name: str = None) -> None:
+                    file_name: str | None = None) -> None:
         """ set parameters for seizure EEG
 
         """
@@ -349,7 +349,7 @@ def setup_bipolar(electrode: str, ch_names: list,
 
     contacts = [i for i in ch_names if i.startswith(electrode)]
     anodes = list()
-    cathodes = list()   # type: ignore
+    cathodes = list()
     ch_names = list()
     num_contacts = find_num_contacts(contacts, electrode)
     if contacts[0][-2] == '0':
@@ -369,7 +369,7 @@ def setup_bipolar(electrode: str, ch_names: list,
             cathode = electrode + str(i+1)
 
         if (anode in contacts) and (cathode in contacts):
-            if not ((anode in bads) or (cathodes in bads)):
+            if not ((anode in bads) or (cathode in bads)):
                 anodes.append(anode)
                 cathodes.append(cathode)
                 ch_names.append(anode + '-' + cathode)
