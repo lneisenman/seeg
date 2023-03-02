@@ -89,7 +89,7 @@ def eeg():
 @pytest.fixture
 def t_map():
     t_map = nib.load(os.path.join(SUBJECTS_DIR, SUBJECT_ID,
-                                  'mri', 't_map.nii.gz'))
+                                  't_map.nii.gz'))
     return t_map
 
 
