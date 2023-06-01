@@ -2,6 +2,7 @@
 
 from .eeg import *
 from .epi_index import *
+from .implantation import *
 from .line_length import *
 from .plots import *
 from .seeg import *

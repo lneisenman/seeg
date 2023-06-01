@@ -359,8 +359,8 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
 
     mri_file = os.path.join(subjects_dir, subject_id, 'mri/T1.mgz')
     mri = nib.load(mri_file)
-    mri_inv = npl.inv(mri.affine)
-    Torig = mri.header.get_vox2ras_tkr()
+    mri_inv = npl.inv(mri.affine)           # type: ignore
+    Torig = mri.header.get_vox2ras_tkr()    # type: ignore
     affine = Torig@mri_inv
     Brain = mne.viz.get_brain_class()
     brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
