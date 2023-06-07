@@ -329,6 +329,44 @@ def create_depths(electrode_names: list, ch_names: list,
     return depth_list
 
 
+def create_depth_list(depths: pd.DataFrame, ch_names: list,
+                      contacts: pd.DataFrame) -> list[Depth]:
+    """Create a list of Depths
+
+    For each electrode in `electrode_names` create a Depth and add to a list
+
+    Parameters
+    ----------
+    electrode_names : list
+        list of electrode names (strings)
+    ch_names : list
+        list of names of all contacts (strings) which are assumed to be in the
+        form of electrode name followed by a number
+    electrodes : Pandas DataFrame
+        contains columns for contact name and x,y,z coordinates in meters
+
+    Returns
+    -------
+    depth_list : list
+        List of Depth's
+    """
+
+    depth_list = list()
+    for depth in depths.itertuples():
+        depth_contacts = contacts.loc[contacts.contact.str.startswith(depth.name), :]   # noqa
+        active = [contact in ch_names for contact in depth_contacts.contact]
+        locations = np.zeros((len(depth_contacts), 3))
+        locations[:, 0] = depth_contacts.x.values
+        locations[:, 1] = depth_contacts.y.values
+        locations[:, 2] = depth_contacts.z.values
+        locations *= 1000
+        depth_list.append(Depth(depth.name, depth_contacts.contact.tolist(),
+                                locations, depth.diam, depth.contact_len,
+                                depth.spacing, active=active))
+
+    return depth_list
+
+
 def create_depths_plot(depth_list: list[Depth], subject_id: str,
                        subjects_dir: str, alpha: float = 0.3,
                        depth_colors: Iterator = rosa_colors(),
