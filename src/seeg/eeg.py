@@ -257,7 +257,7 @@ def read_edf(eeg_file: str, electrodes: pd.DataFrame, bads: list = [],
                 mapping[label.format(contact)] = contact
                 break
 
-    eeg = raw.copy().pick_channels(list(mapping.keys()))
+    eeg = raw.copy().pick(list(mapping.keys()))
     eeg.reorder_channels(list(mapping.keys()))
     eeg.rename_channels(mapping)
     eeg.info['bads'] = bads
@@ -403,7 +403,7 @@ def create_bipolar(raw: Raw, electrodes: list) -> Raw:
 
     bipolar = mne.set_bipolar_reference(raw, anodes, cathodes,
                                         ch_names, verbose=False)
-    bipolar = bipolar.pick_channels(ch_names)
+    bipolar = bipolar.pick(ch_names)
     bipolar = bipolar.reorder_channels(ch_names)
     return bipolar
 
