@@ -254,7 +254,7 @@ class Depth():
             midpoint = apply_affine(affine, (an + ca)/2)
             sph, actor = draw.draw_sphere(plotter, midpoint,
                                           radii[i],      # type: ignore
-                                          contact_colors[i], opacity)
+                                          c_colors[i], opacity)
             name = 'C' + str(i) + '-C' + str(i+1)
             self.blocks[name] = sph
             self.actors_BP.append(actor)
@@ -329,7 +329,7 @@ def create_depths(electrode_names: list, ch_names: list,
     return depth_list
 
 
-def create_depth_list(depths: pd.DataFrame, ch_names: list,
+def create_depth_list(depths: pd.DataFrame, inactives: list, ch_names: list,
                       contacts: pd.DataFrame) -> list[Depth]:
     """Create a list of Depths
 
@@ -339,6 +339,8 @@ def create_depth_list(depths: pd.DataFrame, ch_names: list,
     ----------
     electrode_names : list
         list of electrode names (strings)
+    inactives: list
+        list of inactive electrodes (no EEG recorded from these channels)
     ch_names : list
         list of names of all contacts (strings) which are assumed to be in the
         form of electrode name followed by a number
@@ -354,7 +356,8 @@ def create_depth_list(depths: pd.DataFrame, ch_names: list,
     depth_list = list()
     for depth in depths.itertuples():
         depth_contacts = contacts.loc[contacts.contact.str.startswith(depth.name), :]   # noqa
-        active = [contact in ch_names for contact in depth_contacts.contact]
+        active = [(contact in ch_names) and not (contact in inactives)
+                  for contact in depth_contacts.contact]
         locations = np.zeros((len(depth_contacts), 3))
         locations[:, 0] = depth_contacts.x.values
         locations[:, 1] = depth_contacts.y.values

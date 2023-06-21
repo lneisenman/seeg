@@ -18,6 +18,7 @@ class Implantation():
     depths_file: str = 'depths.dat'
     contacts_file: str = 'measured_contacts.dat'
     bads_file: str = 'bads.dat'
+    inactives_file: str = 'inactives.dat'
 
     def __post_init__(self) -> None:
         self.subject_path = os.path.join(self.subjects_dir, self.subject)
@@ -29,7 +30,10 @@ class Implantation():
                                                          self.contacts_file))
         self.bads = read_data(os.path.join(self.eeg_path, self.bads_file),
                               ['contact']).contact.values.tolist()
-        self.depth_list = create_depth_list(self.depths,
+        self.inactives = read_data(os.path.join(self.eeg_path,
+                                                self.inactives_file),
+                                   ['contact']).contact.values.tolist()
+        self.depth_list = create_depth_list(self.depths, self.inactives,
                                             self.contacts.contact.values,
                                             self.contacts)
 

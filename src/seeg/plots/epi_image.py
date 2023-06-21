@@ -10,6 +10,7 @@ from typing import Sequence, Tuple
 
 import nibabel as nib
 from nibabel.affines import apply_affine
+from nibabel.filebasedimages import FileBasedImage
 from nibabel.nifti1 import Nifti1Image
 from nibabel import processing as nbp
 import nilearn
@@ -505,7 +506,7 @@ def plot_3d_epi_image_map(t_map: Nifti1Image, mri: str) -> None:
     napari.run()
 
 
-def _set_coronal(img: Nifti1Image) -> npt.NDArray:
+def _set_coronal(img: Nifti1Image | FileBasedImage) -> npt.NDArray:
     ''' reorient image to display in napari as coronal slices '''
     canon = nib.funcs.as_closest_canonical(img)
     return np.fliplr(np.moveaxis(canon.get_fdata(), [1, 2], [0, 1]))

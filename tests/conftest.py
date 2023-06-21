@@ -24,7 +24,7 @@ SUBJECT_ID = 'seeg_demo'
 SUBJECTS_DIR = BASE_DIR
 EEG_DIR = os.path.join(SUBJECTS_DIR, SUBJECT_ID, 'eeg')
 EEG_FILE = os.path.join(EEG_DIR, 'baseline.edf')
-ELECTRODE_FILE = os.path.join(EEG_DIR, 'electrodes.dat')
+ELECTRODE_FILE = os.path.join(EEG_DIR, 'measured_contacts.dat')
 
 
 @pytest.fixture
@@ -43,13 +43,18 @@ def electrode_file():
 
 
 @pytest.fixture
-def electrode_names():
-    return ELECTRODE_NAMES
+def implant(subject_id, subjects_dir):
+    return seeg.Implantation(subject_id, subjects_dir)
 
 
 @pytest.fixture
-def bads():
-    return BADS
+def electrode_names(implant):
+    return implant.depths.name.values.tolist()
+
+
+@pytest.fixture
+def bads(implant):
+    return implant.bads
 
 
 @pytest.fixture
@@ -58,8 +63,8 @@ def freqs():
 
 
 @pytest.fixture
-def electrodes():
-    return seeg.read_electrode_file(ELECTRODE_FILE)
+def electrodes(implant):
+    return implant.contacts
 
 
 @pytest.fixture
@@ -82,7 +87,7 @@ def mri():
 @pytest.fixture
 def eeg():
     eeg = seeg.load_eeg_data(EEG_DIR, ELECTRODE_NAMES, BADS, seizure=1,
-                             electrode_file='electrodes.dat')[0]
+                             electrode_file='measured_contacts.dat')[0]
     return eeg
 
 
