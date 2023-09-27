@@ -3,16 +3,19 @@
 
 """
 
+import os
 from typing import Sequence
 
 import matplotlib as mpl
 import mne
 from mne.io import Raw
+import nibabel as nib
 from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.typing as npt
-import scipy as sp
-import scipy.signal as sps
+import pandas as pd
+# import scipy as sp
+# import scipy.signal as sps
 
 
 def strip_bad_channels(raw: Raw) -> Raw:
@@ -132,3 +135,28 @@ def map_colors(values: Sequence,
     vmax *= 1.1
     norm = mpl.colors.Normalize(vmin, vmax)
     return color_map(norm(values))  # type: ignore
+
+
+def localize_electrodes(montage: mne.channels.DigMontage, SUBJECT_ID: str,
+                        SUBJECTS_DIR: str) -> pd.DataFrame:
+    fn = os.path.join(SUBJECTS_DIR, SUBJECT_ID,
+                      r'mri/aparc+aseg.mgz')
+    aseg = nib.load(fn)
+    aseg_data = np.array(aseg.dataobj)      # type: ignore
+    ids, colors = mne.read_freesurfer_lut()
+    lut = {v: k for k, v in ids.items()}
+    positions = montage.get_positions()
+    mri_file = os.path.join(SUBJECTS_DIR, SUBJECT_ID, r'mri/T1.mgz')
+    mri = nib.load(mri_file)
+    inv = np.linalg.inv(mri.affine)         # type: ignore
+    data = list()
+    for ch in montage.ch_names:
+        x, y, z = positions['ch_pos'][ch] * 1000
+        i, j, k = np.round(mne.transforms.apply_trans(inv, (x, y, z))).astype(int)
+        test = aseg_data[i, j, k]
+        R, G, B, _ = colors[lut[test]]/256
+        data.append([ch, x, y, z, i, j, k, test, lut[test], R, G, B])
+
+    return pd.DataFrame(data, columns=['channel', 'x', 'y', 'z', 'i', 'j', 'k',
+                                       'value', 'label', 'R', 'G', 'B'])
+
