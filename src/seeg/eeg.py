@@ -29,6 +29,7 @@ class EEG:
         """ set parameters for baseline EEG
 
         """
+        self.baseline['raw'] = raw
         self.baseline['eeg'] = clip_eeg(raw, pre, post)
         self.baseline['file_name'] = file_name
 
