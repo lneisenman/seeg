@@ -160,3 +160,19 @@ def localize_electrodes(montage: mne.channels.DigMontage, SUBJECT_ID: str,
     return pd.DataFrame(data, columns=['channel', 'x', 'y', 'z', 'i', 'j', 'k',
                                        'value', 'label', 'R', 'G', 'B'])
 
+
+def strip_white_matter(eeg:mne.io.Raw, montage:mne.channels.DigMontage,
+                       SUBJECT_ID: str, SUBJECTS_DIR: str) -> mne.io.Raw:
+    df = localize_electrodes(montage, SUBJECT_ID, SUBJECTS_DIR)
+    df = df[~df.label.str.contains('White-Matter')]
+    df = df[~df.label.str.contains('Unknown')]
+    gray = df.channel.to_list()
+    raw = eeg.copy().crop(0, 60)
+    drops = list()
+    for ch in raw.ch_names:
+        if ch not in gray:
+            drops.append(ch)
+
+    raw.drop_channels(drops)
+    raw.notch_filter(60)
+    return raw
