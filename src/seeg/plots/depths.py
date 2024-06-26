@@ -356,7 +356,7 @@ def create_depth_list(depths: pd.DataFrame, inactives: list, ch_names: list,
     depth_list = list()
     for depth in depths.itertuples():
         depth_contacts = contacts.loc[contacts.contact.str.startswith(depth.name), :]   # noqa
-        active = [(contact in ch_names) and not (contact in inactives)
+        active = [(contact in ch_names) and (contact not in inactives)
                   for contact in depth_contacts.contact]
         locations = np.zeros((len(depth_contacts), 3))
         locations[:, 0] = depth_contacts.x.values
@@ -408,7 +408,7 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
                   cortex='classic', alpha=alpha, show=False)
     plotter = brain.plotter
 
-    if type(contact_colors[0]) is not float:
+    if not isinstance(contact_colors[0], float):
         c_list = True
         idx = 0
     else:
@@ -536,3 +536,29 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
                                  radius[idx],   # type: ignore
                                  color, opacity)
                 idx += 1
+
+
+def highlight_contacts(highlights: dict, depth_list: list[Depth],
+                       plotter: pv.Plotter,
+                       affine: npt.NDArray = np.diag(np.ones(4))) -> None:
+    """Plot yellow spheres over the contacts listed in `highlights`
+
+    
+    Parameters
+    ----------
+    highlights : Dict
+        dictionary where keys are electrodes and values are lists of
+        contacts to be highlighted
+    depth_list : list
+        list of Depths
+    plotter : PyVista Plotter
+        figure of translucent pial surface on which to plot spheres
+    affine : numpy ndarray (4x4)
+        affine to convert coords to Freesurfer surface coordinates
+
+    """
+    for depth in depth_list:
+        if depth.name in highlights.keys():
+            for contact in highlights[depth.name]:
+                coords = apply_affine(affine, np.sum(depth.contacts[contact-1], axis=0)/2)
+                draw.draw_sphere(plotter, coords, depth.contact_len/1.5, YELLOW, 0.3)
