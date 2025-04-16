@@ -74,7 +74,7 @@ class Depth():
     spacing: float = 1.5
     active: bool | list[bool] = True
 
-    def __post_init__(self,) -> None:
+    def __post_init__(self) -> None:
         self.num_contacts = len(self.contact_names)
         if isinstance(self.active, bool):
             self.active = [self.active]*self.num_contacts
@@ -289,6 +289,24 @@ class Depth():
             if self.active[i]:  # type: ignore
                 loc = apply_affine(affine, location)
                 draw.draw_sphere(plotter, loc, radius, c_colors[i], opacity)
+
+
+@dataclass
+class Highlights():
+    """Class to contain info on contacts to highlight
+    
+    electrodes is a dict where electrodes are keys and a list of contacts is the value
+    colors is either an RBG tuple for a single color or a dict where electrodes are keys and a list of colors is the value"""
+    electrodes: dict
+    colors: dict | tuple
+
+    def __post_init__(self) -> None:
+        if isinstance(self.colors, tuple):
+            temp = dict()
+            for electrode in self.electrodes.keys():
+                temp[electrode] = [self.colors]*len(self.electrodes[electrode])
+
+            self.colors = temp
 
 
 def create_depths(electrode_names: list, ch_names: list,
@@ -538,7 +556,7 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
                 idx += 1
 
 
-def highlight_contacts(highlights: dict, depth_list: list[Depth],
+def highlight_contacts(highlights: Highlights, depth_list: list[Depth],
                        plotter: pv.Plotter,
                        affine: npt.NDArray = np.diag(np.ones(4))) -> None:
     """Plot yellow spheres over the contacts listed in `highlights`
@@ -546,9 +564,8 @@ def highlight_contacts(highlights: dict, depth_list: list[Depth],
     
     Parameters
     ----------
-    highlights : Dict
-        dictionary where keys are electrodes and values are lists of
-        contacts to be highlighted
+    highlights : Highlights
+        dataclass containing contacts to be highlighted and corresponding colors
     depth_list : list
         list of Depths
     plotter : PyVista Plotter
@@ -558,7 +575,8 @@ def highlight_contacts(highlights: dict, depth_list: list[Depth],
 
     """
     for depth in depth_list:
-        if depth.name in highlights.keys():
-            for contact in highlights[depth.name]:
+        if depth.name in highlights.electrodes.keys():
+            for i, contact in enumerate(highlights.electrodes[depth.name]):
                 coords = apply_affine(affine, np.sum(depth.contacts[contact-1], axis=0)/2)
-                draw.draw_sphere(plotter, coords, depth.contact_len/1.5, YELLOW, 0.3)
+                color = highlights.colors[depth.name][i]
+                draw.draw_sphere(plotter, coords, depth.contact_len/1.5, color, 0.5)
