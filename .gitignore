@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.py[oc]
 *$py.class
 nilearn_cache/
 .pytest_cache/
@@ -24,6 +25,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -62,7 +64,7 @@ docs/_build/
 # PyBuilder
 target/
 
-# pyenv python configuration file
-.python-version
+# Virtual environments
+.venv
 
 *.nii.gz

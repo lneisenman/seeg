@@ -1,38 +1,33 @@
-[build-system]
-requires = ["setuptools>=48", "wheel >= 0.29.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "seeg"
-description = "seeg utilities"
 version = "0.1.0-dev0"
+description = "seeg analysis utilities"
+readme = "README.md"
 authors = [
-    {name = "Larry Eisenman", email = "leisenman@wustl.edu"}
+    { name = "Larry Eisenman", email = "lneisenman@hotmail.com" }
 ]
-license = {file = "LICENSE"}
-readme = "README.rst"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: BSD3 License",
-    "Operating System :: OS Independent",
-    "Development Status :: 2 - Pre-Alpha"
-]
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 dependencies = [
-    "mne",
-    "nilearn",
-    "neo",
-    "pyvistaqt",
-    "vispy"
+    "matplotlib>=3.10.1",
+    "mne==1.8",
+    "neo>=0.14.1",
+    "nibabel>=5.3.2",
+    "nilearn>=0.11.1",
+    "pandas>=2.2.3",
+    "pyqt6>=6.9.0",
+    "pyvista>=0.44.1",
+    "pyvistaqt>=0.11.2",
+    "vispy>=0.14.3",
 ]
 
-[project.optional-dependencies]
-misc = [
-    "napari"
-]
-test = [
-    "pytest",
-    "pytest-cov"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
 ]
 
 [project.urls]

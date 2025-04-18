@@ -44,7 +44,8 @@ def test_highlight_contacts(implant, T_x_inv):
     brain = seeg.create_depths_plot(implant.depth_list, implant.subject,
                                     implant.subjects_dir)
     
-    highlights = {'LA': [2, 3], 'LB': [3, 4]}
+    contacts = {'LA': [2, 3], 'LB': [3, 4]}
+    highlights = seeg.Highlights(contacts, seeg.YELLOW)
     seeg.highlight_contacts(highlights, implant.depth_list,
                             brain.plotter, T_x_inv)
     
