@@ -6,8 +6,9 @@
 from dataclasses import dataclass
 from numbers import Number
 import os
-from typing import Iterator, Sequence
+from typing import Sequence
 
+from cycler import cycler
 import matplotlib as mpl
 import mne
 import nibabel as nib
@@ -41,21 +42,6 @@ ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
                    (0.7098, 0.4314, 0.08627),   # (181, 110, 22),
                    (0.702, 0.8392, 0.9922),     # (179, 214, 253)
                    ]
-
-
-def rosa_colors() -> Iterator[tuple]:
-    """Generate a repeating list of colors used by ROSA software for electrodes
-
-    Yields
-    ------
-    next sequential RGB color from ROSA_COLOR_LIST
-    """
-
-    i = 0
-    num_colors = len(ROSA_COLOR_LIST)
-    while (True):
-        yield ROSA_COLOR_LIST[i % num_colors]
-        i += 1
 
 
 @dataclass
@@ -390,7 +376,7 @@ def create_depth_list(depths: pd.DataFrame, inactives: list, ch_names: list,
 
 def create_depths_plot(depth_list: list[Depth], subject_id: str,
                        subjects_dir: str, alpha: float = 0.3,
-                       depth_colors: Iterator = rosa_colors(),
+                       depth_colors: list = ROSA_COLOR_LIST,
                        contact_colors: Sequence = SILVER) -> mne.viz.Brain:
     """Create a MNE Brain and plot Depths. Returns the Brain
 
@@ -432,7 +418,7 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
     else:
         c_list = False
 
-    for depth, color in zip(depth_list, depth_colors):
+    for depth, color in zip(depth_list, cycler(depth_color=depth_colors)()):
         if c_list:
             c_colors = list()
             for i in range(depth.num_contacts):
@@ -442,11 +428,11 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
                 else:
                     c_colors.append(GRAY)
 
-            depth.draw(plotter, contact_colors=c_colors, depth_color=color,
+            depth.draw(plotter, contact_colors=c_colors, **color,
                        affine=affine)
         else:
             depth.draw(plotter, contact_colors=contact_colors,
-                       depth_color=color, affine=affine)
+                       **color, affine=affine)
 
     return brain
 
@@ -559,7 +545,7 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
 def highlight_contacts(highlights: Highlights, depth_list: list[Depth],
                        plotter: pv.Plotter,
                        affine: npt.NDArray = np.diag(np.ones(4))) -> None:
-    """Plot yellow spheres over the contacts listed in `highlights`
+    """Plot colored spheres over the contacts listed in `highlights`
 
     
     Parameters
