@@ -295,21 +295,29 @@ class Highlights():
             self.colors = temp
 
 
-def create_depths(electrode_names: list, ch_names: list,
-                  electrodes: pd.DataFrame) -> list[Depth]:
+def create_depths(depth_names: list, ch_names: list,
+                  contacts: pd.DataFrame, diam: float = 0.8,
+                  contact_len: float = 2, spacing: float = 1.5) -> list[Depth]:
     """Create a list of Depths
 
-    For each electrode in `electrode_names` create a Depth and add to a list
+    For each depth electrode in `depth_names` create a Depth and add to a list
+    using the `create_depths_list` function
 
     Parameters
     ----------
-    electrode_names : list
-        list of electrode names (strings)
+    depth_names : list
+        list of depth electrode names (strings)
     ch_names : list
         list of names of all contacts (strings) which are assumed to be in the
-        form of electrode name followed by a number
-    electrodes : Pandas DataFrame
+        form of depth name followed by a number
+    contacts : Pandas DataFrame
         contains columns for contact name and x,y,z coordinates in meters
+    diam : float
+        diameter of depth electrodes
+    contact_len : float
+        length of contact on depth
+    spacing : float
+        distance between contacts on depth
 
     Returns
     -------
@@ -317,38 +325,31 @@ def create_depths(electrode_names: list, ch_names: list,
         List of Depth's
     """
 
-    depth_list = list()
-    for name in electrode_names:
-        contacts = electrodes.loc[electrodes.contact.str.startswith(name), :]
-        active = [contact in ch_names for contact in contacts.contact]
-        locations = np.zeros((len(contacts), 3))
-        locations[:, 0] = contacts.x.values
-        locations[:, 1] = contacts.y.values
-        locations[:, 2] = contacts.z.values
-        locations *= 1000
-        depth = Depth(name, contacts.contact.tolist(), locations,
-                      active=active)
-        depth_list.append(depth)
+    depths = pd.DataFrame({'name': depth_names})
+    depths['diam'] = diam
+    depths['contact_len'] = contact_len
+    depths['spacing'] = spacing
 
-    return depth_list
+    return create_depth_list(depths, [], ch_names, contacts)
 
 
 def create_depth_list(depths: pd.DataFrame, inactives: list, ch_names: list,
                       contacts: pd.DataFrame) -> list[Depth]:
     """Create a list of Depths
 
-    For each electrode in `electrode_names` create a Depth and add to a list
+    For each electrode in `depths` create a Depth and add to a list
 
     Parameters
     ----------
-    electrode_names : list
-        list of electrode names (strings)
+    depths: Pandas DataFrame
+        contains columns for depth name, diam, contact length and spacing
     inactives: list
-        list of inactive electrodes (no EEG recorded from these channels)
+        list of inactive contacts (strings) assumed to be in the form of
+        depth name followed by a number (no EEG recorded from these channels)
     ch_names : list
         list of names of all contacts (strings) which are assumed to be in the
-        form of electrode name followed by a number
-    electrodes : Pandas DataFrame
+        form of depth name followed by a number
+    contacts : Pandas DataFrame
         contains columns for contact name and x,y,z coordinates in meters
 
     Returns
