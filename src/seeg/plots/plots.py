@@ -8,11 +8,11 @@ import mne
 import numpy as np
 import numpy.typing as npt
 
-from .depths import Depth
+from .depths import Depth1
 from ..eeg import EEG
 
 
-def plot_eeg(eeg: mne.io.Raw, depth: Depth,
+def plot_eeg(eeg: mne.io.Raw, depth: Depth1,
              label_color: str = 'black') -> plt.figure:
     """ Plots eeg data for a given depth electrode
 

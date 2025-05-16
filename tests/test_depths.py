@@ -9,19 +9,34 @@ import seeg
 from seeg.utils import map_colors
 
 
-def test1(subject_id, subjects_dir, T_x_inv):
+def test_Depth1(subject_id, subjects_dir, T_x_inv):
     locations = np.asarray([[25.8315, -9.93608, 8.57813],
                             [29.30372216, -9.53925532, 8.76840202],
                             [32.77594432, -9.14243064, 8.95867404],
                             [36.24816648, -8.74560596, 9.14894606],
                             [39.72038864, -8.34878128, 9.33921808]])
     names = ['A1', 'A2', 'A3', 'A4', 'A5']
-    depth = seeg.Depth('A', names, locations, contact_len=2, spacing=1.5)
+    depth = seeg.new_depth_electrode('A', names, locations, contact_len=2, spacing=1.5)
     brain = seeg.create_depths_plot([depth], subject_id, subjects_dir)
     depth.show_locations(brain.plotter, affine=T_x_inv)
     brain.show()
     brain.plotter.app.exec_()
 
+
+def test_Depth2(subject_id, subjects_dir, T_x_inv):
+    locations = np.asarray([[18.88705568, -10.72972936,   8.19758596],
+                            [22.35927784, -10.33290468, 8.38785798],
+                            [25.8315, -9.93608, 8.57813],
+                            [36.24816648, -8.74560596, 9.14894606],
+                            [39.72038864, -8.34878128, 9.33921808],
+                            [43.1926108, -7.9519566,  9.5294901]])
+    names = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+    depth = seeg.new_depth_electrode('A', names, locations, contact_len=2, spacing=1.5)
+    assert depth.gap_contact == 3
+    brain = seeg.create_depths_plot([depth], subject_id, subjects_dir)
+    depth.show_locations(brain.plotter, affine=T_x_inv)
+    brain.show()
+    brain.plotter.app.exec_()
 
 def test_create_depths_plot(implant, T_x_inv):
     num_contacts = 0

@@ -10,7 +10,7 @@ from nilearn.plotting.cm import cold_hot
 import numpy as np
 import numpy.typing as npt
 
-from .depths import Depth, SILVER
+from .depths import Depth1, SILVER
 from ..utils import map_colors
 
 
@@ -37,7 +37,7 @@ class Display4D:
         percentage above which color codes are displayed (default = 75)
     """
 
-    def __init__(self, brain: Brain, depth_list: list[Depth],
+    def __init__(self, brain: Brain, depth_list: list[Depth1],
                  data: npt.NDArray, cmap: Colormap = cold_hot,
                  threshold: int = 75):
         self.brain = brain

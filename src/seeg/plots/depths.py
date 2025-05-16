@@ -45,7 +45,7 @@ ROSA_COLOR_LIST = [(1.0, 0.0, 0.0),             # (255, 0, 0),
 
 
 @dataclass
-class Depth():
+class Depth1():
     """Class to encapsulate data for individual SEEG electrodes.
 
     Data for each depth is stored and the contact locations are fit to
@@ -133,12 +133,13 @@ class Depth():
         a = self.tip + v_shift - self.vector*self.contact_len/2
         b = self.tip + v_shift + self.vector*self.contact_len/2
         self.contacts = list()
+        centers = self._calc_contacts(self.shift)
         for i in range(self.num_contacts):
-            self.contacts.append(((a + i*dist*self.vector),
-                                  (b + i*dist*self.vector)))
+            self.contacts.append(((centers[i] - self.vector*self.contact_len/2),
+                                  (centers[i] + self.vector*self.contact_len/2)))
 
-        self.base = G + self.vector*(20 + self.num_contacts*dist)
-        self.tip = a    # Make sure tip extends to end of distal contact
+        self.base = centers[-1] + 20*self.vector
+        self.tip = centers[0] - self.vector*self.contact_len/2    # Make sure tip extends to end of distal contact
 
     def draw(self, plotter: pv.Plotter,
              contact_colors: Sequence = SILVER,
@@ -278,6 +279,29 @@ class Depth():
 
 
 @dataclass
+class Depth2(Depth1):
+    """ subclass of Depth with a gap between groups of electrodes
+    
+    """
+    gap_contact: int = 3
+    gap_length: float = 10.5
+
+    def _calc_contacts(self, shift: float) -> list:
+        """ calculate idealized contact locations based on fit of
+        actual locations"""
+
+        contacts = list()
+        dist = self.contact_len + self.spacing
+        for i in range(self.gap_contact):
+            contacts.append(self.tip + shift*self.vector + i*dist*self.vector)
+
+        for i in range(self.gap_contact, self.num_contacts):
+            contacts.append(self.tip + (shift+self.gap_length)*self.vector + (i-1)*dist*self.vector)
+
+        return contacts
+
+
+@dataclass
 class Highlights():
     """Class to contain info on contacts to highlight
     
@@ -295,9 +319,43 @@ class Highlights():
             self.colors = temp
 
 
+def new_depth_electrode(name: str, contact_names : list[str], locations : npt.NDArray,
+                        diam: float = 0.8, contact_len: float = 2, spacing: float = 1.5,
+                        active: bool | list[bool] = True) -> Depth1:
+    """function to create appropriate class to encapsulate data for individual SEEG electrodes.
+
+    If there is a gap between electrodes create a Depth2. Otherwise create a Depth
+
+    Parameters
+    ----------
+    name : str
+    contact_names : list[str]
+    locations : npt.NDArray
+    diam: float = 0.8
+    contact_len: float = 2
+    spacing: float = 1.5
+    active: bool | list[bool] = True
+
+    Returns
+    -------
+    Depth : Depth
+        Depth or Depth2 as appropriate
+    """
+
+    gap_contact = locations.shape[0]//2
+    diff = np.diff(locations, axis=0)
+    gap_length = np.linalg.norm(diff[gap_contact-1, :])
+    gap1 = np.linalg.norm(diff[0, :])
+
+    if gap_length < 2*gap1:
+        return Depth1(name, contact_names, locations, diam, contact_len, spacing, active)
+    else:
+        return Depth2(name, contact_names, locations, diam, contact_len, spacing, active, gap_contact, gap_length)
+
+
 def create_depths(depth_names: list, ch_names: list,
                   contacts: pd.DataFrame, diam: float = 0.8,
-                  contact_len: float = 2, spacing: float = 1.5) -> list[Depth]:
+                  contact_len: float = 2, spacing: float = 1.5) -> list[Depth1]:
     """Create a list of Depths
 
     For each depth electrode in `depth_names` create a Depth and add to a list
@@ -334,7 +392,7 @@ def create_depths(depth_names: list, ch_names: list,
 
 
 def create_depth_list(depths: pd.DataFrame, inactives: list, ch_names: list,
-                      contacts: pd.DataFrame) -> list[Depth]:
+                      contacts: pd.DataFrame) -> list[Depth1]:
     """Create a list of Depths
 
     For each electrode in `depths` create a Depth and add to a list
@@ -368,14 +426,16 @@ def create_depth_list(depths: pd.DataFrame, inactives: list, ch_names: list,
         locations[:, 1] = depth_contacts.y.values
         locations[:, 2] = depth_contacts.z.values
         locations *= 1000
-        depth_list.append(Depth(depth.name, depth_contacts.contact.tolist(),
-                                locations, depth.diam, depth.contact_len,
-                                depth.spacing, active=active))
+        depth_list.append(new_depth_electrode(depth.name,
+                                              depth_contacts.contact.tolist(),
+                                              locations, depth.diam,
+                                              depth.contact_len, depth.spacing,
+                                              active=active))
 
     return depth_list
 
 
-def create_depths_plot(depth_list: list[Depth], subject_id: str,
+def create_depths_plot(depth_list: list[Depth1], subject_id: str,
                        subjects_dir: str, alpha: float = 0.3,
                        depth_colors: list = ROSA_COLOR_LIST,
                        contact_colors: Sequence = SILVER) -> mne.viz.Brain:
@@ -438,7 +498,7 @@ def create_depths_plot(depth_list: list[Depth], subject_id: str,
     return brain
 
 
-def show_depth_bipolar_values(depth_list: list[Depth], plotter: pv.Plotter,
+def show_depth_bipolar_values(depth_list: list[Depth1], plotter: pv.Plotter,
                               values: Sequence,
                               radius: float | Sequence | None = None,
                               bads: list = [],
@@ -488,7 +548,7 @@ def show_depth_bipolar_values(depth_list: list[Depth], plotter: pv.Plotter,
         idx += len(depth.anodes)
 
 
-def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
+def show_depth_values(depth_list: list[Depth1], plotter: pv.Plotter,
                       values: Sequence,
                       radius: float | Sequence | None = None,
                       bads: list = [],
@@ -543,7 +603,7 @@ def show_depth_values(depth_list: list[Depth], plotter: pv.Plotter,
                 idx += 1
 
 
-def highlight_contacts(highlights: Highlights, depth_list: list[Depth],
+def highlight_contacts(highlights: Highlights, depth_list: list[Depth1],
                        plotter: pv.Plotter,
                        affine: npt.NDArray = np.diag(np.ones(4))) -> None:
     """Plot colored spheres over the contacts listed in `highlights`
