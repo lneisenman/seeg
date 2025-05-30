@@ -92,9 +92,8 @@ def eeg():
 
 
 @pytest.fixture
-def t_map():
-    t_map = nib.load(os.path.join(SUBJECTS_DIR, SUBJECT_ID,
-                                  't_map.nii.gz'))
+def t_map(eeg, mri):
+    t_map = seeg.create_epi_image_map(eeg, mri, low_freq=120, high_freq=200)
     return t_map
 
 
