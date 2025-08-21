@@ -498,6 +498,49 @@ def create_depths_plot(depth_list: list[Depth1], subject_id: str,
     return brain
 
 
+def create_contacts_plot(depth_list: list[Depth1], subject_id: str,
+                         subjects_dir: str, alpha: float = 0.3,
+                         depth_colors: list = ROSA_COLOR_LIST) -> mne.viz.Brain:
+    """Create a MNE Brain and plot contact locations. Returns the Brain
+
+    Parameters
+    ----------
+    depth_list : list
+        list of Depth's
+    subject_id : string
+        name of subject folder in Freesurfer subjects directory
+    subjects_dir : string
+        location of Freesurfer subjects directory
+    alpha: float
+        opacity of brain (default = 0.3)
+    depth_colors: list
+        list of RGB tuples for the colors of the Depth's
+    contact_colors: RGB tuple or list of tuples
+        color of all contacts if a single value given. Otherwise list of
+        colors for each contact
+
+    Returns
+    -------
+    brain : MNE Brain
+        MNE Brain showing transparent pial surface and Depths
+    """
+
+    mri_file = os.path.join(subjects_dir, subject_id, 'mri/T1.mgz')
+    mri = nib.load(mri_file)
+    mri_inv = npl.inv(mri.affine)           # type: ignore
+    Torig = mri.header.get_vox2ras_tkr()    # type: ignore
+    affine = Torig@mri_inv
+    Brain = mne.viz.get_brain_class()
+    brain = Brain(subject_id, 'both', 'pial', subjects_dir=subjects_dir,
+                  cortex='classic', alpha=alpha, show=False)
+    plotter = brain.plotter
+
+    for depth, colors in zip(depth_list, cycler(colors=depth_colors)()):
+            depth.show_locations(plotter, **colors, affine=affine)
+
+    return brain
+
+
 def show_depth_bipolar_values(depth_list: list[Depth1], plotter: pv.Plotter,
                               values: Sequence,
                               radius: float | Sequence | None = None,
