@@ -14,7 +14,7 @@ from nibabel.filebasedimages import FileBasedImage
 from nibabel.nifti1 import Nifti1Image
 from nibabel import processing as nbp
 import nilearn
-from nilearn.input_data import NiftiMasker
+from nilearn.maskers import NiftiMasker
 from nilearn.mass_univariate import permuted_ols
 from nilearn.plotting import plot_stat_map
 from nilearn.plotting.cm import cold_hot
