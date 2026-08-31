@@ -299,6 +299,32 @@ class Depth2(Depth1):
             contacts.append(self.tip + (shift+self.gap_length)*self.vector + (i-1)*dist*self.vector)
 
         return contacts
+    
+
+@dataclass
+class Depth3(Depth1):
+    """ subclass of Depth with 2 gaps between 3 equal groups of electrodes
+    
+    """
+    gap_length: float = 10.5
+
+    def _calc_contacts(self, shift: float) -> list:
+        """ calculate idealized contact locations based on fit of
+        actual locations"""
+        group_len = self.num_contacts // 3
+        contacts = list()
+        dist = self.contact_len + self.spacing
+        for i in range(group_len):
+            contacts.append(self.tip + shift*self.vector + i*dist*self.vector)
+
+        for i in range(group_len, 2*group_len):
+            contacts.append(self.tip + (shift+self.gap_length)*self.vector + (i-1)*dist*self.vector)
+
+        for i in range(2*group_len, 3*group_len):
+            contacts.append(self.tip + (shift+2*self.gap_length)*self.vector + (i-2)*dist*self.vector)
+
+
+        return contacts
 
 
 @dataclass
@@ -342,15 +368,27 @@ def new_depth_electrode(name: str, contact_names : list[str], locations : npt.ND
         Depth or Depth2 as appropriate
     """
 
-    gap_contact = locations.shape[0]//2
     diff = np.diff(locations, axis=0)
-    gap_length = np.linalg.norm(diff[gap_contact-1, :])
-    gap1 = np.linalg.norm(diff[0, :])
+  
+    gaps = np.zeros(diff.shape[0])
+    for i in range(diff.shape[0]):
+        gaps[i] = np.linalg.norm(diff[i, :])
 
-    if gap_length < 2*gap1:
+    gap1 = gaps[0]
+    gaplist = []
+    for i, gap in enumerate(gaps):
+        if gap > 2*gap1:
+            gaplist.append((i, gap))
+
+    if len(gaplist) == 0:
         return Depth1(name, contact_names, locations, diam, contact_len, spacing, active)
+    elif len(gaplist) == 1:
+        gap_contact = gaplist[0][0]//2
+        gap_len = np.round(2*gaplist[0][1])/2
+        return Depth2(name, contact_names, locations, diam, contact_len, spacing, active, gap_contact, gap_len)
     else:
-        return Depth2(name, contact_names, locations, diam, contact_len, spacing, active, gap_contact, gap_length)
+        gap_len = np.round(2*gaplist[0][1])/2
+        return Depth3(name, contact_names, locations, diam, contact_len, spacing, active, gap_len)
 
 
 def create_depths(depth_names: list, ch_names: list,
